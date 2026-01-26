@@ -49,10 +49,13 @@ func getCurrentUser(r *http.Request) *User {
 }
 
 func main() {
+	// 1. Create uploads folder if it doesn't exist
 	os.MkdirAll("uploads", os.ModePerm)
+
+	// 2. Load data from JSON files
 	loadData()
 
-	// These functions are found in handlers.go
+	// 3. Setup Routes (The logic is in handlers.go)
 	http.HandleFunc("/", homePage)
 	http.HandleFunc("/signup", signupHandler)
 	http.HandleFunc("/login", loginHandler)
@@ -62,8 +65,16 @@ func main() {
 	http.HandleFunc("/houses/upload", uploadHouseHandler)
 	http.HandleFunc("/houses/delete", deleteHouseHandler)
 
+	// 4. Serve images from the uploads folder
 	http.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
 
-	fmt.Println("Server running on http://localhost:8082 ...")
-	http.ListenAndServe(":8082", nil)
+	// 5. START SERVER (Fixed for Render!)
+	// Render gives us a PORT, or we use 8082 if testing on laptop
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8082"
+	}
+
+	fmt.Println("Server running on port " + port + " ...")
+	http.ListenAndServe(":"+port, nil)
 }
