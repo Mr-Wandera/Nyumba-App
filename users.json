@@ -1,0 +1,14 @@
+[
+  {
+    "username": "Wandera",
+    "password": "wandera",
+    "role": "renter",
+    "phone": "254798080038"
+  },
+  {
+    "username": "wandera",
+    "password": "wandera",
+    "role": "landlord",
+    "phone": "254798080038"
+  }
+]
