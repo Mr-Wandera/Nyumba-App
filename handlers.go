@@ -14,10 +14,6 @@ import (
 // --- HANDLERS ---
 
 func signupHandler(w http.ResponseWriter, r *http.Request) {
-	// ... (Same as before, simplified for brevity, logic unchanged) ...
-	// If you need the full signup code again, let me know.
-	// For now, I'll focus on the parts that CHANGED.
-	// copying the standard signup logic below just to be safe:
 	if r.Method == "GET" {
 		html := `
 		<!DOCTYPE html>
@@ -112,9 +108,18 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{Name: CookieName, Value: "", Path: "/", MaxAge: -1})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
-
 func payHandler(w http.ResponseWriter, r *http.Request) {
+	// 1. Get data from the frontend
 	idStr := r.URL.Query().Get("id")
+	phone := r.URL.Query().Get("phone") // We need the user's phone number!
+
+	// 2. Basic Validation
+	if phone == "" {
+		http.Error(w, "Phone number required", http.StatusBadRequest)
+		return
+	}
+
+	// 3. Mark House as Booked (Assuming success for now)
 	id, _ := strconv.Atoi(idStr)
 	for i, h := range houses {
 		if h.ID == id {
@@ -123,8 +128,18 @@ func payHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	saveData(houseFile, houses)
+
+	// 4. Trigger Real M-Pesa STK Push
+	// Force "1" shilling for testing
+	response, err := initiateSTKPush(phone, "1")
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "success", "message": "Payment Received"})
+	if err != nil {
+		json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": err.Error()})
+	} else {
+		// Send the Safaricom response back to the browser
+		fmt.Fprint(w, response)
+	}
 }
 
 func getHouses(w http.ResponseWriter, r *http.Request) {
@@ -155,7 +170,7 @@ func uploadHouseHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 2. Handle MULTIPLE files
 	var imagePaths []string
-	files := r.MultipartForm.File["photos"] // "photos" matches the HTML input name
+	files := r.MultipartForm.File["photos"]
 
 	for _, fileHeader := range files {
 		file, err := fileHeader.Open()
@@ -164,7 +179,7 @@ func uploadHouseHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		// Create unique filename for each image
+		// Create unique filename
 		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), fileHeader.Filename)
 		dstPath := filepath.Join("uploads", filename)
 
@@ -203,7 +218,6 @@ func deleteHouseHandler(w http.ResponseWriter, r *http.Request) {
 	saveData(houseFile, houses)
 	w.WriteHeader(http.StatusOK)
 }
-
 func homePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
@@ -320,7 +334,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 							actionBtn = '<a href="/login" style="display:block; text-align:center; margin-top:10px; color:#666;">Login to Book</a>';
 						}
 
-						// NEW: Gallery Logic
+						// Gallery Logic
 						let imagesHtml = '';
 						if (h.image_urls && h.image_urls.length > 0) {
 							imagesHtml = '<div class="gallery">';
@@ -329,7 +343,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 							});
 							imagesHtml += '</div>';
 						} else {
-							// Fallback if no images
 							imagesHtml = '<div style="height:100px; background:#eee; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#999;">No Photos</div>';
 						}
 						
@@ -344,22 +357,22 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				});
 			}
 
+			// Updated M-Pesa Payment Function
 			function payWithMpesa(id, amount) {
 				let phone = prompt("📲 Enter M-Pesa Number (Format: 2547...):");
 				if (!phone) return;
 				
 				showToast("⏳ Sending M-Pesa request...");
 				
-				// We send the phone number to the server now!
 				fetch('/pay?id=' + id + '&phone=' + phone, {method: 'POST'})
 				.then(res => res.json())
 				.then(data => { 
-					console.log(data); // Look in browser console for Safaricom reply
+					console.log(data); // Debugging
 					if(data.ResponseCode === "0") {
-						showToast("✅ Check your phone for the PIN!"); 
+						showToast("✅ Check your phone for PIN!"); 
 						fetchHouses();
 					} else {
-						showToast("⚠️ Request sent (Check Console)");
+						showToast("⚠️ Request Sent (See Console)");
 					}
 				})
 				.catch(err => showToast("❌ Error connecting"));
@@ -372,7 +385,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				formData.append("utilities", document.getElementById('utils').value);
 				formData.append("details", document.getElementById('details').value);
 				
-				// CHANGED: Loop through all selected files
+				// Loop through all selected files
 				const fileInput = document.getElementById('photos');
 				for (let i = 0; i < fileInput.files.length; i++) {
 					formData.append("photos", fileInput.files[i]);
