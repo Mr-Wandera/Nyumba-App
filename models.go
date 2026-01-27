@@ -1,7 +1,5 @@
 package main
 
-// This file holds the "Blueprints" for our data
-
 type House struct {
 	ID        int      `json:"id"`
 	Location  string   `json:"location"`
@@ -9,7 +7,7 @@ type House struct {
 	Details   string   `json:"details"`
 	Tags      []string `json:"tags"`
 	Utilities float64  `json:"utilities"`
-	ImageURL  string   `json:"image_url"`
+	ImageURLs []string `json:"image_urls"` // 👈 This is now a list []string
 	Phone     string   `json:"phone"`
 	Owner     string   `json:"owner"`
 	IsBooked  bool     `json:"is_booked"`

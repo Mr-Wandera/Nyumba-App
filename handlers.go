@@ -14,6 +14,10 @@ import (
 // --- HANDLERS ---
 
 func signupHandler(w http.ResponseWriter, r *http.Request) {
+	// ... (Same as before, simplified for brevity, logic unchanged) ...
+	// If you need the full signup code again, let me know.
+	// For now, I'll focus on the parts that CHANGED.
+	// copying the standard signup logic below just to be safe:
 	if r.Method == "GET" {
 		html := `
 		<!DOCTYPE html>
@@ -134,25 +138,47 @@ func uploadHouseHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	r.ParseMultipartForm(10 << 20)
+
+	// 1. Parse Multipart Form (Max 10MB)
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		http.Error(w, "File too big", http.StatusBadRequest)
+		return
+	}
+
 	price, _ := strconv.ParseFloat(r.FormValue("price"), 64)
 	utils, _ := strconv.ParseFloat(r.FormValue("utilities"), 64)
 	loc := r.FormValue("location")
 	details := r.FormValue("details")
 	var tags []string
 	json.Unmarshal([]byte(r.FormValue("tags")), &tags)
-	imagePath := ""
-	file, handler, err := r.FormFile("photo")
-	if err == nil {
+
+	// 2. Handle MULTIPLE files
+	var imagePaths []string
+	files := r.MultipartForm.File["photos"] // "photos" matches the HTML input name
+
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			continue
+		}
 		defer file.Close()
-		filename := fmt.Sprintf("%d_%s", time.Now().Unix(), handler.Filename)
-		filepath.Join("uploads", filename)
-		dst, _ := os.Create(filepath.Join("uploads", filename))
+
+		// Create unique filename for each image
+		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), fileHeader.Filename)
+		dstPath := filepath.Join("uploads", filename)
+
+		dst, err := os.Create(dstPath)
+		if err != nil {
+			continue
+		}
 		defer dst.Close()
+
 		io.Copy(dst, file)
-		imagePath = "/uploads/" + filename
+		imagePaths = append(imagePaths, "/uploads/"+filename)
 	}
-	newHouse := House{ID: len(houses) + 1, Location: loc, Price: price, Utilities: utils, Details: details, Tags: tags, ImageURL: imagePath, Owner: user.Username, Phone: user.Phone, IsBooked: false}
+
+	newHouse := House{ID: len(houses) + 1, Location: loc, Price: price, Utilities: utils, Details: details, Tags: tags, ImageURLs: imagePaths, Owner: user.Username, Phone: user.Phone, IsBooked: false}
 	houses = append(houses, newHouse)
 	saveData(houseFile, houses)
 	w.Header().Set("Content-Type", "application/json")
@@ -216,8 +242,15 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			@media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
 
 			.card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; position: relative; }
+			
+			/* SCROLLABLE GALLERY STYLES */
+			.gallery { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scroll-behavior: smooth; }
+			.gallery img { width: 100%; height: 250px; object-fit: cover; border-radius: 12px; flex-shrink: 0; }
+			.gallery::-webkit-scrollbar { height: 8px; }
+			.gallery::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+
 			.booked { opacity: 0.7; border: 2px solid #ccc; background: #f9f9f9; }
-			.booked::after { content: "⛔ TAKEN"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-10deg); font-size: 3rem; font-weight: 900; color: #e53e3e; border: 5px solid #e53e3e; padding: 10px; border-radius: 10px; opacity: 0.8; pointer-events: none; }
+			.booked::after { content: "⛔ TAKEN"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-10deg); font-size: 3rem; font-weight: 900; color: #e53e3e; border: 5px solid #e53e3e; padding: 10px; border-radius: 10px; opacity: 0.8; pointer-events: none; z-index: 10; }
 
 			input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; }
 			.btn-primary { background: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: bold; }
@@ -225,7 +258,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			.btn-secondary { color: var(--text); text-decoration: none; font-weight: 600; margin-right: 15px; }
 			.btn-danger-outline { color: #ef4444; border: 1px solid #ef4444; padding: 5px 15px; border-radius: 6px; text-decoration: none; }
 
-			.house-img { width: 100%; height: 200px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; }
 			#toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); }
 			#toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
 			@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
@@ -245,7 +277,10 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					<input id="loc" type="text" placeholder="Location">
 					<input id="price" type="number" placeholder="Rent (KES)">
 					<input id="utils" type="number" placeholder="Bills (KES)">
-					<label>📸 Photo</label> <input id="photo" type="file" accept="image/*">
+					
+					<label>📸 Photos (Select Multiple)</label> 
+					<input id="photos" type="file" accept="image/*" multiple>
+					
 					<input id="details" type="text" placeholder="Description">
 					<button class="btn-primary" onclick="uploadHouse()">Post</button>
 				</div>
@@ -274,23 +309,32 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					const container = document.getElementById('results-area');
 					container.innerHTML = "";
 					data.forEach(h => {
-						// Logic for Booked Houses
-						let cardClass = "card";
-						let actionBtn = "";
+						let cardClass = h.is_booked ? "card booked" : "card";
 						
+						let actionBtn = "";
 						if (h.is_booked) {
-							cardClass = "card booked";
 							actionBtn = '<button disabled style="background:#ccc; cursor:not-allowed; width:100%; padding:10px; border:none; border-radius:8px; margin-top:10px;">⛔ Already Booked</button>';
 						} else if (isLoggedIn) {
-							// If user is logged in, show PAY button
 							actionBtn = '<button class="btn-mpesa" onclick="payWithMpesa(' + h.id + ', ' + h.price + ')">💳 Pay Booking Fee (KES 1,000)</button>';
 						} else {
 							actionBtn = '<a href="/login" style="display:block; text-align:center; margin-top:10px; color:#666;">Login to Book</a>';
 						}
 
-						let img = h.image_url ? '<img src="' + h.image_url + '" class="house-img">' : '';
+						// NEW: Gallery Logic
+						let imagesHtml = '';
+						if (h.image_urls && h.image_urls.length > 0) {
+							imagesHtml = '<div class="gallery">';
+							h.image_urls.forEach(url => {
+								imagesHtml += '<img src="' + url + '">';
+							});
+							imagesHtml += '</div>';
+						} else {
+							// Fallback if no images
+							imagesHtml = '<div style="height:100px; background:#eee; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#999;">No Photos</div>';
+						}
 						
-						const html = '<div class="' + cardClass + '">' + img + 
+						const html = '<div class="' + cardClass + '">' + 
+							imagesHtml + 
 							'<h3>' + h.location + '</h3>' +
 							'<p>Rent: <b>' + h.price + '</b> | Bills: ' + h.utilities + '</p>' +
 							'<p>' + h.details + '</p>' +
@@ -301,23 +345,15 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			}
 
 			function payWithMpesa(id, amount) {
-				let phone = prompt("📲 M-Pesa Integration\n\nEnter your Phone Number to pay KES 1,000 booking fee:");
+				let phone = prompt("📲 M-Pesa Integration\n\nEnter your Phone Number:");
 				if (!phone) return;
-
 				showToast("⏳ Sending request to phone...");
-				
-				// Simulate API delay
 				setTimeout(() => {
 					if(confirm("Simulate: User entered PIN on phone?")) {
 						fetch('/pay?id=' + id, {method: 'POST'})
 						.then(res => res.json())
-						.then(data => {
-							showToast("✅ Payment Successful!");
-							fetchHouses(); // Refresh to show "booked" status
-						});
-					} else {
-						showToast("❌ Payment Cancelled");
-					}
+						.then(data => { showToast("✅ Payment Successful!"); fetchHouses(); });
+					} else { showToast("❌ Payment Cancelled"); }
 				}, 1500);
 			}
 
@@ -327,10 +363,13 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				formData.append("price", document.getElementById('price').value);
 				formData.append("utilities", document.getElementById('utils').value);
 				formData.append("details", document.getElementById('details').value);
-				const file = document.getElementById('photo').files[0];
-				if (file) formData.append("photo", file);
 				
-				// Empty tags for now
+				// CHANGED: Loop through all selected files
+				const fileInput = document.getElementById('photos');
+				for (let i = 0; i < fileInput.files.length; i++) {
+					formData.append("photos", fileInput.files[i]);
+				}
+				
 				formData.append("tags", JSON.stringify([]));
 
 				fetch('/houses/upload', { method: 'POST', body: formData })
