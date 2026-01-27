@@ -238,14 +238,15 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 
 	currentUser := getCurrentUser(r)
 	isLoggedIn := "false"
-	userRole := "guest"
+	// We remove the Go variable 'userRole' to fix the "unused variable" error
+	// and handle the logic directly in the HTML string below.
+
 	welcomeMsg := "Welcome"
 	navLinks := `<a href="/login" class="btn-secondary">Login</a>`
 	addFormDisplay := "none"
 
 	if currentUser != nil {
 		isLoggedIn = "true"
-		userRole = currentUser.Role
 		welcomeMsg = "Hi, " + currentUser.Username
 		navLinks = `<a href="/logout" class="btn-danger-outline">Logout</a>`
 		if currentUser.Role == "landlord" {
@@ -334,7 +335,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					data.forEach(h => {
 						let cardClass = h.is_booked ? "card booked" : "card";
 						
-						// NEW: WhatsApp Link
 						// Uses the landlord's phone number from the house data
 						let whatsappLink = "https://wa.me/" + h.phone + "?text=Hi, is your " + h.type + " in " + h.location + " available?";
 						
@@ -355,7 +355,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 							imagesHtml + 
 							'<div style="display:flex; justify-content:space-between; align-items:center;">' + 
 								'<h3>' + h.location + '</h3>' + 
-								'<span class="tag">' + h.type + '</span>' + // 👈 SHOW TYPE HERE
+								'<span class="tag">' + h.type + '</span>' + 
 							'</div>' +
 							'<p>Rent: <b>' + h.price + '</b> | Bills: ' + h.utilities + '</p>' +
 							'<p>' + h.details + '</p>' +
@@ -380,7 +380,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			function uploadHouse() {
 				const formData = new FormData();
 				formData.append("location", document.getElementById('loc').value);
-				formData.append("type", document.getElementById('type').value); // 👈 Send Type
+				formData.append("type", document.getElementById('type').value);
 				formData.append("price", document.getElementById('price').value);
 				formData.append("utilities", document.getElementById('utils').value);
 				formData.append("details", document.getElementById('details').value);
@@ -401,25 +401,4 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	</body>
 	</html>`
 	fmt.Fprint(w, html)
-}
-
-// --- HELPER FUNCTIONS (Paste at the bottom of handlers.go) ---
-
-func getCurrentUser(r *http.Request) *User {
-	cookie, err := r.Cookie(CookieName)
-	if err != nil || cookie.Value == "" {
-		return nil
-	}
-	// Find user with this username
-	for _, u := range users {
-		if u.Username == cookie.Value {
-			return &u
-		}
-	}
-	return nil
-}
-
-func saveData(filename string, data interface{}) {
-	file, _ := json.MarshalIndent(data, "", "  ")
-	_ = os.WriteFile(filename, file, 0644)
 }
