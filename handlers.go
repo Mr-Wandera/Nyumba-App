@@ -345,16 +345,24 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			}
 
 			function payWithMpesa(id, amount) {
-				let phone = prompt("📲 M-Pesa Integration\n\nEnter your Phone Number:");
+				let phone = prompt("📲 Enter M-Pesa Number (Format: 2547...):");
 				if (!phone) return;
-				showToast("⏳ Sending request to phone...");
-				setTimeout(() => {
-					if(confirm("Simulate: User entered PIN on phone?")) {
-						fetch('/pay?id=' + id, {method: 'POST'})
-						.then(res => res.json())
-						.then(data => { showToast("✅ Payment Successful!"); fetchHouses(); });
-					} else { showToast("❌ Payment Cancelled"); }
-				}, 1500);
+				
+				showToast("⏳ Sending M-Pesa request...");
+				
+				// We send the phone number to the server now!
+				fetch('/pay?id=' + id + '&phone=' + phone, {method: 'POST'})
+				.then(res => res.json())
+				.then(data => { 
+					console.log(data); // Look in browser console for Safaricom reply
+					if(data.ResponseCode === "0") {
+						showToast("✅ Check your phone for the PIN!"); 
+						fetchHouses();
+					} else {
+						showToast("⚠️ Request sent (Check Console)");
+					}
+				})
+				.catch(err => showToast("❌ Error connecting"));
 			}
 
 			function uploadHouse() {
