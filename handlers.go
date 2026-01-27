@@ -402,3 +402,24 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	</html>`
 	fmt.Fprint(w, html)
 }
+
+// --- HELPER FUNCTIONS (Paste at the bottom of handlers.go) ---
+
+func getCurrentUser(r *http.Request) *User {
+	cookie, err := r.Cookie(CookieName)
+	if err != nil || cookie.Value == "" {
+		return nil
+	}
+	// Find user with this username
+	for _, u := range users {
+		if u.Username == cookie.Value {
+			return &u
+		}
+	}
+	return nil
+}
+
+func saveData(filename string, data interface{}) {
+	file, _ := json.MarshalIndent(data, "", "  ")
+	_ = os.WriteFile(filename, file, 0644)
+}
