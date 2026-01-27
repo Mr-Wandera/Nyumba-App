@@ -147,6 +147,8 @@ func getHouses(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(houses)
 }
 
+// --- UPDATED HANDLERS ---
+
 func uploadHouseHandler(w http.ResponseWriter, r *http.Request) {
 	user := getCurrentUser(r)
 	if user == nil || user.Role != "landlord" {
@@ -154,7 +156,7 @@ func uploadHouseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. Parse Multipart Form (Max 10MB)
+	// 1. Parse Form
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		http.Error(w, "File too big", http.StatusBadRequest)
@@ -164,11 +166,12 @@ func uploadHouseHandler(w http.ResponseWriter, r *http.Request) {
 	price, _ := strconv.ParseFloat(r.FormValue("price"), 64)
 	utils, _ := strconv.ParseFloat(r.FormValue("utilities"), 64)
 	loc := r.FormValue("location")
+	houseType := r.FormValue("type") // 👈 NEW: Get the house type
 	details := r.FormValue("details")
 	var tags []string
 	json.Unmarshal([]byte(r.FormValue("tags")), &tags)
 
-	// 2. Handle MULTIPLE files
+	// 2. Handle Images
 	var imagePaths []string
 	files := r.MultipartForm.File["photos"]
 
@@ -179,21 +182,31 @@ func uploadHouseHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		// Create unique filename
 		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), fileHeader.Filename)
 		dstPath := filepath.Join("uploads", filename)
-
 		dst, err := os.Create(dstPath)
 		if err != nil {
 			continue
 		}
 		defer dst.Close()
-
 		io.Copy(dst, file)
 		imagePaths = append(imagePaths, "/uploads/"+filename)
 	}
 
-	newHouse := House{ID: len(houses) + 1, Location: loc, Price: price, Utilities: utils, Details: details, Tags: tags, ImageURLs: imagePaths, Owner: user.Username, Phone: user.Phone, IsBooked: false}
+	// 3. Save House (With Type)
+	newHouse := House{
+		ID:        len(houses) + 1,
+		Location:  loc,
+		Price:     price,
+		Type:      houseType, // 👈 Save it
+		Utilities: utils,
+		Details:   details,
+		Tags:      tags,
+		ImageURLs: imagePaths,
+		Owner:     user.Username,
+		Phone:     user.Phone,
+		IsBooked:  false,
+	}
 	houses = append(houses, newHouse)
 	saveData(houseFile, houses)
 	w.Header().Set("Content-Type", "application/json")
@@ -201,6 +214,7 @@ func uploadHouseHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteHouseHandler(w http.ResponseWriter, r *http.Request) {
+	// (Keep this the same as before)
 	user := getCurrentUser(r)
 	if user == nil || user.Role != "landlord" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -218,6 +232,7 @@ func deleteHouseHandler(w http.ResponseWriter, r *http.Request) {
 	saveData(houseFile, houses)
 	w.WriteHeader(http.StatusOK)
 }
+
 func homePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
@@ -242,45 +257,34 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	<!DOCTYPE html>
 	<html>
 	<head>
-		<title>Nyumba M-Pesa</title>
+		<title>Nyumba</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 		<style>
-			:root { --primary: #4f46e5; --bg: #f3f4f6; --text: #1f2937; --mpesa: #27ae60; }
+			:root { --primary: #4f46e5; --bg: #f3f4f6; --text: #1f2937; --mpesa: #27ae60; --whatsapp: #25D366; }
 			body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-top: 80px; }
-			
 			.navbar { position: fixed; top: 0; left: 0; right: 0; background: white; height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 5%; box-shadow: 0 1px 3px rgba(0,0,0,0.1); z-index: 100; }
-			.logo { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
-			
 			.container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 350px 1fr; gap: 30px; }
 			@media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
-
 			.card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; position: relative; }
 			
-			/* SCROLLABLE GALLERY STYLES */
 			.gallery { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scroll-behavior: smooth; }
 			.gallery img { width: 100%; height: 250px; object-fit: cover; border-radius: 12px; flex-shrink: 0; }
-			.gallery::-webkit-scrollbar { height: 8px; }
-			.gallery::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
 
-			.booked { opacity: 0.7; border: 2px solid #ccc; background: #f9f9f9; }
-			.booked::after { content: "⛔ TAKEN"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-10deg); font-size: 3rem; font-weight: 900; color: #e53e3e; border: 5px solid #e53e3e; padding: 10px; border-radius: 10px; opacity: 0.8; pointer-events: none; z-index: 10; }
-
+			.tag { display: inline-block; background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 10px; }
+			
 			input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; }
 			.btn-primary { background: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: bold; }
-			.btn-mpesa { background: var(--mpesa); color: white; padding: 10px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
-			.btn-secondary { color: var(--text); text-decoration: none; font-weight: 600; margin-right: 15px; }
-			.btn-danger-outline { color: #ef4444; border: 1px solid #ef4444; padding: 5px 15px; border-radius: 6px; text-decoration: none; }
-
-			#toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); }
-			#toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
-			@keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
-			@keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+			.btn-mpesa { background: var(--mpesa); color: white; padding: 10px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px; }
+			.btn-whatsapp { background: var(--whatsapp); color: white; padding: 10px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px; text-decoration: none; display: block; text-align: center; }
+			
+			.booked { opacity: 0.7; border: 2px solid #ccc; background: #f9f9f9; pointer-events: none; }
+			.booked::after { content: "⛔ TAKEN"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-10deg); font-size: 3rem; font-weight: 900; color: #e53e3e; border: 5px solid #e53e3e; padding: 10px; border-radius: 10px; opacity: 0.8; z-index: 10; }
 		</style>
 	</head>
 	<body>
 		<div class="navbar">
-			<div class="logo">🏠 Nyumba</div>
+			<div style="font-size:1.5rem; font-weight:700; color:#4f46e5;">🏠 Nyumba</div>
 			<div><span style="color:#666; margin-right:15px;">` + welcomeMsg + `</span>` + navLinks + `</div>
 		</div>
 
@@ -288,34 +292,39 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			<div class="sidebar">
 				<div class="card" style="display: ` + addFormDisplay + `;">
 					<h3>➕ List Property</h3>
-					<input id="loc" type="text" placeholder="Location">
+					<input id="loc" type="text" placeholder="Location (e.g. Makongeni)">
+					
+					<select id="type">
+						<option value="Bedsitter">Bedsitter</option>
+						<option value="One Bedroom">One Bedroom</option>
+						<option value="Two Bedroom">Two Bedroom</option>
+						<option value="Studio">Studio</option>
+					</select>
+
 					<input id="price" type="number" placeholder="Rent (KES)">
 					<input id="utils" type="number" placeholder="Bills (KES)">
-					
 					<label>📸 Photos (Select Multiple)</label> 
 					<input id="photos" type="file" accept="image/*" multiple>
-					
 					<input id="details" type="text" placeholder="Description">
-					<button class="btn-primary" onclick="uploadHouse()">Post</button>
+					<button class="btn-primary" onclick="uploadHouse()">Post Property</button>
 				</div>
 				<div class="card">
 					<h3>🔍 Search</h3>
-					<input id="searchTag" type="text" placeholder="Search...">
+					<input id="searchTag" type="text" placeholder="Search location or type...">
 					<button class="btn-primary" style="background:#10b981" onclick="fetchHouses()">Filter</button>
 				</div>
 			</div>
 			<div class="main-content" id="results-area"></div>
 		</div>
-		<div id="toast">Notification</div>
+		<div id="toast" style="visibility:hidden; min-width:250px; background:#333; color:#fff; text-align:center; border-radius:8px; padding:16px; position:fixed; z-index:2000; left:50%; bottom:30px; transform:translateX(-50%);">Notification</div>
 
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
-			const userRole = "` + userRole + `";
-
 			document.addEventListener("DOMContentLoaded", () => fetchHouses());
+
 			function showToast(msg) {
-				const x = document.getElementById("toast"); x.innerText = msg; x.className = "show";
-				setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+				const x = document.getElementById("toast"); x.innerText = msg; x.style.visibility = "visible";
+				setTimeout(() => { x.style.visibility = "hidden"; }, 3000);
 			}
 
 			function fetchHouses() {
@@ -325,73 +334,62 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					data.forEach(h => {
 						let cardClass = h.is_booked ? "card booked" : "card";
 						
-						let actionBtn = "";
-						if (h.is_booked) {
-							actionBtn = '<button disabled style="background:#ccc; cursor:not-allowed; width:100%; padding:10px; border:none; border-radius:8px; margin-top:10px;">⛔ Already Booked</button>';
-						} else if (isLoggedIn) {
-							actionBtn = '<button class="btn-mpesa" onclick="payWithMpesa(' + h.id + ', ' + h.price + ')">💳 Pay Booking Fee (KES 1,000)</button>';
+						// NEW: WhatsApp Link
+						// Uses the landlord's phone number from the house data
+						let whatsappLink = "https://wa.me/" + h.phone + "?text=Hi, is your " + h.type + " in " + h.location + " available?";
+						
+						let actionBtns = "";
+						if (isLoggedIn) {
+							actionBtns = '<a href="' + whatsappLink + '" target="_blank" class="btn-whatsapp">💬 Chat on WhatsApp</a>' +
+										 '<button class="btn-mpesa" onclick="payWithMpesa(' + h.id + ')">💳 Pay Booking (KES 1,000)</button>';
 						} else {
-							actionBtn = '<a href="/login" style="display:block; text-align:center; margin-top:10px; color:#666;">Login to Book</a>';
+							actionBtns = '<a href="/login" style="display:block; text-align:center; margin-top:10px; color:#666;">Login to View Contacts</a>';
 						}
 
-						// Gallery Logic
-						let imagesHtml = '';
-						if (h.image_urls && h.image_urls.length > 0) {
-							imagesHtml = '<div class="gallery">';
-							h.image_urls.forEach(url => {
-								imagesHtml += '<img src="' + url + '">';
-							});
-							imagesHtml += '</div>';
-						} else {
-							imagesHtml = '<div style="height:100px; background:#eee; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#999;">No Photos</div>';
-						}
-						
+						// Gallery
+						let imagesHtml = (h.image_urls && h.image_urls.length > 0) ? '<div class="gallery">' : '';
+						if(h.image_urls) h.image_urls.forEach(url => { imagesHtml += '<img src="' + url + '">'; });
+						if(h.image_urls && h.image_urls.length > 0) imagesHtml += '</div>';
+
 						const html = '<div class="' + cardClass + '">' + 
 							imagesHtml + 
-							'<h3>' + h.location + '</h3>' +
+							'<div style="display:flex; justify-content:space-between; align-items:center;">' + 
+								'<h3>' + h.location + '</h3>' + 
+								'<span class="tag">' + h.type + '</span>' + // 👈 SHOW TYPE HERE
+							'</div>' +
 							'<p>Rent: <b>' + h.price + '</b> | Bills: ' + h.utilities + '</p>' +
 							'<p>' + h.details + '</p>' +
-							actionBtn + '</div>';
+							actionBtns + '</div>';
 						container.innerHTML += html;
 					});
 				});
 			}
 
-			// Updated M-Pesa Payment Function
-			function payWithMpesa(id, amount) {
-				let phone = prompt("📲 Enter M-Pesa Number (Format: 2547...):");
+			function payWithMpesa(id) {
+				let phone = prompt("📲 Enter M-Pesa Number (2547...):");
 				if (!phone) return;
-				
-				showToast("⏳ Sending M-Pesa request...");
-				
+				showToast("⏳ Sending request...");
 				fetch('/pay?id=' + id + '&phone=' + phone, {method: 'POST'})
 				.then(res => res.json())
 				.then(data => { 
-					console.log(data); // Debugging
-					if(data.ResponseCode === "0") {
-						showToast("✅ Check your phone for PIN!"); 
-						fetchHouses();
-					} else {
-						showToast("⚠️ Request Sent (See Console)");
-					}
-				})
-				.catch(err => showToast("❌ Error connecting"));
+					if(data.ResponseCode === "0") { showToast("✅ Check Phone!"); fetchHouses(); }
+					else { showToast("⚠️ Check Console"); console.log(data); }
+				});
 			}
 
 			function uploadHouse() {
 				const formData = new FormData();
 				formData.append("location", document.getElementById('loc').value);
+				formData.append("type", document.getElementById('type').value); // 👈 Send Type
 				formData.append("price", document.getElementById('price').value);
 				formData.append("utilities", document.getElementById('utils').value);
 				formData.append("details", document.getElementById('details').value);
+				formData.append("tags", JSON.stringify([]));
 				
-				// Loop through all selected files
 				const fileInput = document.getElementById('photos');
 				for (let i = 0; i < fileInput.files.length; i++) {
 					formData.append("photos", fileInput.files[i]);
 				}
-				
-				formData.append("tags", JSON.stringify([]));
 
 				fetch('/houses/upload', { method: 'POST', body: formData })
 				.then(res => {
