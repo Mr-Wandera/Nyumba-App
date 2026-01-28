@@ -234,7 +234,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 
 	currentUser := getCurrentUser(r)
 	isLoggedIn := "false"
-	currentUsername := "" // 👈 We need to know WHO is logged in to match with the house owner
+	currentUsername := ""
 
 	welcomeMsg := "Welcome"
 	navLinks := `<a href="/login" class="btn-secondary">Login</a>`
@@ -258,32 +258,45 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 		<style>
-			:root { --primary: #4f46e5; --bg: #f3f4f6; --text: #1f2937; --mpesa: #27ae60; --whatsapp: #25D366; }
-			body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-top: 80px; }
-			.navbar { position: fixed; top: 0; left: 0; right: 0; background: white; height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 5%; box-shadow: 0 1px 3px rgba(0,0,0,0.1); z-index: 100; }
-			.container { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 350px 1fr; gap: 30px; }
+			:root { --primary: #4f46e5; --bg: #f9fafb; --text: #1f2937; --mpesa: #27ae60; --whatsapp: #25D366; }
+			body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-top: 70px; display: flex; flex-direction: column; min-height: 100vh; }
+			
+			/* NAVBAR */
+			.navbar { position: fixed; top: 0; left: 0; right: 0; background: white; height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 5%; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 100; }
+			
+			/* HERO SECTION */
+			.hero { background: linear-gradient(135deg, #4f46e5 0%, #818cf8 100%); color: white; padding: 60px 20px; text-align: center; margin-bottom: 30px; }
+			.hero h1 { margin: 0; font-size: 2.5rem; }
+			.hero p { opacity: 0.9; font-size: 1.1rem; margin-top: 10px; }
+
+			.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: 300px 1fr; gap: 30px; flex: 1; }
 			@media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
-			.card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; position: relative; }
+
+			/* CARDS */
+			.card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; position: relative; transition: transform 0.2s; }
+			.card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
 			
 			.gallery { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scroll-behavior: smooth; }
-			.gallery img { width: 100%; height: 250px; object-fit: cover; border-radius: 12px; flex-shrink: 0; }
+			.gallery img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
 
-			.tag { display: inline-block; background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-bottom: 10px; }
+			.tag { display: inline-block; background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 			
-			input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #d1d5db; border-radius: 8px; box-sizing: border-box; }
-			.btn-primary { background: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: bold; }
-			.btn-mpesa { background: var(--mpesa); color: white; padding: 10px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px; }
-			.btn-whatsapp { background: var(--whatsapp); color: white; padding: 10px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px; text-decoration: none; display: block; text-align: center; }
-			.btn-delete { background: white; color: #ef4444; border: 1px solid #ef4444; padding: 5px 10px; border-radius: 6px; cursor: pointer; float: right; font-size: 0.8rem; margin-top: -5px; }
+			input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
+			label { font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 4px; display: block; }
+
+			/* BUTTONS */
+			.btn-primary { background: var(--primary); color: white; padding: 10px; border-radius: 6px; border: none; cursor: pointer; width: 100%; font-weight: 600; }
+			.btn-mpesa { background: var(--mpesa); color: white; padding: 8px; border-radius: 6px; border: none; cursor: pointer; width: 100%; font-weight: 600; margin-top: 5px; }
+			.btn-whatsapp { background: var(--whatsapp); color: white; padding: 8px; border-radius: 6px; border: none; cursor: pointer; width: 100%; font-weight: 600; margin-top: 5px; text-decoration: none; display: block; text-align: center; }
+			.btn-delete { background: #fee2e2; color: #b91c1c; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; float: right; font-size: 0.75rem; font-weight: bold; }
 			
-			.booked { opacity: 0.7; border: 2px solid #ccc; background: #f9f9f9; pointer-events: none; }
-			.booked::after { content: "⛔ TAKEN"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-10deg); font-size: 3rem; font-weight: 900; color: #e53e3e; border: 5px solid #e53e3e; padding: 10px; border-radius: 10px; opacity: 0.8; z-index: 10; }
-			
-			/* Special style for the owner so they can still see the card even if booked */
-			.booked.owner-view { opacity: 1; pointer-events: auto; border: 2px solid #4f46e5; }
-			.booked.owner-view::after { display: none; } /* Hide the big TAKEN stamp for the owner */
-			
-			.tenant-info { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 8px; margin-top: 10px; font-weight: bold; text-align: center; }
+			/* STATUS BADGES */
+			.booked { opacity: 0.6; filter: grayscale(100%); pointer-events: none; }
+			.booked.owner-view { opacity: 1; filter: none; pointer-events: auto; border: 2px solid #4f46e5; }
+			.tenant-info { background: #ecfdf5; color: #065f46; padding: 8px; border-radius: 6px; margin-top: 10px; font-size: 0.9rem; text-align: center; font-weight: 600; }
+
+			/* FOOTER */
+			footer { background: white; text-align: center; padding: 20px; color: #6b7280; font-size: 0.9rem; margin-top: 40px; border-top: 1px solid #e5e7eb; }
 		</style>
 	</head>
 	<body>
@@ -292,37 +305,59 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			<div><span style="color:#666; margin-right:15px;">` + welcomeMsg + `</span>` + navLinks + `</div>
 		</div>
 
+		<div class="hero">
+			<h1>Find Your Next Home</h1>
+			<p>Secure, Affordable, and Simple Rentals in Kenya.</p>
+		</div>
+
 		<div class="container">
 			<div class="sidebar">
 				<div class="card" style="display: ` + addFormDisplay + `;">
 					<h3>➕ List Property</h3>
-					<input id="loc" type="text" placeholder="Location">
+					<label>Location</label>
+					<input id="loc" type="text" placeholder="e.g. Juja">
+					<label>Type</label>
 					<select id="type">
 						<option value="Bedsitter">Bedsitter</option>
 						<option value="One Bedroom">One Bedroom</option>
 						<option value="Two Bedroom">Two Bedroom</option>
 						<option value="Studio">Studio</option>
 					</select>
-					<input id="price" type="number" placeholder="Rent (KES)">
-					<input id="utils" type="number" placeholder="Bills (KES)">
-					<label>📸 Photos (Select Multiple)</label> 
+					<label>Rent (KES)</label>
+					<input id="price" type="number" placeholder="0">
+					<label>Utilities (KES)</label>
+					<input id="utils" type="number" placeholder="0">
+					<label>Photos</label> 
 					<input id="photos" type="file" accept="image/*" multiple>
-					<input id="details" type="text" placeholder="Description">
+					<label>Description</label>
+					<input id="details" type="text" placeholder="Details...">
 					<button class="btn-primary" onclick="uploadHouse()">Post Property</button>
 				</div>
+
 				<div class="card">
-					<h3>🔍 Search</h3>
-					<input id="searchTag" type="text" placeholder="Search...">
-					<button class="btn-primary" style="background:#10b981" onclick="fetchHouses()">Filter</button>
+					<h3>🔍 Filter Search</h3>
+					<label>Location</label>
+					<input id="searchLoc" type="text" placeholder="Any Location...">
+					<label>Max Rent (KES)</label>
+					<input id="searchPrice" type="number" placeholder="e.g. 15000">
+					<button class="btn-primary" style="background:#10b981" onclick="fetchHouses()">Apply Filters</button>
+					<button onclick="clearFilters()" style="width:100%; margin-top:5px; background:none; border:none; color:#6b7280; cursor:pointer;">Reset</button>
 				</div>
 			</div>
+
 			<div class="main-content" id="results-area"></div>
 		</div>
-		<div id="toast" style="visibility:hidden; min-width:250px; background:#333; color:#fff; text-align:center; border-radius:8px; padding:16px; position:fixed; z-index:2000; left:50%; bottom:30px; transform:translateX(-50%);">Notification</div>
+
+		<div id="toast" style="visibility:hidden; min-width:250px; background:#1f2937; color:#fff; text-align:center; border-radius:8px; padding:12px; position:fixed; z-index:2000; left:50%; bottom:30px; transform:translateX(-50%); box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Notification</div>
+
+		<footer>
+			&copy; 2026 Nyumba App. Built with Go & Render. <br> 
+			<span style="font-size:0.8rem">Simple. Secure. Sorted.</span>
+		</footer>
 
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
-			const currentUsername = "` + currentUsername + `"; // 👈 Pass username to JS
+			const currentUsername = "` + currentUsername + `";
 
 			document.addEventListener("DOMContentLoaded", () => fetchHouses());
 
@@ -331,42 +366,56 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				setTimeout(() => { x.style.visibility = "hidden"; }, 3000);
 			}
 
+			function clearFilters() {
+				document.getElementById('searchLoc').value = "";
+				document.getElementById('searchPrice').value = "";
+				fetchHouses();
+			}
+
 			function fetchHouses() {
+				// 1. Get Filter Values
+				const sLoc = document.getElementById('searchLoc').value.toLowerCase();
+				const sPrice = document.getElementById('searchPrice').value;
+
 				fetch('/houses').then(res => res.json()).then(data => {
 					const container = document.getElementById('results-area');
 					container.innerHTML = "";
-					data.forEach(h => {
+					
+					// 2. Filter Logic (Client Side)
+					const filteredData = data.filter(h => {
+						// Filter by Location
+						if(sLoc && !h.location.toLowerCase().includes(sLoc)) return false;
+						// Filter by Price
+						if(sPrice && h.price > parseFloat(sPrice)) return false;
+						return true;
+					});
+
+					if (filteredData.length === 0) {
+						container.innerHTML = "<div style='text-align:center; color:#666; padding:20px;'>No houses found matching your filters.</div>";
+						return;
+					}
+
+					filteredData.forEach(h => {
 						const isOwner = (h.owner === currentUsername);
-						
-						// CSS Logic: If it's booked, dim it. BUT if I own it, keep it bright so I can manage it.
 						let cardClass = "card";
 						if (h.is_booked) {
 							cardClass = isOwner ? "card booked owner-view" : "card booked";
 						}
 
-						// Delete Button (Only for Owner)
-						let deleteBtn = "";
-						if (isOwner) {
-							deleteBtn = '<button class="btn-delete" onclick="deleteHouse(' + h.id + ')">🗑️ Delete</button>';
-						}
+						let deleteBtn = isOwner ? '<button class="btn-delete" onclick="deleteHouse(' + h.id + ')">Delete</button>' : '';
 						
 						let whatsappLink = "https://wa.me/" + h.phone + "?text=Hi, is your " + h.type + " in " + h.location + " available?";
 						
 						let actionArea = "";
-						
-						// LOGIC: What shows at the bottom of the card?
 						if (isOwner && h.is_booked) {
-							// If I own it and it's booked -> Show me WHO booked it
-							actionArea = '<div class="tenant-info">👤 Booked by: ' + h.tenant_phone + '</div>';
+							actionArea = '<div class="tenant-info">✅ Booked by: ' + h.tenant_phone + '</div>';
 						} else if (isOwner) {
-							// If I own it and it's empty -> Just show text
-							actionArea = '<p style="color:#666; font-size:0.9rem;">(Your listing is active)</p>';
+							actionArea = '<p style="color:#666; font-size:0.8rem; text-align:center;">(Your listing is active)</p>';
 						} else if (isLoggedIn) {
-							// If I'm a tenant -> Show Pay/Chat buttons
-							actionArea = '<a href="' + whatsappLink + '" target="_blank" class="btn-whatsapp">💬 Chat on WhatsApp</a>' +
-										 '<button class="btn-mpesa" onclick="payWithMpesa(' + h.id + ')">💳 Pay Booking (KES 1,000)</button>';
+							actionArea = '<a href="' + whatsappLink + '" target="_blank" class="btn-whatsapp">💬 WhatsApp</a>' +
+										 '<button class="btn-mpesa" onclick="payWithMpesa(' + h.id + ')">💳 Pay (KES 1,000)</button>';
 						} else {
-							actionArea = '<a href="/login" style="display:block; text-align:center; margin-top:10px; color:#666;">Login to View Contacts</a>';
+							actionArea = '<a href="/login" style="display:block; text-align:center; margin-top:10px; color:#6b7280; font-size:0.9rem;">Login to Book</a>';
 						}
 
 						let imagesHtml = (h.image_urls && h.image_urls.length > 0) ? '<div class="gallery">' : '';
@@ -374,14 +423,16 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						if(h.image_urls && h.image_urls.length > 0) imagesHtml += '</div>';
 
 						const html = '<div class="' + cardClass + '">' + 
-							deleteBtn +
-							imagesHtml + 
-							'<div style="display:flex; justify-content:space-between; align-items:center;">' + 
-								'<h3>' + h.location + '</h3>' + 
+							'<div style="display:flex; justify-content:space-between;">' + 
 								'<span class="tag">' + h.type + '</span>' + 
+								deleteBtn +
 							'</div>' +
-							'<p>Rent: <b>' + h.price + '</b> | Bills: ' + h.utilities + '</p>' +
-							'<p>' + h.details + '</p>' +
+							'<h3 style="margin:10px 0 5px 0;">' + h.location + '</h3>' + 
+							'<div style="color:#4b5563; font-size:0.9rem; margin-bottom:10px;">' + 
+								'Rent: <b style="color:#111827">KES ' + h.price + '</b> <span style="font-size:0.8em; color:#9ca3af">/mo</span>' +
+							'</div>' +
+							imagesHtml + 
+							'<p style="font-size:0.9rem; color:#4b5563;">' + h.details + '</p>' +
 							actionArea + '</div>';
 						container.innerHTML += html;
 					});
@@ -389,7 +440,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			}
 
 			function deleteHouse(id) {
-				if(!confirm("Are you sure you want to delete this house?")) return;
+				if(!confirm("Delete this house?")) return;
 				fetch('/houses/delete?id=' + id, {method: 'POST'}).then(() => {
 					showToast("🗑️ Deleted!");
 					fetchHouses();
@@ -397,14 +448,14 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			}
 
 			function payWithMpesa(id) {
-				let phone = prompt("📲 Enter M-Pesa Number (2547...):");
+				let phone = prompt("Enter M-Pesa Number (2547...):");
 				if (!phone) return;
 				showToast("⏳ Sending request...");
 				fetch('/pay?id=' + id + '&phone=' + phone, {method: 'POST'})
 				.then(res => res.json())
 				.then(data => { 
 					if(data.ResponseCode === "0") { showToast("✅ Check Phone!"); fetchHouses(); }
-					else { showToast("⚠️ Check Console"); }
+					else { showToast("⚠️ Error: " + (data.errorMessage || "Check Console")); console.log(data); }
 				});
 			}
 
@@ -422,7 +473,13 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				fetch('/houses/upload', { method: 'POST', body: formData })
 				.then(res => {
 					if(res.status === 401) showToast("Login Required");
-					else { fetchHouses(); showToast("Uploaded!"); }
+					else { 
+						fetchHouses(); 
+						showToast("🏠 Uploaded!"); 
+						// Clear form
+						document.getElementById('loc').value = "";
+						document.getElementById('price').value = "";
+					}
 				});
 			}
 		</script>
