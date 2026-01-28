@@ -109,35 +109,31 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 func payHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. Get data from the frontend
 	idStr := r.URL.Query().Get("id")
-	phone := r.URL.Query().Get("phone") // We need the user's phone number!
+	phone := r.URL.Query().Get("phone")
 
-	// 2. Basic Validation
 	if phone == "" {
 		http.Error(w, "Phone number required", http.StatusBadRequest)
 		return
 	}
 
-	// 3. Mark House as Booked (Assuming success for now)
 	id, _ := strconv.Atoi(idStr)
 	for i, h := range houses {
 		if h.ID == id {
 			houses[i].IsBooked = true
+			houses[i].TenantPhone = phone // 👈 NEW: Save the tenant's number!
 			break
 		}
 	}
 	saveData(houseFile, houses)
 
-	// 4. Trigger Real M-Pesa STK Push
-	// Force "1" shilling for testing
+	// Trigger M-Pesa (1 KES for testing)
 	response, err := initiateSTKPush(phone, "1")
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
 		json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": err.Error()})
 	} else {
-		// Send the Safaricom response back to the browser
 		fmt.Fprint(w, response)
 	}
 }
@@ -238,8 +234,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 
 	currentUser := getCurrentUser(r)
 	isLoggedIn := "false"
-	// We remove the Go variable 'userRole' to fix the "unused variable" error
-	// and handle the logic directly in the HTML string below.
+	currentUsername := "" // 👈 We need to know WHO is logged in to match with the house owner
 
 	welcomeMsg := "Welcome"
 	navLinks := `<a href="/login" class="btn-secondary">Login</a>`
@@ -247,6 +242,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 
 	if currentUser != nil {
 		isLoggedIn = "true"
+		currentUsername = currentUser.Username
 		welcomeMsg = "Hi, " + currentUser.Username
 		navLinks = `<a href="/logout" class="btn-danger-outline">Logout</a>`
 		if currentUser.Role == "landlord" {
@@ -278,9 +274,16 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			.btn-primary { background: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: bold; }
 			.btn-mpesa { background: var(--mpesa); color: white; padding: 10px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px; }
 			.btn-whatsapp { background: var(--whatsapp); color: white; padding: 10px; border-radius: 8px; border: none; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px; text-decoration: none; display: block; text-align: center; }
+			.btn-delete { background: white; color: #ef4444; border: 1px solid #ef4444; padding: 5px 10px; border-radius: 6px; cursor: pointer; float: right; font-size: 0.8rem; margin-top: -5px; }
 			
 			.booked { opacity: 0.7; border: 2px solid #ccc; background: #f9f9f9; pointer-events: none; }
 			.booked::after { content: "⛔ TAKEN"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-10deg); font-size: 3rem; font-weight: 900; color: #e53e3e; border: 5px solid #e53e3e; padding: 10px; border-radius: 10px; opacity: 0.8; z-index: 10; }
+			
+			/* Special style for the owner so they can still see the card even if booked */
+			.booked.owner-view { opacity: 1; pointer-events: auto; border: 2px solid #4f46e5; }
+			.booked.owner-view::after { display: none; } /* Hide the big TAKEN stamp for the owner */
+			
+			.tenant-info { background: #fee2e2; color: #991b1b; padding: 10px; border-radius: 8px; margin-top: 10px; font-weight: bold; text-align: center; }
 		</style>
 	</head>
 	<body>
@@ -293,15 +296,13 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			<div class="sidebar">
 				<div class="card" style="display: ` + addFormDisplay + `;">
 					<h3>➕ List Property</h3>
-					<input id="loc" type="text" placeholder="Location (e.g. Makongeni)">
-					
+					<input id="loc" type="text" placeholder="Location">
 					<select id="type">
 						<option value="Bedsitter">Bedsitter</option>
 						<option value="One Bedroom">One Bedroom</option>
 						<option value="Two Bedroom">Two Bedroom</option>
 						<option value="Studio">Studio</option>
 					</select>
-
 					<input id="price" type="number" placeholder="Rent (KES)">
 					<input id="utils" type="number" placeholder="Bills (KES)">
 					<label>📸 Photos (Select Multiple)</label> 
@@ -311,7 +312,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				</div>
 				<div class="card">
 					<h3>🔍 Search</h3>
-					<input id="searchTag" type="text" placeholder="Search location or type...">
+					<input id="searchTag" type="text" placeholder="Search...">
 					<button class="btn-primary" style="background:#10b981" onclick="fetchHouses()">Filter</button>
 				</div>
 			</div>
@@ -321,6 +322,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
+			const currentUsername = "` + currentUsername + `"; // 👈 Pass username to JS
+
 			document.addEventListener("DOMContentLoaded", () => fetchHouses());
 
 			function showToast(msg) {
@@ -333,25 +336,45 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					const container = document.getElementById('results-area');
 					container.innerHTML = "";
 					data.forEach(h => {
-						let cardClass = h.is_booked ? "card booked" : "card";
+						const isOwner = (h.owner === currentUsername);
 						
-						// Uses the landlord's phone number from the house data
-						let whatsappLink = "https://wa.me/" + h.phone + "?text=Hi, is your " + h.type + " in " + h.location + " available?";
-						
-						let actionBtns = "";
-						if (isLoggedIn) {
-							actionBtns = '<a href="' + whatsappLink + '" target="_blank" class="btn-whatsapp">💬 Chat on WhatsApp</a>' +
-										 '<button class="btn-mpesa" onclick="payWithMpesa(' + h.id + ')">💳 Pay Booking (KES 1,000)</button>';
-						} else {
-							actionBtns = '<a href="/login" style="display:block; text-align:center; margin-top:10px; color:#666;">Login to View Contacts</a>';
+						// CSS Logic: If it's booked, dim it. BUT if I own it, keep it bright so I can manage it.
+						let cardClass = "card";
+						if (h.is_booked) {
+							cardClass = isOwner ? "card booked owner-view" : "card booked";
 						}
 
-						// Gallery
+						// Delete Button (Only for Owner)
+						let deleteBtn = "";
+						if (isOwner) {
+							deleteBtn = '<button class="btn-delete" onclick="deleteHouse(' + h.id + ')">🗑️ Delete</button>';
+						}
+						
+						let whatsappLink = "https://wa.me/" + h.phone + "?text=Hi, is your " + h.type + " in " + h.location + " available?";
+						
+						let actionArea = "";
+						
+						// LOGIC: What shows at the bottom of the card?
+						if (isOwner && h.is_booked) {
+							// If I own it and it's booked -> Show me WHO booked it
+							actionArea = '<div class="tenant-info">👤 Booked by: ' + h.tenant_phone + '</div>';
+						} else if (isOwner) {
+							// If I own it and it's empty -> Just show text
+							actionArea = '<p style="color:#666; font-size:0.9rem;">(Your listing is active)</p>';
+						} else if (isLoggedIn) {
+							// If I'm a tenant -> Show Pay/Chat buttons
+							actionArea = '<a href="' + whatsappLink + '" target="_blank" class="btn-whatsapp">💬 Chat on WhatsApp</a>' +
+										 '<button class="btn-mpesa" onclick="payWithMpesa(' + h.id + ')">💳 Pay Booking (KES 1,000)</button>';
+						} else {
+							actionArea = '<a href="/login" style="display:block; text-align:center; margin-top:10px; color:#666;">Login to View Contacts</a>';
+						}
+
 						let imagesHtml = (h.image_urls && h.image_urls.length > 0) ? '<div class="gallery">' : '';
 						if(h.image_urls) h.image_urls.forEach(url => { imagesHtml += '<img src="' + url + '">'; });
 						if(h.image_urls && h.image_urls.length > 0) imagesHtml += '</div>';
 
 						const html = '<div class="' + cardClass + '">' + 
+							deleteBtn +
 							imagesHtml + 
 							'<div style="display:flex; justify-content:space-between; align-items:center;">' + 
 								'<h3>' + h.location + '</h3>' + 
@@ -359,9 +382,17 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 							'</div>' +
 							'<p>Rent: <b>' + h.price + '</b> | Bills: ' + h.utilities + '</p>' +
 							'<p>' + h.details + '</p>' +
-							actionBtns + '</div>';
+							actionArea + '</div>';
 						container.innerHTML += html;
 					});
+				});
+			}
+
+			function deleteHouse(id) {
+				if(!confirm("Are you sure you want to delete this house?")) return;
+				fetch('/houses/delete?id=' + id, {method: 'POST'}).then(() => {
+					showToast("🗑️ Deleted!");
+					fetchHouses();
 				});
 			}
 
@@ -373,7 +404,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				.then(res => res.json())
 				.then(data => { 
 					if(data.ResponseCode === "0") { showToast("✅ Check Phone!"); fetchHouses(); }
-					else { showToast("⚠️ Check Console"); console.log(data); }
+					else { showToast("⚠️ Check Console"); }
 				});
 			}
 
@@ -385,11 +416,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				formData.append("utilities", document.getElementById('utils').value);
 				formData.append("details", document.getElementById('details').value);
 				formData.append("tags", JSON.stringify([]));
-				
 				const fileInput = document.getElementById('photos');
-				for (let i = 0; i < fileInput.files.length; i++) {
-					formData.append("photos", fileInput.files[i]);
-				}
+				for (let i = 0; i < fileInput.files.length; i++) { formData.append("photos", fileInput.files[i]); }
 
 				fetch('/houses/upload', { method: 'POST', body: formData })
 				.then(res => {
