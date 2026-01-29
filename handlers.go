@@ -237,16 +237,16 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	currentUsername := ""
 
 	welcomeMsg := "Welcome"
-	navLinks := `<a href="/login" class="btn-secondary">Login</a>`
-	addFormDisplay := "none"
+	navLinks := `<a href="/login" class="text-sm font-medium text-slate-300 hover:text-white transition">Login</a>`
+	landlordPanelDisplay := "none"
 
 	if currentUser != nil {
 		isLoggedIn = "true"
 		currentUsername = currentUser.Username
 		welcomeMsg = "Hi, " + currentUser.Username
-		navLinks = `<a href="/logout" class="btn-danger-outline">Logout</a>`
+		navLinks = `<a href="/logout" class="text-sm font-bold text-red-400 border border-red-500/30 px-3 py-1 rounded-full hover:bg-red-500/10 transition">Logout</a>`
 		if currentUser.Role == "landlord" {
-			addFormDisplay = "block"
+			landlordPanelDisplay = "block"
 		}
 	}
 
@@ -254,106 +254,130 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	<!DOCTYPE html>
 	<html>
 	<head>
-		<title>Nyumba</title>
+		<title>Nyumba Discovery</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+		<script src="https://cdn.tailwindcss.com"></script>
 		<style>
-			:root { --primary: #4f46e5; --bg: #f9fafb; --text: #1f2937; --mpesa: #27ae60; --whatsapp: #25D366; }
-			body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding-top: 70px; display: flex; flex-direction: column; min-height: 100vh; }
+			body { font-family: 'Outfit', sans-serif; background: #0b0f19; color: #f8fafc; }
 			
-			/* NAVBAR */
-			.navbar { position: fixed; top: 0; left: 0; right: 0; background: white; height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 5%; box-shadow: 0 1px 3px rgba(0,0,0,0.05); z-index: 100; }
-			
-			/* HERO SECTION */
-			.hero { background: linear-gradient(135deg, #4f46e5 0%, #818cf8 100%); color: white; padding: 60px 20px; text-align: center; margin-bottom: 30px; }
-			.hero h1 { margin: 0; font-size: 2.5rem; }
-			.hero p { opacity: 0.9; font-size: 1.1rem; margin-top: 10px; }
+			/* Custom Scrollbar */
+			::-webkit-scrollbar { width: 6px; }
+			::-webkit-scrollbar-track { background: #0b0f19; }
+			::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
 
-			.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; display: grid; grid-template-columns: 300px 1fr; gap: 30px; flex: 1; }
-			@media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+			/* Glassmorphism Classes */
+			.glass {
+				background: rgba(30, 41, 59, 0.4);
+				backdrop-filter: blur(16px);
+				-webkit-backdrop-filter: blur(16px);
+				border: 1px solid rgba(255, 255, 255, 0.05);
+			}
+			.glass-strong {
+				background: rgba(15, 23, 42, 0.8);
+				backdrop-filter: blur(20px);
+				border-right: 1px solid rgba(255, 255, 255, 0.05);
+			}
 
-			/* CARDS */
-			.card { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; position: relative; transition: transform 0.2s; }
-			.card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-			
-			.gallery { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 10px; scroll-behavior: smooth; }
-			.gallery img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
-
-			.tag { display: inline-block; background: #e0e7ff; color: #4338ca; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-			
-			input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #d1d5db; border-radius: 6px; box-sizing: border-box; }
-			label { font-size: 0.85rem; font-weight: 600; color: #4b5563; margin-bottom: 4px; display: block; }
-
-			/* BUTTONS */
-			.btn-primary { background: var(--primary); color: white; padding: 10px; border-radius: 6px; border: none; cursor: pointer; width: 100%; font-weight: 600; }
-			.btn-mpesa { background: var(--mpesa); color: white; padding: 8px; border-radius: 6px; border: none; cursor: pointer; width: 100%; font-weight: 600; margin-top: 5px; }
-			.btn-whatsapp { background: var(--whatsapp); color: white; padding: 8px; border-radius: 6px; border: none; cursor: pointer; width: 100%; font-weight: 600; margin-top: 5px; text-decoration: none; display: block; text-align: center; }
-			.btn-delete { background: #fee2e2; color: #b91c1c; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; float: right; font-size: 0.75rem; font-weight: bold; }
-			
-			/* STATUS BADGES */
-			.booked { opacity: 0.6; filter: grayscale(100%); pointer-events: none; }
-			.booked.owner-view { opacity: 1; filter: none; pointer-events: auto; border: 2px solid #4f46e5; }
-			.tenant-info { background: #ecfdf5; color: #065f46; padding: 8px; border-radius: 6px; margin-top: 10px; font-size: 0.9rem; text-align: center; font-weight: 600; }
-
-			/* FOOTER */
-			footer { background: white; text-align: center; padding: 20px; color: #6b7280; font-size: 0.9rem; margin-top: 40px; border-top: 1px solid #e5e7eb; }
+			/* Animations */
+			@keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+			.animate-float { animation: float 6s ease-in-out infinite; }
 		</style>
 	</head>
-	<body>
-		<div class="navbar">
-			<div style="font-size:1.5rem; font-weight:700; color:#4f46e5;">🏠 Nyumba</div>
-			<div><span style="color:#666; margin-right:15px;">` + welcomeMsg + `</span>` + navLinks + `</div>
-		</div>
+	<body class="h-screen flex overflow-hidden selection:bg-indigo-500 selection:text-white">
+		
+		<aside class="w-80 flex-shrink-0 glass-strong flex flex-col h-full relative z-20">
+			<div class="p-8 pb-4">
+				<h1 class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300 cursor-pointer">
+					Nyumba.
+				</h1>
+				<p class="text-xs text-slate-500 font-medium tracking-widest uppercase mt-2">Curated Living</p>
+			</div>
 
-		<div class="hero">
-			<h1>Find Your Next Home</h1>
-			<p>Secure, Affordable, and Simple Rentals in Kenya.</p>
-		</div>
-
-		<div class="container">
-			<div class="sidebar">
-				<div class="card" style="display: ` + addFormDisplay + `;">
-					<h3>➕ List Property</h3>
-					<label>Location</label>
-					<input id="loc" type="text" placeholder="e.g. Juja">
-					<label>Type</label>
-					<select id="type">
-						<option value="Bedsitter">Bedsitter</option>
-						<option value="One Bedroom">One Bedroom</option>
-						<option value="Two Bedroom">Two Bedroom</option>
-						<option value="Studio">Studio</option>
-					</select>
-					<label>Rent (KES)</label>
-					<input id="price" type="number" placeholder="0">
-					<label>Utilities (KES)</label>
-					<input id="utils" type="number" placeholder="0">
-					<label>Photos</label> 
-					<input id="photos" type="file" accept="image/*" multiple>
-					<label>Description</label>
-					<input id="details" type="text" placeholder="Details...">
-					<button class="btn-primary" onclick="uploadHouse()">Post Property</button>
+			<div class="px-6 py-4 space-y-6 flex-1 overflow-y-auto">
+				
+				<div style="display: ` + landlordPanelDisplay + `;" class="glass rounded-2xl p-5 mb-8 border border-indigo-500/20 shadow-lg shadow-indigo-900/20">
+					<h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+						<span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span> Landlord Mode
+					</h3>
+					<div class="space-y-3">
+						<input id="loc" type="text" placeholder="Location" class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 transition outline-none">
+						<select id="type" class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm outline-none">
+							<option>Bedsitter</option><option>One Bedroom</option><option>Two Bedroom</option><option>Studio</option>
+						</select>
+						<div class="grid grid-cols-2 gap-2">
+							<input id="price" type="number" placeholder="Rent" class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm outline-none">
+							<input id="utils" type="number" placeholder="Bills" class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm outline-none">
+						</div>
+						<input id="photos" type="file" multiple class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400">
+						<textarea id="details" placeholder="Description..." class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm h-16 outline-none resize-none"></textarea>
+						<button onclick="uploadHouse()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-lg text-sm transition shadow-lg shadow-indigo-600/20">Post Listing</button>
+					</div>
 				</div>
 
-				<div class="card">
-					<h3>🔍 Filter Search</h3>
-					<label>Location</label>
-					<input id="searchLoc" type="text" placeholder="Any Location...">
-					<label>Max Rent (KES)</label>
-					<input id="searchPrice" type="number" placeholder="e.g. 15000">
-					<button class="btn-primary" style="background:#10b981" onclick="fetchHouses()">Apply Filters</button>
-					<button onclick="clearFilters()" style="width:100%; margin-top:5px; background:none; border:none; color:#6b7280; cursor:pointer;">Reset</button>
+				<div class="space-y-4">
+					<div class="relative group">
+						<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Where to?</label>
+						<input id="searchLoc" onkeyup="fetchHouses()" type="text" placeholder="Try 'Kileleshwa'..." 
+							class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition outline-none text-lg font-medium">
+						<div class="absolute right-3 top-8 text-slate-600">🔍</div>
+					</div>
+
+					<div>
+						<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Max Budget</label>
+						<input id="searchPrice" onkeyup="fetchHouses()" type="number" placeholder="Any Price" 
+							class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 transition outline-none text-lg font-medium">
+					</div>
+					
+					<div class="grid grid-cols-2 gap-3 mt-6">
+						<div class="glass p-3 rounded-xl text-center">
+							<div class="text-2xl font-bold text-white">12</div>
+							<div class="text-[10px] text-slate-400 uppercase tracking-wider">New Today</div>
+						</div>
+						<div class="glass p-3 rounded-xl text-center">
+							<div class="text-2xl font-bold text-emerald-400">85%</div>
+							<div class="text-[10px] text-slate-400 uppercase tracking-wider">Response</div>
+						</div>
+					</div>
 				</div>
 			</div>
 
-			<div class="main-content" id="results-area"></div>
+			<div class="p-6 border-t border-white/5 flex items-center justify-between">
+				<div class="flex items-center gap-3">
+					<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold">👤</div>
+					<div class="text-sm">
+						<div class="font-bold text-white leading-none">` + currentUsername + `</div>
+						<div class="text-xs text-slate-500 mt-1">` + welcomeMsg + `</div>
+					</div>
+				</div>
+				` + navLinks + `
+			</div>
+		</aside>
+
+		<main class="flex-1 h-full overflow-y-auto relative bg-[#0b0f19]">
+			
+			<div class="fixed top-0 right-0 w-3/4 h-full pointer-events-none opacity-20">
+				<div class="absolute top-1/4 right-1/4 w-96 h-96 bg-indigo-600 rounded-full mix-blend-screen filter blur-[120px] animate-float"></div>
+				<div class="absolute bottom-1/4 right-10 w-64 h-64 bg-emerald-600 rounded-full mix-blend-screen filter blur-[100px] animate-float" style="animation-delay: 2s"></div>
+			</div>
+
+			<div class="p-8 max-w-[1600px] mx-auto">
+				<header class="flex justify-between items-end mb-8 relative z-10">
+					<div>
+						<h2 class="text-3xl font-light text-white">Discover <span class="font-bold text-indigo-400">Sanctuary</span></h2>
+						<p class="text-slate-400 mt-1">Curated homes for your next chapter.</p>
+					</div>
+					<button class="bg-white text-black px-4 py-2 rounded-full text-sm font-bold hover:bg-slate-200 transition">View Map 🗺️</button>
+				</header>
+
+				<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)] pb-20 relative z-10">
+					</div>
+			</div>
+		</main>
+
+		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 glass px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-150%] transition-transform duration-500 z-50 flex items-center gap-2">
+			<span class="text-lg">✨</span> <span id="toast-msg">Notification</span>
 		</div>
-
-		<div id="toast" style="visibility:hidden; min-width:250px; background:#1f2937; color:#fff; text-align:center; border-radius:8px; padding:12px; position:fixed; z-index:2000; left:50%; bottom:30px; transform:translateX(-50%); box-shadow: 0 4px 6px rgba(0,0,0,0.3);">Notification</div>
-
-		<footer>
-			&copy; 2026 Nyumba App. Built with Go & Render. <br> 
-			<span style="font-size:0.8rem">Simple. Secure. Sorted.</span>
-		</footer>
 
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
@@ -362,18 +386,13 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			document.addEventListener("DOMContentLoaded", () => fetchHouses());
 
 			function showToast(msg) {
-				const x = document.getElementById("toast"); x.innerText = msg; x.style.visibility = "visible";
-				setTimeout(() => { x.style.visibility = "hidden"; }, 3000);
-			}
-
-			function clearFilters() {
-				document.getElementById('searchLoc').value = "";
-				document.getElementById('searchPrice').value = "";
-				fetchHouses();
+				const t = document.getElementById("toast");
+				document.getElementById("toast-msg").innerText = msg;
+				t.classList.remove("translate-y-[-150%]");
+				setTimeout(() => t.classList.add("translate-y-[-150%]"), 3000);
 			}
 
 			function fetchHouses() {
-				// 1. Get Filter Values
 				const sLoc = document.getElementById('searchLoc').value.toLowerCase();
 				const sPrice = document.getElementById('searchPrice').value;
 
@@ -381,84 +400,132 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					const container = document.getElementById('results-area');
 					container.innerHTML = "";
 					
-					// 2. Filter Logic (Client Side)
-					const filteredData = data.filter(h => {
-						// Filter by Location
+					// Filter
+					let filtered = data.filter(h => {
 						if(sLoc && !h.location.toLowerCase().includes(sLoc)) return false;
-						// Filter by Price
 						if(sPrice && h.price > parseFloat(sPrice)) return false;
 						return true;
 					});
 
-					if (filteredData.length === 0) {
-						container.innerHTML = "<div style='text-align:center; color:#666; padding:20px;'>No houses found matching your filters.</div>";
+					if (filtered.length === 0) {
+						container.innerHTML = "<div class='col-span-full text-center text-slate-500 py-20'>No sanctuaries found. Try adjusting your filters.</div>";
 						return;
 					}
 
-					filteredData.forEach(h => {
+					// Inject "Magazine Modules" to break the monotony
+					// We'll insert a "Trending" card at index 2
+					const trendingCard = { isPromo: true, type: 'trending' };
+					if(filtered.length >= 2) filtered.splice(2, 0, trendingCard);
+
+					filtered.forEach((h, index) => {
+						// 1. RENDER PROMO CARDS (The "Tall Rectangle")
+						if (h.isPromo) {
+							const promoHtml = 
+							'<div class="glass p-6 rounded-3xl flex flex-col justify-between row-span-2 border border-indigo-500/30 relative overflow-hidden group">' +
+								'<div class="absolute inset-0 bg-gradient-to-b from-indigo-900/50 to-transparent opacity-50"></div>' +
+								'<div class="relative z-10">' +
+									'<h3 class="text-xl font-bold text-white mb-4">Trending 🔥</h3>' +
+									'<ul class="space-y-3 text-sm font-medium text-slate-300">' +
+										'<li class="flex justify-between border-b border-white/10 pb-2"><span>Kileleshwa</span> <span class="text-emerald-400">↑ 14%</span></li>' +
+										'<li class="flex justify-between border-b border-white/10 pb-2"><span>Westlands</span> <span class="text-emerald-400">↑ 8%</span></li>' +
+										'<li class="flex justify-between border-b border-white/10 pb-2"><span>Kilimani</span> <span class="text-emerald-400">↑ 5%</span></li>' +
+										'<li class="flex justify-between border-b border-white/10 pb-2"><span>Juja</span> <span class="text-slate-500">- 2%</span></li>' +
+									'</ul>' +
+								'</div>' +
+								'<button class="relative z-10 w-full mt-4 bg-white/10 hover:bg-white/20 text-white text-xs font-bold py-3 rounded-xl transition">View Heatmap</button>' +
+							'</div>';
+							container.innerHTML += promoHtml;
+							return;
+						}
+
+						// 2. RENDER HOUSE CARDS
 						const isOwner = (h.owner === currentUsername);
-						let cardClass = "card";
+						
+						// Layout Logic: First item is HERO (Wide)
+						let gridClass = (index === 0) ? "md:col-span-2 row-span-2" : "";
+						
+						// Styling Logic
+						let statusBadge, opacityClass, actionBtn;
+						let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
+
 						if (h.is_booked) {
-							cardClass = isOwner ? "card booked owner-view" : "card booked";
-						}
-
-						let deleteBtn = isOwner ? '<button class="btn-delete" onclick="deleteHouse(' + h.id + ')">Delete</button>' : '';
-						
-						let whatsappLink = "https://wa.me/" + h.phone + "?text=Hi, is your " + h.type + " in " + h.location + " available?";
-						
-						let actionArea = "";
-						if (isOwner && h.is_booked) {
-							actionArea = '<div class="tenant-info">✅ Booked by: ' + h.tenant_phone + '</div>';
-						} else if (isOwner) {
-							actionArea = '<p style="color:#666; font-size:0.8rem; text-align:center;">(Your listing is active)</p>';
-						} else if (isLoggedIn) {
-							actionArea = '<a href="' + whatsappLink + '" target="_blank" class="btn-whatsapp">💬 WhatsApp</a>' +
-										 '<button class="btn-mpesa" onclick="payWithMpesa(' + h.id + ')">💳 Pay (KES 1,000)</button>';
+							if (isOwner) {
+								statusBadge = '<span class="absolute top-4 right-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full z-20 shadow-lg shadow-indigo-500/50">Booked by: ' + h.tenant_phone + '</span>';
+								opacityClass = "border-indigo-500";
+								actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl bg-slate-800 text-red-400 text-xs font-bold hover:bg-slate-700 transition">Delete Listing</button>';
+							} else {
+								statusBadge = '<span class="absolute top-4 right-4 bg-slate-900/90 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-full z-20 backdrop-blur">TAKEN</span>';
+								opacityClass = "opacity-50 grayscale";
+								actionBtn = '<button disabled class="mt-4 w-full py-3 rounded-xl bg-slate-800/50 text-slate-500 text-xs font-bold cursor-not-allowed">Unavailable</button>';
+							}
 						} else {
-							actionArea = '<a href="/login" style="display:block; text-align:center; margin-top:10px; color:#6b7280; font-size:0.9rem;">Login to Book</a>';
+							// Available
+							statusBadge = '<span class="absolute top-4 right-4 bg-white text-black text-[10px] font-bold px-3 py-1 rounded-full z-20 shadow-xl">AVAILABLE</span>';
+							opacityClass = "";
+							
+							if (isOwner) {
+								actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl border border-red-500/30 text-red-400 text-xs font-bold hover:bg-red-500/10 transition">Remove Listing</button>';
+							} else if (isLoggedIn) {
+								let waLink = "https://wa.me/" + h.phone + "?text=Hi, I found your " + h.type + " on Nyumba.";
+								actionBtn = '<div class="grid grid-cols-2 gap-2 mt-4">' +
+									'<a href="' + waLink + '" target="_blank" class="flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-500/20">Chat</a>' +
+									'<button onclick="payWithMpesa(' + h.id + ')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-500/30">Book Now</button>' +
+								'</div>';
+							} else {
+								actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Secure</a>';
+							}
 						}
 
-						let imagesHtml = (h.image_urls && h.image_urls.length > 0) ? '<div class="gallery">' : '';
-						if(h.image_urls) h.image_urls.forEach(url => { imagesHtml += '<img src="' + url + '">'; });
-						if(h.image_urls && h.image_urls.length > 0) imagesHtml += '</div>';
+						const html = 
+						'<div class="glass rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10 ' + gridClass + ' ' + opacityClass + '">' +
+							statusBadge +
+							// Image Area
+							'<div class="w-full h-48 ' + (index===0 ? 'h-64' : '') + ' bg-slate-800 rounded-2xl overflow-hidden relative mb-4">' +
+								'<img src="' + imageSrc + '" class="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-out">' +
+								'<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent"></div>' +
+								'<div class="absolute bottom-4 left-4">' +
+									'<p class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-1">' + h.type + '</p>' +
+									'<h3 class="text-2xl font-bold text-white leading-none">' + h.location + '</h3>' +
+								'</div>' +
+							'</div>' +
+							// Info Area
+							'<div class="flex-1">' +
+								'<p class="text-slate-400 text-sm line-clamp-2 leading-relaxed">' + h.details + '</p>' +
+							'</div>' +
+							// Price Area
+							'<div class="mt-4 pt-4 border-t border-white/5 flex items-end justify-between">' +
+								'<div>' +
+									'<p class="text-[10px] text-slate-500 uppercase font-bold">Monthly Rent</p>' +
+									'<p class="text-xl font-bold text-white">KES ' + h.price.toLocaleString() + '</p>' +
+								'</div>' +
+								'<div class="text-right">' +
+									'<p class="text-[10px] text-slate-500 uppercase font-bold">Bills</p>' +
+									'<p class="text-sm font-medium text-slate-300">~' + h.utilities.toLocaleString() + '</p>' +
+								'</div>' +
+							'</div>' +
+							actionBtn +
+						'</div>';
 
-						const html = '<div class="' + cardClass + '">' + 
-							'<div style="display:flex; justify-content:space-between;">' + 
-								'<span class="tag">' + h.type + '</span>' + 
-								deleteBtn +
-							'</div>' +
-							'<h3 style="margin:10px 0 5px 0;">' + h.location + '</h3>' + 
-							'<div style="color:#4b5563; font-size:0.9rem; margin-bottom:10px;">' + 
-								'Rent: <b style="color:#111827">KES ' + h.price + '</b> <span style="font-size:0.8em; color:#9ca3af">/mo</span>' +
-							'</div>' +
-							imagesHtml + 
-							'<p style="font-size:0.9rem; color:#4b5563;">' + h.details + '</p>' +
-							actionArea + '</div>';
 						container.innerHTML += html;
 					});
 				});
 			}
 
 			function deleteHouse(id) {
-				if(!confirm("Delete this house?")) return;
-				fetch('/houses/delete?id=' + id, {method: 'POST'}).then(() => {
-					showToast("🗑️ Deleted!");
-					fetchHouses();
-				});
+				if(!confirm("Are you sure?")) return;
+				fetch('/houses/delete?id=' + id, {method: 'POST'}).then(() => { showToast("Listing Deleted"); fetchHouses(); });
 			}
-
 			function payWithMpesa(id) {
-				let phone = prompt("Enter M-Pesa Number (2547...):");
+				let phone = prompt("M-Pesa Number:");
 				if (!phone) return;
-				showToast("⏳ Sending request...");
+				showToast("Requesting M-Pesa...");
 				fetch('/pay?id=' + id + '&phone=' + phone, {method: 'POST'})
 				.then(res => res.json())
 				.then(data => { 
-					if(data.ResponseCode === "0") { showToast("✅ Check Phone!"); fetchHouses(); }
-					else { showToast("⚠️ Error: " + (data.errorMessage || "Check Console")); console.log(data); }
+					if(data.ResponseCode === "0") { showToast("Check your phone!"); fetchHouses(); }
+					else { showToast("Connection Failed"); }
 				});
 			}
-
 			function uploadHouse() {
 				const formData = new FormData();
 				formData.append("location", document.getElementById('loc').value);
@@ -469,17 +536,11 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				formData.append("tags", JSON.stringify([]));
 				const fileInput = document.getElementById('photos');
 				for (let i = 0; i < fileInput.files.length; i++) { formData.append("photos", fileInput.files[i]); }
-
-				fetch('/houses/upload', { method: 'POST', body: formData })
-				.then(res => {
-					if(res.status === 401) showToast("Login Required");
-					else { 
-						fetchHouses(); 
-						showToast("🏠 Uploaded!"); 
-						// Clear form
-						document.getElementById('loc').value = "";
-						document.getElementById('price').value = "";
-					}
+				fetch('/houses/upload', { method: 'POST', body: formData }).then(res => { 
+					fetchHouses(); showToast("Published Successfully");
+					// Clear inputs
+					document.getElementById('loc').value = "";
+					document.getElementById('price').value = "";
 				});
 			}
 		</script>
