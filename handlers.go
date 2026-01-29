@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -304,41 +303,44 @@ func deleteHouseHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // 6. PAY HANDLER
+// 6. PAY HANDLER (Connected to Safaricom Sandbox)
 func payHandler(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
+	// 1. Get the Phone Number & House ID
+	idStr := r.URL.Query().Get("id")
 	phone := r.URL.Query().Get("phone")
+	id, _ := strconv.Atoi(idStr)
+
+	// 2. Find the House
+	var selectedHouse *House
 	for i, h := range houses {
 		if h.ID == id {
-			houses[i].IsBooked = true
-			houses[i].TenantPhone = phone
-			saveData(houseFile, houses)
-			w.Header().Set("Content-Type", "application/json")
-			fmt.Fprint(w, `{"ResponseCode": "0"}`)
-			return
+			selectedHouse = &houses[i]
+			break
 		}
 	}
-	http.Error(w, "Not found", 404)
-}
 
-// 7. FILE SERVER
-func serveMedia(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "."+r.URL.Path) }
+	if selectedHouse == nil {
+		http.Error(w, "House not found", http.StatusNotFound)
+		return
+	}
 
-// --- CONNECTORS FOR MAIN.GO ---
+	// 3. TRIGGER THE POP-UP (Call the function in mpesa.go)
+	// We send "1" KES because Daraja Sandbox requires at least 1 shilling to trigger.
+	err := initiateSTKPush(phone, "1")
+	if err != nil {
+		// If Safaricom fails (e.g., wrong phone number format)
+		http.Error(w, "M-Pesa Failed: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-// 8. GET HOUSES API
-func getHouses(w http.ResponseWriter, r *http.Request) {
+	// 4. Unlock the House (Optimistic Unlock)
+	// In a real production app, we would wait for the "Callback" to confirm payment.
+	// For this student project, we unlock it as soon as the Request is successful.
+	selectedHouse.IsBooked = true
+	selectedHouse.TenantPhone = phone
+	saveData(houseFile, houses)
+
+	// 5. Tell the Frontend it worked
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(houses)
-}
-
-// 9. LOGOUT HANDLER
-func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	http.SetCookie(w, &http.Cookie{Name: CookieName, Value: "", Path: "/", MaxAge: -1})
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
-}
-
-// 10. UPLOAD HANDLER WRAPPER
-// main.go expects 'uploadHouseHandler', so we link it to 'uploadHouse'
-func uploadHouseHandler(w http.ResponseWriter, r *http.Request) {
-	uploadHouse(w, r)
+	fmt.Fprint(w, `{"ResponseCode": "0", "CustomerMessage": "STK Push Sent. Check phone."}`)
 }

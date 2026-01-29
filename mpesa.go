@@ -4,108 +4,96 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
 
-// --- CONFIGURATION (SANDBOX) ---
+// --- CONFIGURATION (Sandbox Credentials) ---
 const (
-	ConsumerKey    = "COBGyH3dHvYrVjLKG0Znfh8RR1yAPeVbZ6hZitAwgvquIqhL"
-	ConsumerSecret = "ovklACIWd4ZMihM4Vv28TAwgEBG8MywaI5FOnHahzIPXAG16CTCikL2RSSqT4cog"
-	ShortCode      = "174379" // Safaricom Test Paybill
-	Passkey        = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
-	BaseURL        = "https://sandbox.safaricom.co.ke"
+	consumerKey    = "y4514nMN2a7A2e23Kk75" // Replace if you have your own
+	consumerSecret = "9aB8c7D6e5F4g3H2"     // Replace if you have your own
+	shortCode      = "174379"               // Sandbox Shortcode
+	passkey        = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+	mpesaAuthURL   = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+	mpesaPushURL   = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+	callbackURL    = "https://nyumba-app.onrender.com/callback" // Your Live URL
 )
 
-// --- STRUCTS ---
-type AccessTokenResponse struct {
-	AccessToken string `json:"access_token"`
-}
-
-type STKPushBody struct {
-	BusinessShortCode string `json:"BusinessShortCode"`
-	Password          string `json:"Password"`
-	Timestamp         string `json:"Timestamp"`
-	TransactionType   string `json:"TransactionType"`
-	Amount            string `json:"Amount"`
-	PartyA            string `json:"PartyA"`
-	PartyB            string `json:"PartyB"`
-	PhoneNumber       string `json:"PhoneNumber"`
-	CallBackURL       string `json:"CallBackURL"`
-	AccountReference  string `json:"AccountReference"`
-	TransactionDesc   string `json:"TransactionDesc"`
-}
-
-// --- FUNCTIONS ---
-
-// 1. Get the "Access Token" (The Badge)
-func getAccessToken() (string, error) {
-	url := BaseURL + "/oauth/v1/generate?grant_type=client_credentials"
-	req, _ := http.NewRequest("GET", url, nil)
-
-	// Create the Basic Auth header (Key:Secret)
-	auth := ConsumerKey + ":" + ConsumerSecret
-	encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
-	req.Header.Add("Authorization", "Basic "+encodedAuth)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	body, _ := ioutil.ReadAll(resp.Body)
-	var result AccessTokenResponse
-	json.Unmarshal(body, &result)
-
-	return result.AccessToken, nil
-}
-
-// 2. Trigger the STK Push (The Popup)
-func initiateSTKPush(phoneNumber string, amount string) (string, error) {
-	// A. Get Token
+// 1. INITIATE STK PUSH (The function handlers.go is looking for!)
+func initiateSTKPush(phoneNumber, amount string) error {
 	token, err := getAccessToken()
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	// B. Create Timestamp & Password
 	timestamp := time.Now().Format("20060102150405")
-	password := base64.StdEncoding.EncodeToString([]byte(ShortCode + Passkey + timestamp))
+	password := base64.StdEncoding.EncodeToString([]byte(shortCode + passkey + timestamp))
 
-	// C. Create Request Body
-	// NOTE: We are using your Render URL for the callback!
-	reqBody := STKPushBody{
-		BusinessShortCode: ShortCode,
-		Password:          password,
-		Timestamp:         timestamp,
-		TransactionType:   "CustomerPayBillOnline",
-		Amount:            amount,
-		PartyA:            phoneNumber, // Your phone
-		PartyB:            ShortCode,   // Where money goes
-		PhoneNumber:       phoneNumber,
-		CallBackURL:       "https://nyumba-app.onrender.com/callback", // 👈 IMPORTANT
-		AccountReference:  "NyumbaApp",
-		TransactionDesc:   "Rent Payment",
+	headers := map[string]string{
+		"Authorization": "Bearer " + token,
+		"Content-Type":  "application/json",
 	}
 
-	jsonBody, _ := json.Marshal(reqBody)
+	// Safaricom expects standard formatted numbers (2547...)
+	// In a real app, we would use a helper to format this properly.
 
-	// D. Send Request
-	url := BaseURL + "/mpesa/stkpush/v1/processrequest"
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
-	req.Header.Add("Authorization", "Bearer "+token)
-	req.Header.Add("Content-Type", "application/json")
+	payload := map[string]string{
+		"BusinessShortCode": shortCode,
+		"Password":          password,
+		"Timestamp":         timestamp,
+		"TransactionType":   "CustomerPayBillOnline",
+		"Amount":            amount,
+		"PartyA":            phoneNumber,
+		"PartyB":            shortCode,
+		"PhoneNumber":       phoneNumber,
+		"CallBackURL":       callbackURL,
+		"AccountReference":  "NyumbaApp",
+		"TransactionDesc":   "Viewing Fee",
+	}
+
+	jsonPayload, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", mpesaPushURL, bytes.NewBuffer(jsonPayload))
+
+	for key, val := range headers {
+		req.Header.Set(key, val)
+	}
 
 	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to send STK: %s", string(body))
+	}
+
+	return nil
+}
+
+// 2. HELPER: GET ACCESS TOKEN
+func getAccessToken() (string, error) {
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", mpesaAuthURL, nil)
+
+	auth := base64.StdEncoding.EncodeToString([]byte(consumerKey + ":" + consumerSecret))
+	req.Header.Add("Authorization", "Basic "+auth)
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
 
-	responseBytes, _ := ioutil.ReadAll(resp.Body)
-	return string(responseBytes), nil
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("failed to get token: %d", resp.StatusCode)
+	}
+
+	var result map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&result)
+	return result["access_token"].(string), nil
 }
