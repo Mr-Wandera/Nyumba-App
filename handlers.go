@@ -323,6 +323,19 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, html)
 }
 
+// --- HELPER: FORMAT PHONE NUMBER ---
+func formatPhoneNumber(phone string) string {
+	// If starts with "0", change to "254"
+	if len(phone) > 0 && phone[0] == '0' {
+		return "254" + phone[1:]
+	}
+	// If starts with "+254", remove "+"
+	if len(phone) > 4 && phone[0] == '+' {
+		return phone[1:]
+	}
+	return phone
+}
+
 // 2. LOGIN HANDLER
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
@@ -412,10 +425,16 @@ func deleteHouseHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
-// 6. PAY HANDLER
+// 6. PAY HANDLER (Now with Auto-Formatting!)
 func payHandler(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
-	phone := r.URL.Query().Get("phone")
+	rawPhone := r.URL.Query().Get("phone") // Get the raw input
+
+	// --- FIX: Auto-Format the number to 254... ---
+	phone := formatPhoneNumber(rawPhone)
+
+	fmt.Println("Attempting M-Pesa for:", phone) // This logs to your Render console
+
 	var selectedHouse *House
 	for i, h := range houses {
 		if h.ID == id {
@@ -430,6 +449,7 @@ func payHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := initiateSTKPush(phone, "1")
 	if err != nil {
+		fmt.Println("M-Pesa Error:", err) // See the real error in logs
 		http.Error(w, "M-Pesa Failed: "+err.Error(), 500)
 		return
 	}
