@@ -9,10 +9,11 @@ type House struct {
 	Tags        []string `json:"tags"`
 	Utilities   float64  `json:"utilities"`
 	ImageURLs   []string `json:"image_urls"`
-	Phone       string   `json:"phone"` // Landlord's phone
-	Owner       string   `json:"owner"` // Landlord's username
+	Phone       string   `json:"phone"`
+	Owner       string   `json:"owner"`
 	IsBooked    bool     `json:"is_booked"`
-	TenantPhone string   `json:"tenant_phone"` // 👈 NEW: Stores the Renter's number
+	TenantPhone string   `json:"tenant_phone"`
+	MapURL      string   `json:"map_url"` // 👈 NEW: Stores the Google Maps Link
 }
 
 type User struct {

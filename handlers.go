@@ -63,45 +63,88 @@ func signupHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
-		html := `
-		<!DOCTYPE html>
-		<html>
-		<head>
-			<title>Login</title>
-			<meta name="viewport" content="width=device-width, initial-scale=1">
-			<style>
-				body { font-family: sans-serif; background: #f3f4f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-				.card { background: white; padding: 2rem; border-radius: 16px; width: 100%; max-width: 350px; text-align: center; }
-				input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-				button { width: 100%; padding: 10px; background: #4f46e5; color: white; border: none; border-radius: 8px; cursor: pointer; }
-			</style>
-		</head>
-		<body>
-			<div class="card">
-				<h2>🔐 Login</h2>
-				<form method="POST" action="/login">
-					<input type="text" name="username" placeholder="Username" required>
-					<input type="password" name="password" placeholder="Password" required>
-					<button>Sign In</button>
-				</form>
-				<p><a href="/signup">Create Account</a></p>
-			</div>
-		</body>
-		</html>`
-		fmt.Fprint(w, html)
+	if r.Method == http.MethodPost {
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+
+		for _, u := range users {
+			if u.Username == username && u.Password == password {
+				http.SetCookie(w, &http.Cookie{
+					Name:  CookieName,
+					Value: username,
+					Path:  "/",
+				})
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+		}
+		http.Error(w, "Invalid Credentials. Try again.", http.StatusUnauthorized)
 		return
 	}
-	user := r.FormValue("username")
-	pass := r.FormValue("password")
-	for _, u := range users {
-		if u.Username == user && u.Password == pass {
-			http.SetCookie(w, &http.Cookie{Name: CookieName, Value: user, Path: "/"})
-			http.Redirect(w, r, "/", http.StatusSeeOther)
-			return
-		}
-	}
-	http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
+
+	html := `
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Login • Nyumba</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+		<script src="https://cdn.tailwindcss.com"></script>
+		<style>
+			body { font-family: 'Outfit', sans-serif; background: #0b0f19; color: #f8fafc; }
+			
+			/* Animations */
+			@keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-20px); } 100% { transform: translateY(0px); } }
+			.animate-float { animation: float 6s ease-in-out infinite; }
+			
+			.glass-card {
+				background: rgba(30, 41, 59, 0.4);
+				backdrop-filter: blur(16px);
+				border: 1px solid rgba(255, 255, 255, 0.05);
+				box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+			}
+		</style>
+	</head>
+	<body class="h-screen w-full flex items-center justify-center relative overflow-hidden">
+		
+		<div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+			<div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600 rounded-full mix-blend-screen filter blur-[120px] opacity-30 animate-float"></div>
+			<div class="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600 rounded-full mix-blend-screen filter blur-[120px] opacity-30 animate-float" style="animation-delay: 2s"></div>
+		</div>
+
+		<div class="glass-card p-10 rounded-3xl w-full max-w-sm mx-4 relative z-10 border-t border-white/10">
+			<div class="text-center mb-8">
+				<h1 class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300 mb-2">Nyumba.</h1>
+				<p class="text-slate-400 text-sm font-medium">Welcome back, Hunter.</p>
+			</div>
+
+			<form method="POST" action="/login" class="space-y-5">
+				<div>
+					<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Username</label>
+					<input name="username" type="text" placeholder="username" required 
+						class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent outline-none transition placeholder-slate-600">
+				</div>
+				
+				<div>
+					<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">Password</label>
+					<input name="password" type="password" placeholder="••••••••" required 
+						class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent outline-none transition placeholder-slate-600">
+				</div>
+
+				<button type="submit" class="w-full mt-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-500/20 transition transform hover:-translate-y-0.5">
+					Sign In
+				</button>
+			</form>
+
+			<div class="mt-8 text-center border-t border-white/5 pt-6">
+				<p class="text-slate-500 text-xs mb-2">New to Nyumba?</p>
+				<a href="/signup" class="text-indigo-400 text-sm font-bold hover:text-indigo-300 transition">Create an Account</a>
+			</div>
+		</div>
+
+	</body>
+	</html>`
+	fmt.Fprint(w, html)
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -229,12 +272,15 @@ func deleteHouseHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// --- PASTE THIS INSIDE handlers.go (Replacing the old homePage) ---
+
 func homePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	currentUser := getCurrentUser(r)
 	isLoggedIn := "false"
 	currentUsername := ""
+	currentUserPhone := ""
 
 	welcomeMsg := "Welcome"
 	navLinks := `<a href="/login" class="text-sm font-medium text-slate-300 hover:text-white transition">Login</a>`
@@ -243,6 +289,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	if currentUser != nil {
 		isLoggedIn = "true"
 		currentUsername = currentUser.Username
+		currentUserPhone = currentUser.Phone // We need this to check if THEY paid
 		welcomeMsg = "Hi, " + currentUser.Username
 		navLinks = `<a href="/logout" class="text-sm font-bold text-red-400 border border-red-500/30 px-3 py-1 rounded-full hover:bg-red-500/10 transition">Logout</a>`
 		if currentUser.Role == "landlord" {
@@ -260,48 +307,31 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<script src="https://cdn.tailwindcss.com"></script>
 		<style>
 			body { font-family: 'Outfit', sans-serif; background: #0b0f19; color: #f8fafc; }
-			
-			/* Custom Scrollbar */
 			::-webkit-scrollbar { width: 6px; }
 			::-webkit-scrollbar-track { background: #0b0f19; }
 			::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-
-			/* Glassmorphism Classes */
-			.glass {
-				background: rgba(30, 41, 59, 0.4);
-				backdrop-filter: blur(16px);
-				-webkit-backdrop-filter: blur(16px);
-				border: 1px solid rgba(255, 255, 255, 0.05);
-			}
-			.glass-strong {
-				background: rgba(15, 23, 42, 0.8);
-				backdrop-filter: blur(20px);
-				border-right: 1px solid rgba(255, 255, 255, 0.05);
-			}
-
-			/* Animations */
-			@keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-			.animate-float { animation: float 6s ease-in-out infinite; }
+			.glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
+			.glass-strong { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); }
 		</style>
 	</head>
 	<body class="h-screen flex overflow-hidden selection:bg-indigo-500 selection:text-white">
 		
 		<aside class="w-80 flex-shrink-0 glass-strong flex flex-col h-full relative z-20">
 			<div class="p-8 pb-4">
-				<h1 class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300 cursor-pointer">
-					Nyumba.
-				</h1>
+				<h1 class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1>
 				<p class="text-xs text-slate-500 font-medium tracking-widest uppercase mt-2">Curated Living</p>
 			</div>
 
 			<div class="px-6 py-4 space-y-6 flex-1 overflow-y-auto">
-				
 				<div style="display: ` + landlordPanelDisplay + `;" class="glass rounded-2xl p-5 mb-8 border border-indigo-500/20 shadow-lg shadow-indigo-900/20">
 					<h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
 						<span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span> Landlord Mode
 					</h3>
 					<div class="space-y-3">
-						<input id="loc" type="text" placeholder="Location" class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 transition outline-none">
+						<input id="loc" type="text" placeholder="Location Name (e.g. Juja)" class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 transition outline-none">
+						
+						<input id="map_url" type="text" placeholder="📍 Paste Google Maps Link" class="w-full bg-slate-900/50 border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-indigo-300 placeholder-indigo-700/50 focus:border-indigo-500 transition outline-none">
+						
 						<select id="type" class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm outline-none">
 							<option>Bedsitter</option><option>One Bedroom</option><option>Two Bedroom</option><option>Studio</option>
 						</select>
@@ -319,25 +349,12 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					<div class="relative group">
 						<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Where to?</label>
 						<input id="searchLoc" onkeyup="fetchHouses()" type="text" placeholder="Try 'Kileleshwa'..." 
-							class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:ring-2 focus:ring-indigo-500/50 focus:border-transparent transition outline-none text-lg font-medium">
-						<div class="absolute right-3 top-8 text-slate-600">🔍</div>
+							class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:ring-2 focus:ring-indigo-500/50 outline-none text-lg font-medium">
 					</div>
-
 					<div>
 						<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Max Budget</label>
 						<input id="searchPrice" onkeyup="fetchHouses()" type="number" placeholder="Any Price" 
-							class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 transition outline-none text-lg font-medium">
-					</div>
-					
-					<div class="grid grid-cols-2 gap-3 mt-6">
-						<div class="glass p-3 rounded-xl text-center">
-							<div class="text-2xl font-bold text-white">12</div>
-							<div class="text-[10px] text-slate-400 uppercase tracking-wider">New Today</div>
-						</div>
-						<div class="glass p-3 rounded-xl text-center">
-							<div class="text-2xl font-bold text-emerald-400">85%</div>
-							<div class="text-[10px] text-slate-400 uppercase tracking-wider">Response</div>
-						</div>
+							class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 outline-none text-lg font-medium">
 					</div>
 				</div>
 			</div>
@@ -345,33 +362,21 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			<div class="p-6 border-t border-white/5 flex items-center justify-between">
 				<div class="flex items-center gap-3">
 					<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold">👤</div>
-					<div class="text-sm">
-						<div class="font-bold text-white leading-none">` + currentUsername + `</div>
-						<div class="text-xs text-slate-500 mt-1">` + welcomeMsg + `</div>
-					</div>
+					<div class="text-sm"><div class="font-bold text-white leading-none">` + currentUsername + `</div><div class="text-xs text-slate-500 mt-1">` + welcomeMsg + `</div></div>
 				</div>
 				` + navLinks + `
 			</div>
 		</aside>
 
 		<main class="flex-1 h-full overflow-y-auto relative bg-[#0b0f19]">
-			
-			<div class="fixed top-0 right-0 w-3/4 h-full pointer-events-none opacity-20">
-				<div class="absolute top-1/4 right-1/4 w-96 h-96 bg-indigo-600 rounded-full mix-blend-screen filter blur-[120px] animate-float"></div>
-				<div class="absolute bottom-1/4 right-10 w-64 h-64 bg-emerald-600 rounded-full mix-blend-screen filter blur-[100px] animate-float" style="animation-delay: 2s"></div>
-			</div>
-
 			<div class="p-8 max-w-[1600px] mx-auto">
 				<header class="flex justify-between items-end mb-8 relative z-10">
 					<div>
 						<h2 class="text-3xl font-light text-white">Discover <span class="font-bold text-indigo-400">Sanctuary</span></h2>
-						<p class="text-slate-400 mt-1">Curated homes for your next chapter.</p>
+						<p class="text-slate-400 mt-1">Pay the service fee to unlock locations instantly.</p>
 					</div>
-					<button class="bg-white text-black px-4 py-2 rounded-full text-sm font-bold hover:bg-slate-200 transition">View Map 🗺️</button>
 				</header>
-
-				<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)] pb-20 relative z-10">
-					</div>
+				<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)] pb-20 relative z-10"></div>
 			</div>
 		</main>
 
@@ -382,14 +387,13 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
 			const currentUsername = "` + currentUsername + `";
+			const currentUserPhone = "` + currentUserPhone + `"; // 👈 Pass phone to JS to check ownership
 
 			document.addEventListener("DOMContentLoaded", () => fetchHouses());
 
 			function showToast(msg) {
-				const t = document.getElementById("toast");
-				document.getElementById("toast-msg").innerText = msg;
-				t.classList.remove("translate-y-[-150%]");
-				setTimeout(() => t.classList.add("translate-y-[-150%]"), 3000);
+				const t = document.getElementById("toast"); document.getElementById("toast-msg").innerText = msg;
+				t.classList.remove("translate-y-[-150%]"); setTimeout(() => t.classList.add("translate-y-[-150%]"), 3000);
 			}
 
 			function fetchHouses() {
@@ -400,86 +404,69 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					const container = document.getElementById('results-area');
 					container.innerHTML = "";
 					
-					// Filter
 					let filtered = data.filter(h => {
 						if(sLoc && !h.location.toLowerCase().includes(sLoc)) return false;
 						if(sPrice && h.price > parseFloat(sPrice)) return false;
 						return true;
 					});
 
-					if (filtered.length === 0) {
-						container.innerHTML = "<div class='col-span-full text-center text-slate-500 py-20'>No sanctuaries found. Try adjusting your filters.</div>";
-						return;
-					}
-
-					// Inject "Magazine Modules" to break the monotony
-					// We'll insert a "Trending" card at index 2
-					const trendingCard = { isPromo: true, type: 'trending' };
-					if(filtered.length >= 2) filtered.splice(2, 0, trendingCard);
+					if (filtered.length === 0) { container.innerHTML = "<div class='col-span-full text-center text-slate-500 py-20'>No sanctuaries found.</div>"; return; }
 
 					filtered.forEach((h, index) => {
-						// 1. RENDER PROMO CARDS (The "Tall Rectangle")
-						if (h.isPromo) {
-							const promoHtml = 
-							'<div class="glass p-6 rounded-3xl flex flex-col justify-between row-span-2 border border-indigo-500/30 relative overflow-hidden group">' +
-								'<div class="absolute inset-0 bg-gradient-to-b from-indigo-900/50 to-transparent opacity-50"></div>' +
-								'<div class="relative z-10">' +
-									'<h3 class="text-xl font-bold text-white mb-4">Trending 🔥</h3>' +
-									'<ul class="space-y-3 text-sm font-medium text-slate-300">' +
-										'<li class="flex justify-between border-b border-white/10 pb-2"><span>Kileleshwa</span> <span class="text-emerald-400">↑ 14%</span></li>' +
-										'<li class="flex justify-between border-b border-white/10 pb-2"><span>Westlands</span> <span class="text-emerald-400">↑ 8%</span></li>' +
-										'<li class="flex justify-between border-b border-white/10 pb-2"><span>Kilimani</span> <span class="text-emerald-400">↑ 5%</span></li>' +
-										'<li class="flex justify-between border-b border-white/10 pb-2"><span>Juja</span> <span class="text-slate-500">- 2%</span></li>' +
-									'</ul>' +
-								'</div>' +
-								'<button class="relative z-10 w-full mt-4 bg-white/10 hover:bg-white/20 text-white text-xs font-bold py-3 rounded-xl transition">View Heatmap</button>' +
-							'</div>';
-							container.innerHTML += promoHtml;
-							return;
-						}
-
-						// 2. RENDER HOUSE CARDS
 						const isOwner = (h.owner === currentUsername);
+						const didIPay = (h.tenant_phone === currentUserPhone && currentUserPhone !== "");
 						
-						// Layout Logic: First item is HERO (Wide)
 						let gridClass = (index === 0) ? "md:col-span-2 row-span-2" : "";
-						
-						// Styling Logic
 						let statusBadge, opacityClass, actionBtn;
 						let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
 
+						// --- LOGIC FOR BUTTONS & MAPS ---
+						
 						if (h.is_booked) {
 							if (isOwner) {
-								statusBadge = '<span class="absolute top-4 right-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full z-20 shadow-lg shadow-indigo-500/50">Booked by: ' + h.tenant_phone + '</span>';
+								// LANDLORD VIEW: See tenant & Delete
+								statusBadge = '<span class="absolute top-4 right-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full z-20">Paid by: ' + h.tenant_phone + '</span>';
 								opacityClass = "border-indigo-500";
-								actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl bg-slate-800 text-red-400 text-xs font-bold hover:bg-slate-700 transition">Delete Listing</button>';
+								actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl bg-slate-800 text-red-400 text-xs font-bold">Delete Listing</button>';
+							
+							} else if (didIPay) {
+								// PAYING TENANT VIEW: See Map! 🔓
+								statusBadge = '<span class="absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-full z-20 shadow-xl">UNLOCKED ✅</span>';
+								opacityClass = "border-emerald-500 shadow-emerald-900/20";
+								
+								// 📍 THE DIRECTIONS BUTTON (Only visible here)
+								let mapLink = h.map_url ? h.map_url : "https://maps.google.com/?q=" + h.location; 
+								actionBtn = '<a href="' + mapLink + '" target="_blank" class="block mt-4 w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-center text-sm font-bold transition shadow-lg shadow-blue-500/30">📍 Get Directions (Paid)</a>';
+							
 							} else {
+								// OTHER PEOPLE VIEW: Taken 🔒
 								statusBadge = '<span class="absolute top-4 right-4 bg-slate-900/90 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-full z-20 backdrop-blur">TAKEN</span>';
 								opacityClass = "opacity-50 grayscale";
 								actionBtn = '<button disabled class="mt-4 w-full py-3 rounded-xl bg-slate-800/50 text-slate-500 text-xs font-bold cursor-not-allowed">Unavailable</button>';
 							}
 						} else {
-							// Available
+							// AVAILABLE HOUSE
 							statusBadge = '<span class="absolute top-4 right-4 bg-white text-black text-[10px] font-bold px-3 py-1 rounded-full z-20 shadow-xl">AVAILABLE</span>';
 							opacityClass = "";
 							
 							if (isOwner) {
-								actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl border border-red-500/30 text-red-400 text-xs font-bold hover:bg-red-500/10 transition">Remove Listing</button>';
+								actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl border border-red-500/30 text-red-400 text-xs font-bold">Remove Listing</button>';
 							} else if (isLoggedIn) {
 								let waLink = "https://wa.me/" + h.phone + "?text=Hi, I found your " + h.type + " on Nyumba.";
 								actionBtn = '<div class="grid grid-cols-2 gap-2 mt-4">' +
-									'<a href="' + waLink + '" target="_blank" class="flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-500/20">Chat</a>' +
-									'<button onclick="payWithMpesa(' + h.id + ')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-500/30">Book Now</button>' +
+									'<a href="' + waLink + '" target="_blank" class="flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold py-3 rounded-xl transition">Chat</a>' +
+									
+									// 💳 CHANGED TEXT: "Pay Service Fee"
+									'<button onclick="payWithMpesa(' + h.id + ')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-500/30">💳 Pay Service Fee (1k)</button>' +
 								'</div>';
 							} else {
-								actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Secure</a>';
+								actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock</a>';
 							}
 						}
 
 						const html = 
 						'<div class="glass rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10 ' + gridClass + ' ' + opacityClass + '">' +
 							statusBadge +
-							// Image Area
 							'<div class="w-full h-48 ' + (index===0 ? 'h-64' : '') + ' bg-slate-800 rounded-2xl overflow-hidden relative mb-4">' +
 								'<img src="' + imageSrc + '" class="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-out">' +
 								'<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent"></div>' +
@@ -488,29 +475,42 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 									'<h3 class="text-2xl font-bold text-white leading-none">' + h.location + '</h3>' +
 								'</div>' +
 							'</div>' +
-							// Info Area
-							'<div class="flex-1">' +
-								'<p class="text-slate-400 text-sm line-clamp-2 leading-relaxed">' + h.details + '</p>' +
-							'</div>' +
-							// Price Area
+							'<div class="flex-1"><p class="text-slate-400 text-sm line-clamp-2 leading-relaxed">' + h.details + '</p></div>' +
 							'<div class="mt-4 pt-4 border-t border-white/5 flex items-end justify-between">' +
-								'<div>' +
-									'<p class="text-[10px] text-slate-500 uppercase font-bold">Monthly Rent</p>' +
-									'<p class="text-xl font-bold text-white">KES ' + h.price.toLocaleString() + '</p>' +
-								'</div>' +
-								'<div class="text-right">' +
-									'<p class="text-[10px] text-slate-500 uppercase font-bold">Bills</p>' +
-									'<p class="text-sm font-medium text-slate-300">~' + h.utilities.toLocaleString() + '</p>' +
-								'</div>' +
+								'<div><p class="text-[10px] text-slate-500 uppercase font-bold">Monthly Rent</p><p class="text-xl font-bold text-white">KES ' + h.price.toLocaleString() + '</p></div>' +
+								'<div class="text-right"><p class="text-[10px] text-slate-500 uppercase font-bold">Bills</p><p class="text-sm font-medium text-slate-300">~' + h.utilities.toLocaleString() + '</p></div>' +
 							'</div>' +
 							actionBtn +
 						'</div>';
-
 						container.innerHTML += html;
 					});
 				});
 			}
 
+			// --- UPLOAD FUNCTION UPDATED TO INCLUDE MAP URL ---
+			function uploadHouse() {
+				const formData = new FormData();
+				formData.append("location", document.getElementById('loc').value);
+				formData.append("type", document.getElementById('type').value);
+				formData.append("price", document.getElementById('price').value);
+				formData.append("utilities", document.getElementById('utils').value);
+				formData.append("details", document.getElementById('details').value);
+				
+				// 👈 NEW: Capture Map URL
+				formData.append("map_url", document.getElementById('map_url').value); 
+				
+				formData.append("tags", JSON.stringify([]));
+				const fileInput = document.getElementById('photos');
+				for (let i = 0; i < fileInput.files.length; i++) { formData.append("photos", fileInput.files[i]); }
+
+				fetch('/houses/upload', { method: 'POST', body: formData }).then(res => { 
+					fetchHouses(); showToast("Published Successfully");
+					document.getElementById('loc').value = "";
+					document.getElementById('price').value = "";
+				});
+			}
+
+			// (Keep other functions like deleteHouse, payWithMpesa same as before)
 			function deleteHouse(id) {
 				if(!confirm("Are you sure?")) return;
 				fetch('/houses/delete?id=' + id, {method: 'POST'}).then(() => { showToast("Listing Deleted"); fetchHouses(); });
@@ -526,25 +526,71 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					else { showToast("Connection Failed"); }
 				});
 			}
-			function uploadHouse() {
-				const formData = new FormData();
-				formData.append("location", document.getElementById('loc').value);
-				formData.append("type", document.getElementById('type').value);
-				formData.append("price", document.getElementById('price').value);
-				formData.append("utilities", document.getElementById('utils').value);
-				formData.append("details", document.getElementById('details').value);
-				formData.append("tags", JSON.stringify([]));
-				const fileInput = document.getElementById('photos');
-				for (let i = 0; i < fileInput.files.length; i++) { formData.append("photos", fileInput.files[i]); }
-				fetch('/houses/upload', { method: 'POST', body: formData }).then(res => { 
-					fetchHouses(); showToast("Published Successfully");
-					// Clear inputs
-					document.getElementById('loc').value = "";
-					document.getElementById('price').value = "";
-				});
-			}
 		</script>
 	</body>
 	</html>`
 	fmt.Fprint(w, html)
+}
+
+// --- UPDATE THE UPLOAD HANDLER TO RECEIVE MAP URL ---
+func uploadHouse(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Max upload size 20MB
+	r.ParseMultipartForm(20 << 20)
+
+	currentUser := getCurrentUser(r)
+	if currentUser == nil || currentUser.Role != "landlord" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Process Photos
+	var imageURLs []string
+	files := r.MultipartForm.File["photos"]
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			continue
+		}
+		defer file.Close()
+
+		// Create unique filename
+		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), fileHeader.Filename)
+		dst, err := os.Create("uploads/" + filename)
+		if err != nil {
+			continue
+		}
+		defer dst.Close()
+
+		io.Copy(dst, file)
+		imageURLs = append(imageURLs, "/uploads/"+filename)
+	}
+
+	// Basic fields
+	price, _ := strconv.ParseFloat(r.FormValue("price"), 64)
+	utils, _ := strconv.ParseFloat(r.FormValue("utilities"), 64)
+
+	newHouse := House{
+		ID:        len(houses) + 1,
+		Location:  r.FormValue("location"),
+		Type:      r.FormValue("type"),
+		Price:     price,
+		Utilities: utils,
+		Details:   r.FormValue("details"),
+		ImageURLs: imageURLs,
+		Phone:     currentUser.Phone,
+		Owner:     currentUser.Username,
+		IsBooked:  false,
+		MapURL:    r.FormValue("map_url"), // 👈 SAVE THE MAP LINK
+	}
+
+	houses = append(houses, newHouse)
+	saveData(houseFile, houses)
+
+	w.WriteHeader(http.StatusCreated)
+	fmt.Fprint(w, "House uploaded")
 }
