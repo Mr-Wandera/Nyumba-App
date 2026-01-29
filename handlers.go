@@ -289,7 +289,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	if currentUser != nil {
 		isLoggedIn = "true"
 		currentUsername = currentUser.Username
-		currentUserPhone = currentUser.Phone // We need this to check if THEY paid
+		currentUserPhone = currentUser.Phone
 		welcomeMsg = "Hi, " + currentUser.Username
 		navLinks = `<a href="/logout" class="text-sm font-bold text-red-400 border border-red-500/30 px-3 py-1 rounded-full hover:bg-red-500/10 transition">Logout</a>`
 		if currentUser.Role == "landlord" {
@@ -306,88 +306,87 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 		<script src="https://cdn.tailwindcss.com"></script>
 		<style>
-			body { font-family: 'Outfit', sans-serif; background: #0b0f19; color: #f8fafc; }
+			/* Changed background to Slate-900 (Lighter than before) */
+			body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; }
 			::-webkit-scrollbar { width: 6px; }
-			::-webkit-scrollbar-track { background: #0b0f19; }
+			::-webkit-scrollbar-track { background: #0f172a; }
 			::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-			.glass { background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
-			.glass-strong { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); }
+			/* Simplified Glass - No Strong Blur to prevent layering issues */
+			.glass { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); }
+			.glass-sidebar { background: #1e293b; border-right: 1px solid rgba(255, 255, 255, 0.05); }
 		</style>
 	</head>
-	<body class="h-screen flex overflow-hidden selection:bg-indigo-500 selection:text-white">
+	<body class="h-screen flex overflow-hidden">
 		
-		<aside class="w-80 flex-shrink-0 glass-strong flex flex-col h-full relative z-20">
+		<aside class="w-80 flex-shrink-0 glass-sidebar flex flex-col h-full relative z-20">
 			<div class="p-8 pb-4">
 				<h1 class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1>
 				<p class="text-xs text-slate-500 font-medium tracking-widest uppercase mt-2">Curated Living</p>
 			</div>
 
 			<div class="px-6 py-4 space-y-6 flex-1 overflow-y-auto">
-				<div style="display: ` + landlordPanelDisplay + `;" class="glass rounded-2xl p-5 mb-8 border border-indigo-500/20 shadow-lg shadow-indigo-900/20">
-					<h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-						<span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span> Landlord Mode
-					</h3>
+				<div style="display: ` + landlordPanelDisplay + `;" class="glass rounded-2xl p-5 mb-8">
+					<h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4">Landlord Mode</h3>
 					<div class="space-y-3">
-						<input id="loc" type="text" placeholder="Location Name (e.g. Juja)" class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 transition outline-none">
-						
-						<input id="map_url" type="text" placeholder="📍 Paste Google Maps Link" class="w-full bg-slate-900/50 border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-indigo-300 placeholder-indigo-700/50 focus:border-indigo-500 transition outline-none">
-						
-						<select id="type" class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm outline-none">
+						<input id="loc" type="text" placeholder="Location (e.g. Juja)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+						<input id="map_url" type="text" placeholder="📍 Google Maps Link" class="w-full bg-slate-900 border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-indigo-300 outline-none">
+						<select id="type" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm outline-none">
 							<option>Bedsitter</option><option>One Bedroom</option><option>Two Bedroom</option><option>Studio</option>
 						</select>
 						<div class="grid grid-cols-2 gap-2">
-							<input id="price" type="number" placeholder="Rent" class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm outline-none">
-							<input id="utils" type="number" placeholder="Bills" class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm outline-none">
+							<input id="price" type="number" placeholder="Rent" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm outline-none">
+							<input id="utils" type="number" placeholder="Bills" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm outline-none">
 						</div>
-						<input id="photos" type="file" multiple class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400">
-						<textarea id="details" placeholder="Description..." class="w-full bg-slate-900/50 border border-slate-700/50 rounded-lg px-3 py-2 text-sm h-16 outline-none resize-none"></textarea>
-						<button onclick="uploadHouse()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-lg text-sm transition shadow-lg shadow-indigo-600/20">Post Listing</button>
+						<input id="photos" type="file" multiple class="text-xs text-slate-500">
+						<textarea id="details" placeholder="Description..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm h-16 resize-none outline-none"></textarea>
+						<button onclick="uploadHouse()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-lg text-sm transition">Post Listing</button>
 					</div>
 				</div>
 
 				<div class="space-y-4">
-					<div class="relative group">
+					<div>
 						<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Where to?</label>
 						<input id="searchLoc" onkeyup="fetchHouses()" type="text" placeholder="Try 'Kileleshwa'..." 
-							class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:ring-2 focus:ring-indigo-500/50 outline-none text-lg font-medium">
+							class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
 					</div>
 					<div>
 						<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Max Budget</label>
 						<input id="searchPrice" onkeyup="fetchHouses()" type="number" placeholder="Any Price" 
-							class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:ring-2 focus:ring-emerald-500/50 outline-none text-lg font-medium">
+							class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none">
 					</div>
 				</div>
 			</div>
 
-			<div class="p-6 border-t border-white/5 flex items-center justify-between">
+			<div class="p-6 border-t border-white/5 flex items-center justify-between bg-[#1e293b]">
 				<div class="flex items-center gap-3">
-					<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold">👤</div>
-					<div class="text-sm"><div class="font-bold text-white leading-none">` + currentUsername + `</div><div class="text-xs text-slate-500 mt-1">` + welcomeMsg + `</div></div>
+					<div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-bold">👤</div>
+					<div class="text-sm"><div class="font-bold text-white">` + currentUsername + `</div></div>
 				</div>
 				` + navLinks + `
 			</div>
 		</aside>
 
-		<main class="flex-1 h-full overflow-y-auto relative bg-[#0b0f19]">
+		<main class="flex-1 h-full overflow-y-auto bg-slate-900 relative z-10">
 			<div class="p-8 max-w-[1600px] mx-auto">
-				<header class="flex justify-between items-end mb-8 relative z-10">
+				<header class="flex justify-between items-end mb-8">
 					<div>
 						<h2 class="text-3xl font-light text-white">Discover <span class="font-bold text-indigo-400">Sanctuary</span></h2>
 						<p class="text-slate-400 mt-1">Pay the service fee to unlock locations instantly.</p>
 					</div>
+					<button onclick="alert('Full Map View coming in v2.0!')" class="bg-white text-black px-4 py-2 rounded-full text-sm font-bold hover:bg-slate-200 transition">View Map 🗺️</button>
 				</header>
-				<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)] pb-20 relative z-10"></div>
+				<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)] pb-20"></div>
 			</div>
 		</main>
 
-		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 glass px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-150%] transition-transform duration-500 z-50 flex items-center gap-2">
+		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-150%] transition-transform duration-500 z-50 flex items-center gap-2">
 			<span class="text-lg">✨</span> <span id="toast-msg">Notification</span>
 		</div>
 
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
 			const currentUsername = "` + currentUsername + `";
-			const currentUserPhone = "` + currentUserPhone + `"; // 👈 Pass phone to JS to check ownership
+			const currentUserPhone = "` + currentUserPhone + `";
 
 			document.addEventListener("DOMContentLoaded", () => fetchHouses());
 
@@ -420,44 +419,31 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						let statusBadge, opacityClass, actionBtn;
 						let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
 
-						// --- LOGIC FOR BUTTONS & MAPS ---
-						
 						if (h.is_booked) {
 							if (isOwner) {
-								// LANDLORD VIEW: See tenant & Delete
 								statusBadge = '<span class="absolute top-4 right-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full z-20">Paid by: ' + h.tenant_phone + '</span>';
-								opacityClass = "border-indigo-500";
+								opacityClass = "border-2 border-indigo-500";
 								actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl bg-slate-800 text-red-400 text-xs font-bold">Delete Listing</button>';
-							
 							} else if (didIPay) {
-								// PAYING TENANT VIEW: See Map! 🔓
 								statusBadge = '<span class="absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-full z-20 shadow-xl">UNLOCKED ✅</span>';
-								opacityClass = "border-emerald-500 shadow-emerald-900/20";
-								
-								// 📍 THE DIRECTIONS BUTTON (Only visible here)
-								let mapLink = h.map_url ? h.map_url : "https://maps.google.com/?q=" + h.location; 
-								actionBtn = '<a href="' + mapLink + '" target="_blank" class="block mt-4 w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-center text-sm font-bold transition shadow-lg shadow-blue-500/30">📍 Get Directions (Paid)</a>';
-							
+								opacityClass = "border-2 border-emerald-500 shadow-xl";
+								let mapLink = h.map_url ? h.map_url : "https://www.google.com/maps/search/?api=1&query=" + h.location; 
+								actionBtn = '<a href="' + mapLink + '" target="_blank" class="block mt-4 w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-center text-sm font-bold transition">📍 Get Directions (Paid)</a>';
 							} else {
-								// OTHER PEOPLE VIEW: Taken 🔒
-								statusBadge = '<span class="absolute top-4 right-4 bg-slate-900/90 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-full z-20 backdrop-blur">TAKEN</span>';
+								statusBadge = '<span class="absolute top-4 right-4 bg-slate-900/90 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-full z-20">TAKEN</span>';
 								opacityClass = "opacity-50 grayscale";
 								actionBtn = '<button disabled class="mt-4 w-full py-3 rounded-xl bg-slate-800/50 text-slate-500 text-xs font-bold cursor-not-allowed">Unavailable</button>';
 							}
 						} else {
-							// AVAILABLE HOUSE
 							statusBadge = '<span class="absolute top-4 right-4 bg-white text-black text-[10px] font-bold px-3 py-1 rounded-full z-20 shadow-xl">AVAILABLE</span>';
 							opacityClass = "";
-							
 							if (isOwner) {
 								actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl border border-red-500/30 text-red-400 text-xs font-bold">Remove Listing</button>';
 							} else if (isLoggedIn) {
 								let waLink = "https://wa.me/" + h.phone + "?text=Hi, I found your " + h.type + " on Nyumba.";
 								actionBtn = '<div class="grid grid-cols-2 gap-2 mt-4">' +
 									'<a href="' + waLink + '" target="_blank" class="flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold py-3 rounded-xl transition">Chat</a>' +
-									
-									// 💳 CHANGED TEXT: "Pay Service Fee"
-									'<button onclick="payWithMpesa(' + h.id + ')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-xl transition shadow-lg shadow-indigo-500/30">💳 Pay Service Fee (1k)</button>' +
+									'<button onclick="payWithMpesa(' + h.id + ')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-xl transition">💳 Pay Fee (1k)</button>' +
 								'</div>';
 							} else {
 								actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock</a>';
@@ -465,7 +451,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						}
 
 						const html = 
-						'<div class="glass rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-indigo-500/10 ' + gridClass + ' ' + opacityClass + '">' +
+						'<div class="glass rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl ' + gridClass + ' ' + opacityClass + '">' +
 							statusBadge +
 							'<div class="w-full h-48 ' + (index===0 ? 'h-64' : '') + ' bg-slate-800 rounded-2xl overflow-hidden relative mb-4">' +
 								'<img src="' + imageSrc + '" class="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-out">' +
@@ -487,7 +473,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				});
 			}
 
-			// --- UPLOAD FUNCTION UPDATED TO INCLUDE MAP URL ---
 			function uploadHouse() {
 				const formData = new FormData();
 				formData.append("location", document.getElementById('loc').value);
@@ -495,22 +480,16 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				formData.append("price", document.getElementById('price').value);
 				formData.append("utilities", document.getElementById('utils').value);
 				formData.append("details", document.getElementById('details').value);
-				
-				// 👈 NEW: Capture Map URL
-				formData.append("map_url", document.getElementById('map_url').value); 
-				
+				formData.append("map_url", document.getElementById('map_url').value);
 				formData.append("tags", JSON.stringify([]));
 				const fileInput = document.getElementById('photos');
 				for (let i = 0; i < fileInput.files.length; i++) { formData.append("photos", fileInput.files[i]); }
-
 				fetch('/houses/upload', { method: 'POST', body: formData }).then(res => { 
 					fetchHouses(); showToast("Published Successfully");
-					document.getElementById('loc').value = "";
-					document.getElementById('price').value = "";
+					document.getElementById('loc').value = ""; document.getElementById('price').value = "";
 				});
 			}
 
-			// (Keep other functions like deleteHouse, payWithMpesa same as before)
 			function deleteHouse(id) {
 				if(!confirm("Are you sure?")) return;
 				fetch('/houses/delete?id=' + id, {method: 'POST'}).then(() => { showToast("Listing Deleted"); fetchHouses(); });
@@ -530,67 +509,4 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	</body>
 	</html>`
 	fmt.Fprint(w, html)
-}
-
-// --- UPDATE THE UPLOAD HANDLER TO RECEIVE MAP URL ---
-func uploadHouse(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Max upload size 20MB
-	r.ParseMultipartForm(20 << 20)
-
-	currentUser := getCurrentUser(r)
-	if currentUser == nil || currentUser.Role != "landlord" {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	// Process Photos
-	var imageURLs []string
-	files := r.MultipartForm.File["photos"]
-	for _, fileHeader := range files {
-		file, err := fileHeader.Open()
-		if err != nil {
-			continue
-		}
-		defer file.Close()
-
-		// Create unique filename
-		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), fileHeader.Filename)
-		dst, err := os.Create("uploads/" + filename)
-		if err != nil {
-			continue
-		}
-		defer dst.Close()
-
-		io.Copy(dst, file)
-		imageURLs = append(imageURLs, "/uploads/"+filename)
-	}
-
-	// Basic fields
-	price, _ := strconv.ParseFloat(r.FormValue("price"), 64)
-	utils, _ := strconv.ParseFloat(r.FormValue("utilities"), 64)
-
-	newHouse := House{
-		ID:        len(houses) + 1,
-		Location:  r.FormValue("location"),
-		Type:      r.FormValue("type"),
-		Price:     price,
-		Utilities: utils,
-		Details:   r.FormValue("details"),
-		ImageURLs: imageURLs,
-		Phone:     currentUser.Phone,
-		Owner:     currentUser.Username,
-		IsBooked:  false,
-		MapURL:    r.FormValue("map_url"), // 👈 SAVE THE MAP LINK
-	}
-
-	houses = append(houses, newHouse)
-	saveData(houseFile, houses)
-
-	w.WriteHeader(http.StatusCreated)
-	fmt.Fprint(w, "House uploaded")
 }
