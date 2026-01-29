@@ -43,8 +43,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// COMBINED HTML + JAVASCRIPT
-	fullPage := `
+	html := `
 	<!DOCTYPE html>
 	<html>
 	<head>
@@ -57,9 +56,10 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			::-webkit-scrollbar { width: 6px; }
 			::-webkit-scrollbar-track { background: #0f172a; }
 			::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-			.glass { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); }
+			/* Fixed Glass Effect */
+			.glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
 			.glass-sidebar { background: #1e293b; border-right: 1px solid rgba(255, 255, 255, 0.05); }
-			.nav-arrow { background: rgba(0,0,0,0.5); color: white; border-radius: 50%; width: 30px; height: 30px; flex: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+			.nav-arrow { background: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.2); }
 			.nav-arrow:hover { background: white; color: black; }
 		</style>
 	</head>
@@ -70,7 +70,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				<p class="text-xs text-slate-500 font-medium tracking-widest uppercase mt-2">Curated Living</p>
 			</div>
 			<div class="px-6 py-4 space-y-6 flex-1 overflow-y-auto">
-				<div style="display: ` + landlordPanelDisplay + `;" class="glass rounded-2xl p-5 mb-8">
+				<div style="display: ` + landlordPanelDisplay + `;" class="glass-card rounded-2xl p-5 mb-8">
 					<h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4">Landlord Mode</h3>
 					<div class="space-y-3">
 						<input id="loc" type="text" placeholder="Location (e.g. Juja)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
@@ -106,6 +106,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				` + navLinks + `
 			</div>
 		</aside>
+
 		<main class="flex-1 h-full overflow-y-auto bg-slate-900 relative z-10">
 			<div class="p-8 max-w-[1600px] mx-auto">
 				<header class="flex justify-between items-end mb-8">
@@ -113,25 +114,47 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						<h2 class="text-3xl font-light text-white">Discover <span class="font-bold text-indigo-400">Sanctuary</span></h2>
 						<p class="text-slate-400 mt-1">Pay the service fee to unlock locations instantly.</p>
 					</div>
-					<button onclick="alert('Full Map View coming in v2.0!')" class="bg-white text-black px-4 py-2 rounded-full text-sm font-bold hover:bg-slate-200 transition">View Map 🗺️</button>
 				</header>
 				<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)] pb-20"></div>
 			</div>
 		</main>
-		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-150%] transition-transform duration-500 z-50 flex items-center gap-2">
+
+		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-200%] transition-transform duration-500 z-50 flex items-center gap-2">
 			<span class="text-lg">✨</span> <span id="toast-msg">Notification</span>
 		</div>
+
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
 			const currentUsername = "` + currentUsername + `";
 			let houseImages = {};
 			let currentImageIndex = {};
+			let autoScrollInterval;
 
-			document.addEventListener("DOMContentLoaded", () => fetchHouses());
+			document.addEventListener("DOMContentLoaded", () => {
+				fetchHouses();
+				startAutoScroll(); // Start the photo slideshow
+			});
 
 			function showToast(msg) {
-				const t = document.getElementById("toast"); document.getElementById("toast-msg").innerText = msg;
-				t.classList.remove("translate-y-[-150%]"); setTimeout(() => t.classList.add("translate-y-[-150%]"), 3000);
+				const t = document.getElementById("toast"); 
+				document.getElementById("toast-msg").innerText = msg;
+				t.classList.remove("translate-y-[-200%]"); 
+				setTimeout(() => t.classList.add("translate-y-[-200%]"), 3000);
+			}
+
+			// AUTO SCROLL ENGINE
+			function startAutoScroll() {
+				if (autoScrollInterval) clearInterval(autoScrollInterval);
+				autoScrollInterval = setInterval(() => {
+					// Find all visible images and advance them
+					document.querySelectorAll('[id^="img-"]').forEach(img => {
+						let id = img.id.split('-')[1];
+						// Only scroll if there are multiple images
+						if (houseImages[id] && houseImages[id].length > 1) {
+							changeSlide(id, 1);
+						}
+					});
+				}, 3000); // Change picture every 3 seconds
 			}
 
 			function changeSlide(id, step) {
@@ -145,7 +168,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				if (next < 0) next = images.length - 1;
 				
 				currentImageIndex[id] = next;
-				document.getElementById('img-' + id).src = images[next];
+				const imgElement = document.getElementById('img-' + id);
+				if (imgElement) imgElement.src = images[next];
 			}
 
 			function fetchHouses() {
@@ -169,7 +193,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						let gridClass = (index === 0) ? "md:col-span-2 row-span-2" : "";
 						let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
 						
-						// Gallery Arrows
+						// Manual Arrows (Visible on Hover)
 						let arrows = "";
 						if (h.image_urls && h.image_urls.length > 1) {
 							arrows = '<div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-30 opacity-0 group-hover:opacity-100 transition">' + 
@@ -206,7 +230,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						}
 
 						const html = 
-						'<div class="glass rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl ' + gridClass + ' ' + opacityClass + '">' +
+						'<div class="glass-card rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl ' + gridClass + ' ' + opacityClass + '">' +
 							statusBadge +
 							'<div class="w-full h-48 ' + (index===0 ? 'h-64' : '') + ' bg-slate-800 rounded-2xl overflow-hidden relative mb-4">' +
 								'<img id="img-' + h.id + '" src="' + imageSrc + '" class="w-full h-full object-cover transition duration-700 ease-out">' +
@@ -256,7 +280,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		</script>
 	</body>
 	</html>`
-	fmt.Fprint(w, fullPage)
+	fmt.Fprint(w, html)
 }
 
 // 2. LOGIN HANDLER
