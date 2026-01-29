@@ -72,6 +72,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				<div style="display: ` + landlordPanelDisplay + `;" class="glass-card rounded-2xl p-5 mb-8">
 					<h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4">Landlord Mode</h3>
 					<div class="space-y-3">
+						<input id="building" type="text" placeholder="Apartment Name (e.g. Sunrise Apts)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
 						<input id="loc" type="text" placeholder="Location (e.g. Juja)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
 						<input id="map_url" type="text" placeholder="📍 Google Maps Link" class="w-full bg-slate-900 border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-indigo-300 outline-none">
 						<select id="type" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm outline-none">
@@ -119,6 +120,9 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-200%] transition-transform duration-500 z-50 flex items-center gap-2">
 			<span class="text-lg">✨</span> <span id="toast-msg">Notification</span>
 		</div>
+`
+	// PART 2: CLOSING THE HTML & ADDING LOGIC
+	script := `
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
 			const currentUsername = "` + currentUsername + `";
@@ -184,7 +188,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						let gridClass = (index === 0) ? "md:col-span-2 row-span-2" : "";
 						let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
 						
-						// --- ARROWS & BADGE ---
 						let arrows = "";
 						let photoBadge = "";
 						if (h.image_urls && h.image_urls.length > 1) {
@@ -194,8 +197,10 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 								'<button onclick="changeSlide(' + h.id + ', 1)" class="nav-arrow">❯</button>' +
 							'</div>';
 						}
-
+						
+						let buildingName = h.building_name ? h.building_name : "Private Property";
 						let statusBadge, opacityClass, actionBtn;
+
 						if (h.is_booked) {
 							if (isOwner) {
 								statusBadge = '<span class="absolute top-4 right-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full z-20">Paid by: ' + h.tenant_phone + '</span>';
@@ -231,7 +236,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 								arrows +
 								'<div class="absolute bottom-4 left-4 pointer-events-none">' +
 									'<p class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-1">' + h.type + '</p>' +
-									'<h3 class="text-2xl font-bold text-white leading-none">' + h.location + '</h3>' +
+									'<h3 class="text-2xl font-bold text-white leading-none">' + buildingName + '</h3>' +
+									'<p class="text-xs text-slate-300 mt-1">📍 ' + h.location + '</p>' +
 								'</div>' +
 							'</div>' +
 							'<div class="flex-1"><p class="text-slate-400 text-sm line-clamp-2 leading-relaxed">' + h.details + '</p></div>' +
@@ -247,6 +253,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			}
 			function uploadHouse() {
 				const formData = new FormData();
+				formData.append("building_name", document.getElementById('building').value);
 				formData.append("location", document.getElementById('loc').value);
 				formData.append("type", document.getElementById('type').value);
 				formData.append("price", document.getElementById('price').value);
@@ -273,7 +280,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		</script>
 	</body>
 	</html>`
-	fmt.Fprint(w, html)
+	fmt.Fprint(w, html+script)
 }
 
 // 2. LOGIN HANDLER
@@ -339,8 +346,11 @@ func uploadHouse(w http.ResponseWriter, r *http.Request) {
 	p, _ := strconv.ParseFloat(r.FormValue("price"), 64)
 	u, _ := strconv.ParseFloat(r.FormValue("utilities"), 64)
 	newHouse := House{
-		ID: len(houses) + 1, Location: r.FormValue("location"), Type: r.FormValue("type"),
-		Price: p, Utilities: u, Details: r.FormValue("details"), ImageURLs: imageURLs,
+		ID:           len(houses) + 1,
+		BuildingName: r.FormValue("building_name"),
+		Location:     r.FormValue("location"),
+		Type:         r.FormValue("type"),
+		Price:        p, Utilities: u, Details: r.FormValue("details"), ImageURLs: imageURLs,
 		Phone: currentUser.Phone, Owner: currentUser.Username, IsBooked: false, MapURL: r.FormValue("map_url"),
 	}
 	houses = append(houses, newHouse)
@@ -362,7 +372,7 @@ func deleteHouseHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
-// 6. PAY HANDLER (Calls Internal MPESA Function)
+// 6. PAY HANDLER
 func payHandler(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
 	phone := r.URL.Query().Get("phone")
