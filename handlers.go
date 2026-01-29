@@ -1,12 +1,26 @@
 package main
 
 import (
+	"bytes"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
+)
+
+// --- SAFARICOM CONFIG ---
+const (
+	consumerKey    = "y4514nMN2a7A2e23Kk75"
+	consumerSecret = "9aB8c7D6e5F4g3H2"
+	shortCode      = "174379"
+	passkey        = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+	mpesaAuthURL   = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+	mpesaPushURL   = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+	callbackURL    = "https://nyumba-app.onrender.com/callback"
 )
 
 // 1. HOME PAGE
@@ -16,7 +30,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	currentUser := getCurrentUser(r)
 	isLoggedIn := "false"
 	currentUsername := ""
-	currentUserPhone := ""
 
 	navLinks := `<a href="/login" class="text-sm font-medium text-slate-300 hover:text-white transition">Login</a>`
 	landlordPanelDisplay := "none"
@@ -24,7 +37,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	if currentUser != nil {
 		isLoggedIn = "true"
 		currentUsername = currentUser.Username
-		currentUserPhone = currentUser.Phone
 		navLinks = `<a href="/logout" class="text-sm font-bold text-red-400 border border-red-500/30 px-3 py-1 rounded-full hover:bg-red-500/10 transition">Logout</a>`
 		if currentUser.Role == "landlord" {
 			landlordPanelDisplay = "block"
@@ -109,7 +121,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
 			const currentUsername = "` + currentUsername + `";
-			const currentUserPhone = "` + currentUserPhone + `";
 			document.addEventListener("DOMContentLoaded", () => fetchHouses());
 			function showToast(msg) {
 				const t = document.getElementById("toast"); document.getElementById("toast-msg").innerText = msg;
@@ -129,7 +140,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					if (filtered.length === 0) { container.innerHTML = "<div class='col-span-full text-center text-slate-500 py-20'>No sanctuaries found.</div>"; return; }
 					filtered.forEach((h, index) => {
 						const isOwner = (h.owner === currentUsername);
-						const didIPay = (h.tenant_phone === currentUserPhone && currentUserPhone !== "");
 						let gridClass = (index === 0) ? "md:col-span-2 row-span-2" : "";
 						let statusBadge, opacityClass, actionBtn;
 						let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
@@ -138,11 +148,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 								statusBadge = '<span class="absolute top-4 right-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full z-20">Paid by: ' + h.tenant_phone + '</span>';
 								opacityClass = "border-2 border-indigo-500";
 								actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl bg-slate-800 text-red-400 text-xs font-bold">Delete Listing</button>';
-							} else if (didIPay) {
-								statusBadge = '<span class="absolute top-4 right-4 bg-emerald-500 text-white text-[10px] font-bold px-3 py-1 rounded-full z-20 shadow-xl">UNLOCKED ✅</span>';
-								opacityClass = "border-2 border-emerald-500 shadow-xl";
-								let mapLink = h.map_url ? h.map_url : "https://www.google.com/maps/search/?api=1&query=" + h.location; 
-								actionBtn = '<a href="' + mapLink + '" target="_blank" class="block mt-4 w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-center text-sm font-bold transition">📍 Get Directions (Paid)</a>';
 							} else {
 								statusBadge = '<span class="absolute top-4 right-4 bg-slate-900/90 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-full z-20">TAKEN</span>';
 								opacityClass = "opacity-50 grayscale";
@@ -302,15 +307,10 @@ func deleteHouseHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
-// 6. PAY HANDLER
-// 6. PAY HANDLER (Connected to Safaricom Sandbox)
+// 6. PAY HANDLER (Calls Internal MPESA Function)
 func payHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. Get the Phone Number & House ID
-	idStr := r.URL.Query().Get("id")
+	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
 	phone := r.URL.Query().Get("phone")
-	id, _ := strconv.Atoi(idStr)
-
-	// 2. Find the House
 	var selectedHouse *House
 	for i, h := range houses {
 		if h.ID == id {
@@ -318,29 +318,87 @@ func payHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-
 	if selectedHouse == nil {
-		http.Error(w, "House not found", http.StatusNotFound)
+		http.Error(w, "Not found", 404)
 		return
 	}
 
-	// 3. TRIGGER THE POP-UP (Call the function in mpesa.go)
-	// We send "1" KES because Daraja Sandbox requires at least 1 shilling to trigger.
 	err := initiateSTKPush(phone, "1")
 	if err != nil {
-		// If Safaricom fails (e.g., wrong phone number format)
-		http.Error(w, "M-Pesa Failed: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "M-Pesa Failed: "+err.Error(), 500)
 		return
 	}
 
-	// 4. Unlock the House (Optimistic Unlock)
-	// In a real production app, we would wait for the "Callback" to confirm payment.
-	// For this student project, we unlock it as soon as the Request is successful.
 	selectedHouse.IsBooked = true
 	selectedHouse.TenantPhone = phone
 	saveData(houseFile, houses)
-
-	// 5. Tell the Frontend it worked
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprint(w, `{"ResponseCode": "0", "CustomerMessage": "STK Push Sent. Check phone."}`)
+	fmt.Fprint(w, `{"ResponseCode": "0", "CustomerMessage": "Sent"}`)
+}
+
+// 7. FILE SERVER
+func serveMedia(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "."+r.URL.Path) }
+
+// --- CONNECTORS FOR MAIN.GO ---
+
+func getHouses(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(houses)
+}
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{Name: CookieName, Value: "", Path: "/", MaxAge: -1})
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
+}
+func uploadHouseHandler(w http.ResponseWriter, r *http.Request) { uploadHouse(w, r) }
+
+// --- INTERNAL MPESA LOGIC ---
+
+func initiateSTKPush(phoneNumber, amount string) error {
+	token, err := getAccessToken()
+	if err != nil {
+		return err
+	}
+	timestamp := time.Now().Format("20060102150405")
+	password := base64.StdEncoding.EncodeToString([]byte(shortCode + passkey + timestamp))
+	headers := map[string]string{"Authorization": "Bearer " + token, "Content-Type": "application/json"}
+	payload := map[string]string{
+		"BusinessShortCode": shortCode, "Password": password, "Timestamp": timestamp,
+		"TransactionType": "CustomerPayBillOnline", "Amount": amount, "PartyA": phoneNumber,
+		"PartyB": shortCode, "PhoneNumber": phoneNumber, "CallBackURL": callbackURL,
+		"AccountReference": "NyumbaApp", "TransactionDesc": "Viewing Fee",
+	}
+	jsonPayload, _ := json.Marshal(payload)
+	req, _ := http.NewRequest("POST", mpesaPushURL, bytes.NewBuffer(jsonPayload))
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed: %s", string(body))
+	}
+	return nil
+}
+
+func getAccessToken() (string, error) {
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", mpesaAuthURL, nil)
+	auth := base64.StdEncoding.EncodeToString([]byte(consumerKey + ":" + consumerSecret))
+	req.Header.Add("Authorization", "Basic "+auth)
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("failed to get token")
+	}
+	var result map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&result)
+	return result["access_token"].(string), nil
 }
