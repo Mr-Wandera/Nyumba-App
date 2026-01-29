@@ -14,52 +14,108 @@ import (
 // --- HANDLERS ---
 
 func signupHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
-		html := `
-		<!DOCTYPE html>
-		<html>
-		<head>
-			<title>Sign Up</title>
-			<meta name="viewport" content="width=device-width, initial-scale=1">
-			<style>
-				body { font-family: sans-serif; background: #f3f4f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-				.card { background: white; padding: 2rem; border-radius: 16px; width: 100%; max-width: 400px; text-align: center; }
-				input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-				button { width: 100%; padding: 10px; background: #4f46e5; color: white; border: none; border-radius: 8px; cursor: pointer; }
-			</style>
-		</head>
-		<body>
-			<div class="card">
-				<h2>✨ Join Nyumba</h2>
-				<form method="POST" action="/signup">
-					<input type="text" name="username" placeholder="Username" required>
-					<input type="password" name="password" placeholder="Password" required>
-					<input type="text" name="phone" placeholder="Phone (e.g. 2547...)" required>
-					<select name="role">
-						<option value="renter">👤 Renter</option>
-						<option value="landlord">🏠 Landlord</option>
-					</select>
-					<button>Create Account</button>
-				</form>
-				<p><a href="/login">Login</a></p>
-			</div>
-		</body>
-		</html>`
-		fmt.Fprint(w, html)
-		return
-	}
-	username := r.FormValue("username")
-	for _, u := range users {
-		if u.Username == username {
-			http.Error(w, "User exists!", http.StatusBadRequest)
+	if r.Method == http.MethodPost {
+		// 1. Get Form Data
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+		phone := r.FormValue("phone")
+		role := r.FormValue("role")
+
+		// 2. Simple Validation
+		if username == "" || password == "" || phone == "" {
+			http.Error(w, "All fields required", http.StatusBadRequest)
 			return
 		}
+
+		// 3. Create User
+		newUser := User{
+			Username: username,
+			Password: password,
+			Phone:    phone,
+			Role:     role,
+		}
+
+		// 4. Save to Database
+		users = append(users, newUser)
+		saveData(userFile, users)
+
+		// 5. Redirect to Login
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
 	}
-	newUser := User{Username: username, Password: r.FormValue("password"), Role: r.FormValue("role"), Phone: r.FormValue("phone")}
-	users = append(users, newUser)
-	saveData(userFile, users)
-	http.SetCookie(w, &http.Cookie{Name: CookieName, Value: username, Path: "/"})
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+
+	html := `
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Join • Nyumba</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+		<script src="https://cdn.tailwindcss.com"></script>
+		<style>
+			body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; }
+			
+			.glass-card {
+				background: rgba(30, 41, 59, 0.7);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+			}
+		</style>
+	</head>
+	<body class="h-screen w-full flex items-center justify-center relative overflow-hidden bg-slate-900">
+		
+		<div class="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-900/20"></div>
+
+		<div class="glass-card p-8 rounded-3xl w-full max-w-md mx-4 relative z-10">
+			<div class="text-center mb-6">
+				<h1 class="text-3xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300 mb-2">Join Nyumba.</h1>
+				<p class="text-slate-400 text-sm font-medium">Start your hunt today.</p>
+			</div>
+
+			<form method="POST" action="/signup" class="space-y-4">
+				<div>
+					<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Username</label>
+					<input name="username" type="text" placeholder="Choose a name" required 
+						class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition placeholder-slate-600">
+				</div>
+				
+				<div>
+					<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Phone Number</label>
+					<input name="phone" type="text" placeholder="2547..." required 
+						class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition placeholder-slate-600">
+				</div>
+
+				<div>
+					<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Password</label>
+					<input name="password" type="password" placeholder="Create password" required 
+						class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition placeholder-slate-600">
+				</div>
+
+				<div>
+					<label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">I am a...</label>
+					<div class="relative">
+						<select name="role" class="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500/50 outline-none transition appearance-none cursor-pointer">
+							<option value="renter">🏠 Renter (Looking for a house)</option>
+							<option value="landlord">🔑 Landlord (Listing a house)</option>
+						</select>
+						<div class="absolute right-4 top-3.5 text-slate-500 pointer-events-none">▼</div>
+					</div>
+				</div>
+
+				<button type="submit" class="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-500/20 transition transform hover:-translate-y-0.5">
+					Create Account
+				</button>
+			</form>
+
+			<div class="mt-6 text-center border-t border-white/5 pt-4">
+				<p class="text-slate-500 text-xs mb-2">Already have an account?</p>
+				<a href="/login" class="text-indigo-400 text-sm font-bold hover:text-indigo-300 transition">Login Here</a>
+			</div>
+		</div>
+
+	</body>
+	</html>`
+	fmt.Fprint(w, html)
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
