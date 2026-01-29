@@ -43,7 +43,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	html := `
+	// COMBINED HTML + JAVASCRIPT
+	fullPage := `
 	<!DOCTYPE html>
 	<html>
 	<head>
@@ -58,6 +59,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
 			.glass { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); }
 			.glass-sidebar { background: #1e293b; border-right: 1px solid rgba(255, 255, 255, 0.05); }
+			.nav-arrow { background: rgba(0,0,0,0.5); color: white; border-radius: 50%; width: 30px; height: 30px; flex: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+			.nav-arrow:hover { background: white; color: black; }
 		</style>
 	</head>
 	<body class="h-screen flex overflow-hidden">
@@ -121,11 +124,30 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
 			const currentUsername = "` + currentUsername + `";
+			let houseImages = {};
+			let currentImageIndex = {};
+
 			document.addEventListener("DOMContentLoaded", () => fetchHouses());
+
 			function showToast(msg) {
 				const t = document.getElementById("toast"); document.getElementById("toast-msg").innerText = msg;
 				t.classList.remove("translate-y-[-150%]"); setTimeout(() => t.classList.add("translate-y-[-150%]"), 3000);
 			}
+
+			function changeSlide(id, step) {
+				const images = houseImages[id];
+				if (!images || images.length <= 1) return;
+				
+				let current = currentImageIndex[id] || 0;
+				let next = current + step;
+				
+				if (next >= images.length) next = 0;
+				if (next < 0) next = images.length - 1;
+				
+				currentImageIndex[id] = next;
+				document.getElementById('img-' + id).src = images[next];
+			}
+
 			function fetchHouses() {
 				const sLoc = document.getElementById('searchLoc').value.toLowerCase();
 				const sPrice = document.getElementById('searchPrice').value;
@@ -138,11 +160,25 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						return true;
 					});
 					if (filtered.length === 0) { container.innerHTML = "<div class='col-span-full text-center text-slate-500 py-20'>No sanctuaries found.</div>"; return; }
+					
 					filtered.forEach((h, index) => {
+						houseImages[h.id] = h.image_urls;
+						currentImageIndex[h.id] = 0;
+
 						const isOwner = (h.owner === currentUsername);
 						let gridClass = (index === 0) ? "md:col-span-2 row-span-2" : "";
-						let statusBadge, opacityClass, actionBtn;
 						let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
+						
+						// Gallery Arrows
+						let arrows = "";
+						if (h.image_urls && h.image_urls.length > 1) {
+							arrows = '<div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-30 opacity-0 group-hover:opacity-100 transition">' + 
+								'<button onclick="changeSlide(' + h.id + ', -1)" class="nav-arrow">❮</button>' +
+								'<button onclick="changeSlide(' + h.id + ', 1)" class="nav-arrow">❯</button>' +
+							'</div>';
+						}
+
+						let statusBadge, opacityClass, actionBtn;
 						if (h.is_booked) {
 							if (isOwner) {
 								statusBadge = '<span class="absolute top-4 right-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full z-20">Paid by: ' + h.tenant_phone + '</span>';
@@ -168,13 +204,15 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 								actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock</a>';
 							}
 						}
+
 						const html = 
 						'<div class="glass rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl ' + gridClass + ' ' + opacityClass + '">' +
 							statusBadge +
 							'<div class="w-full h-48 ' + (index===0 ? 'h-64' : '') + ' bg-slate-800 rounded-2xl overflow-hidden relative mb-4">' +
-								'<img src="' + imageSrc + '" class="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-out">' +
-								'<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent"></div>' +
-								'<div class="absolute bottom-4 left-4">' +
+								'<img id="img-' + h.id + '" src="' + imageSrc + '" class="w-full h-full object-cover transition duration-700 ease-out">' +
+								'<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent pointer-events-none"></div>' +
+								arrows +
+								'<div class="absolute bottom-4 left-4 pointer-events-none">' +
 									'<p class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-1">' + h.type + '</p>' +
 									'<h3 class="text-2xl font-bold text-white leading-none">' + h.location + '</h3>' +
 								'</div>' +
@@ -218,7 +256,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		</script>
 	</body>
 	</html>`
-	fmt.Fprint(w, html)
+	fmt.Fprint(w, fullPage)
 }
 
 // 2. LOGIN HANDLER
