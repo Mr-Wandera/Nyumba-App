@@ -60,9 +60,22 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			.glass-sidebar { background: #1e293b; border-right: 1px solid rgba(255, 255, 255, 0.05); }
 			.nav-arrow { background: rgba(0,0,0,0.8); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); z-index: 40; transition: 0.2s; }
 			.nav-arrow:hover { background: white; color: black; transform: scale(1.1); }
+			#gallery-modal { transition: opacity 0.3s ease; }
+			.gallery-btn { background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 99px; font-size: 12px; font-weight: bold; color: white; cursor: pointer; transition: 0.2s; }
+			.gallery-btn:hover { background: white; color: black; }
 		</style>
 	</head>
 	<body class="h-screen flex overflow-hidden">
+		<div id="gallery-modal" class="fixed inset-0 z-[100] bg-black/95 hidden flex flex-col items-center justify-center p-4">
+			<button onclick="closeGallery()" class="absolute top-6 right-6 text-white text-4xl hover:text-red-500 transition">&times;</button>
+			<img id="gallery-img" src="" class="max-h-[80vh] max-w-full rounded-lg shadow-2xl object-contain mb-4">
+			<div class="flex items-center gap-6">
+				<button onclick="navGallery(-1)" class="text-white text-3xl hover:text-indigo-400 transition">❮</button>
+				<p id="gallery-counter" class="text-slate-400 font-medium">1 / 1</p>
+				<button onclick="navGallery(1)" class="text-white text-3xl hover:text-indigo-400 transition">❯</button>
+			</div>
+		</div>
+
 		<aside class="w-80 flex-shrink-0 glass-sidebar flex flex-col h-full relative z-20">
 			<div class="p-8 pb-4">
 				<h1 class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1>
@@ -120,14 +133,12 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-200%] transition-transform duration-500 z-50 flex items-center gap-2">
 			<span class="text-lg">✨</span> <span id="toast-msg">Notification</span>
 		</div>
-`
-	// PART 2: CLOSING THE HTML & ADDING LOGIC
-	script := `
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
 			const currentUsername = "` + currentUsername + `";
 			let houseImages = {};
-			let currentImageIndex = {};
+			let currentGalleryID = 0;
+			let galleryIndex = 0;
 			let autoScrollInterval;
 
 			document.addEventListener("DOMContentLoaded", () => {
@@ -142,29 +153,55 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				setTimeout(() => t.classList.add("translate-y-[-200%]"), 3000);
 			}
 
+			function openGallery(id) {
+				const images = houseImages[id];
+				if(!images || images.length === 0) return;
+				currentGalleryID = id;
+				galleryIndex = 0;
+				updateGalleryView();
+				document.getElementById('gallery-modal').classList.remove('hidden');
+			}
+
+			function closeGallery() {
+				document.getElementById('gallery-modal').classList.add('hidden');
+			}
+
+			function navGallery(step) {
+				const images = houseImages[currentGalleryID];
+				galleryIndex += step;
+				if(galleryIndex >= images.length) galleryIndex = 0;
+				if(galleryIndex < 0) galleryIndex = images.length - 1;
+				updateGalleryView();
+			}
+
+			function updateGalleryView() {
+				const images = houseImages[currentGalleryID];
+				document.getElementById('gallery-img').src = images[galleryIndex];
+				document.getElementById('gallery-counter').innerText = (galleryIndex + 1) + " / " + images.length;
+			}
+
 			function startAutoScroll() {
 				if (autoScrollInterval) clearInterval(autoScrollInterval);
 				autoScrollInterval = setInterval(() => {
 					document.querySelectorAll('[id^="img-"]').forEach(img => {
 						let id = img.id.split('-')[1];
-						if (houseImages[id] && houseImages[id].length > 1) { changeSlide(id, 1); }
+						if (document.getElementById('gallery-modal').classList.contains('hidden')) {
+							changeSlide(id, 1); 
+						}
 					});
-				}, 3000);
+				}, 3500);
 			}
 
 			function changeSlide(id, step) {
 				const images = houseImages[id];
 				if (!images || images.length <= 1) return;
-				
-				let current = currentImageIndex[id] || 0;
+				let imgEl = document.getElementById('img-' + id);
+				let current = parseInt(imgEl.dataset.index || 0);
 				let next = current + step;
-				
 				if (next >= images.length) next = 0;
 				if (next < 0) next = images.length - 1;
-				
-				currentImageIndex[id] = next;
-				const imgElement = document.getElementById('img-' + id);
-				if (imgElement) imgElement.src = images[next];
+				imgEl.dataset.index = next;
+				imgEl.src = images[next];
 			}
 
 			function fetchHouses() {
@@ -182,20 +219,23 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					
 					filtered.forEach((h, index) => {
 						houseImages[h.id] = h.image_urls;
-						currentImageIndex[h.id] = 0;
-
 						const isOwner = (h.owner === currentUsername);
 						let gridClass = (index === 0) ? "md:col-span-2 row-span-2" : "";
 						let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
 						
 						let arrows = "";
 						let photoBadge = "";
-						if (h.image_urls && h.image_urls.length > 1) {
-							photoBadge = '<div class="absolute top-3 left-3 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-md z-30 pointer-events-none">📸 ' + h.image_urls.length + ' Photos</div>';
-							arrows = '<div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-30">' + 
-								'<button onclick="changeSlide(' + h.id + ', -1)" class="nav-arrow">❮</button>' +
-								'<button onclick="changeSlide(' + h.id + ', 1)" class="nav-arrow">❯</button>' +
-							'</div>';
+						let viewBtn = "";
+
+						if (h.image_urls && h.image_urls.length > 0) {
+							viewBtn = '<button onclick="openGallery(' + h.id + ')" class="gallery-btn absolute bottom-4 right-4 z-30">View Photos</button>';
+							if (h.image_urls.length > 1) {
+								photoBadge = '<div class="absolute top-3 left-3 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-md z-30 pointer-events-none">📸 ' + h.image_urls.length + ' Photos</div>';
+								arrows = '<div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-30">' + 
+									'<button onclick="changeSlide(' + h.id + ', -1)" class="nav-arrow">❮</button>' +
+									'<button onclick="changeSlide(' + h.id + ', 1)" class="nav-arrow">❯</button>' +
+								'</div>';
+							}
 						}
 						
 						let buildingName = h.building_name ? h.building_name : "Private Property";
@@ -233,7 +273,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 							'<div class="w-full h-48 ' + (index===0 ? 'h-64' : '') + ' bg-slate-800 rounded-2xl overflow-hidden relative mb-4">' +
 								'<img id="img-' + h.id + '" src="' + imageSrc + '" class="w-full h-full object-cover transition duration-700 ease-out">' +
 								'<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent pointer-events-none"></div>' +
-								arrows +
+								arrows + viewBtn +
 								'<div class="absolute bottom-4 left-4 pointer-events-none">' +
 									'<p class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-1">' + h.type + '</p>' +
 									'<h3 class="text-2xl font-bold text-white leading-none">' + buildingName + '</h3>' +
@@ -280,7 +320,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		</script>
 	</body>
 	</html>`
-	fmt.Fprint(w, html+script)
+	fmt.Fprint(w, html)
 }
 
 // 2. LOGIN HANDLER
