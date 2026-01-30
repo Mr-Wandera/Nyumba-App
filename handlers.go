@@ -14,13 +14,16 @@ import (
 
 // --- SAFARICOM CONFIG ---
 const (
-	consumerKey    = "y4514nMN2a7A2e23Kk75"
-	consumerSecret = "9aB8c7D6e5F4g3H2"
-	shortCode      = "174379"
-	passkey        = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
-	mpesaAuthURL   = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-	mpesaPushURL   = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-	callbackURL    = "https://nyumba-app.onrender.com/callback"
+	// Your NEW Keys
+	consumerKey    = "COBGyH3dHvYrVjLKG0Znfh8RR1yAPeVbZ6hZitAwgvquIqhL"
+	consumerSecret = "ovklACIWd4ZMihM4Vv28TAwgEBG8MywaI5FOnHahzIPXAG16CTCikL2RSSqT4cog"
+
+	// Keep these default Sandbox values
+	shortCode    = "174379"
+	passkey      = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+	mpesaAuthURL = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+	mpesaPushURL = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+	callbackURL  = "https://nyumba-app.onrender.com/callback"
 )
 
 // --- HELPER: FORMAT PHONE NUMBER ---
