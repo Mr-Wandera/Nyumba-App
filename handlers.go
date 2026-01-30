@@ -14,11 +14,10 @@ import (
 
 // --- SAFARICOM CONFIG ---
 const (
-	// Your NEW Keys
+	// Your Sandbox Keys
 	consumerKey    = "COBGyH3dHvYrVjLKG0Znfh8RR1yAPeVbZ6hZitAwgvquIqhL"
 	consumerSecret = "ovklACIWd4ZMihM4Vv28TAwgEBG8MywaI5FOnHahzIPXAG16CTCikL2RSSqT4cog"
 
-	// Keep these default Sandbox values
 	shortCode    = "174379"
 	passkey      = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
 	mpesaAuthURL = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
@@ -28,13 +27,10 @@ const (
 
 // --- HELPER: FORMAT PHONE NUMBER ---
 func formatPhoneNumber(phone string) string {
-	// Remove spaces and ensure string
 	phone = "" + phone
-	// If starts with "0", change to "254"
 	if len(phone) > 0 && phone[0] == '0' {
 		return "254" + phone[1:]
 	}
-	// If starts with "+254", remove "+"
 	if len(phone) > 4 && phone[0] == '+' {
 		return phone[1:]
 	}
@@ -71,39 +67,34 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<script src="https://cdn.tailwindcss.com"></script>
 		<style>
 			body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; }
-			::-webkit-scrollbar { width: 6px; }
-			::-webkit-scrollbar-track { background: #0f172a; }
-			::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
 			.glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
 			.glass-sidebar { background: #1e293b; border-right: 1px solid rgba(255, 255, 255, 0.05); }
 			.nav-arrow { background: rgba(0,0,0,0.8); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); z-index: 40; transition: 0.2s; }
-			.nav-arrow:hover { background: white; color: black; transform: scale(1.1); }
-			#gallery-modal { transition: opacity 0.3s ease; }
-			.gallery-btn { background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 99px; font-size: 12px; font-weight: bold; color: white; cursor: pointer; transition: 0.2s; }
-			.gallery-btn:hover { background: white; color: black; }
+			.gallery-btn { background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 99px; font-size: 12px; font-weight: bold; color: white; cursor: pointer; }
 		</style>
 	</head>
-	<body class="h-screen flex overflow-hidden">
-		<div id="gallery-modal" class="fixed inset-0 z-[100] bg-black/95 hidden flex flex-col items-center justify-center p-4">
-			<button onclick="closeGallery()" class="absolute top-6 right-6 text-white text-4xl hover:text-red-500 transition">&times;</button>
-			<img id="gallery-img" src="" class="max-h-[80vh] max-w-full rounded-lg shadow-2xl object-contain mb-4">
-			<div class="flex items-center gap-6">
-				<button onclick="navGallery(-1)" class="text-white text-3xl hover:text-indigo-400 transition">❮</button>
-				<p id="gallery-counter" class="text-slate-400 font-medium">1 / 1</p>
-				<button onclick="navGallery(1)" class="text-white text-3xl hover:text-indigo-400 transition">❯</button>
-			</div>
+	<body class="h-screen flex flex-col md:flex-row overflow-hidden">
+		<div class="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/5 z-40">
+			<h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1>
+			<button onclick="toggleMenu()" class="text-white text-2xl px-2">☰</button>
 		</div>
 
-		<aside class="w-80 flex-shrink-0 glass-sidebar flex flex-col h-full relative z-20">
-			<div class="p-8 pb-4">
-				<h1 class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1>
-				<p class="text-xs text-slate-500 font-medium tracking-widest uppercase mt-2">Curated Living</p>
+		<div id="backdrop" onclick="toggleMenu()" class="fixed inset-0 bg-black/80 z-40 hidden md:hidden transition-opacity"></div>
+
+		<aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-80 bg-[#1e293b] md:bg-transparent md:static md:flex flex-col h-full transform -translate-x-full md:translate-x-0 transition-transform duration-300 glass-sidebar">
+			<div class="p-8 pb-4 flex justify-between items-center">
+				<div>
+					<h1 class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1>
+					<p class="text-xs text-slate-500 font-medium tracking-widest uppercase mt-2">Curated Living</p>
+				</div>
+				<button onclick="toggleMenu()" class="md:hidden text-white text-3xl">&times;</button>
 			</div>
+
 			<div class="px-6 py-4 space-y-6 flex-1 overflow-y-auto">
 				<div style="display: ` + landlordPanelDisplay + `;" class="glass-card rounded-2xl p-5 mb-8">
 					<h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4">Landlord Mode</h3>
 					<div class="space-y-3">
-						<input id="building" type="text" placeholder="Apartment Name (e.g. Sunrise Apts)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
+						<input id="building" type="text" placeholder="Apartment Name" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
 						<input id="loc" type="text" placeholder="Location (e.g. Juja)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
 						<input id="map_url" type="text" placeholder="📍 Google Maps Link" class="w-full bg-slate-900 border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-indigo-300 outline-none">
 						<select id="type" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm outline-none">
@@ -137,18 +128,30 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				` + navLinks + `
 			</div>
 		</aside>
+
 		<main class="flex-1 h-full overflow-y-auto bg-slate-900 relative z-10">
-			<div class="p-8 max-w-[1600px] mx-auto">
-				<header class="flex justify-between items-end mb-8">
+			<div class="p-4 md:p-8 max-w-[1600px] mx-auto">
+				<header class="flex justify-between items-end mb-8 mt-4 md:mt-0">
 					<div>
-						<h2 class="text-3xl font-light text-white">Discover <span class="font-bold text-indigo-400">Sanctuary</span></h2>
-						<p class="text-slate-400 mt-1">Pay the service fee to unlock locations instantly.</p>
+						<h2 class="text-2xl md:text-3xl font-light text-white">Discover <span class="font-bold text-indigo-400">Sanctuary</span></h2>
+						<p class="text-slate-400 mt-1 text-sm">Pay the service fee to unlock locations instantly.</p>
 					</div>
 				</header>
-				<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-[minmax(180px,auto)] pb-20"></div>
+				<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20"></div>
 			</div>
 		</main>
-		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-200%] transition-transform duration-500 z-50 flex items-center gap-2">
+
+		<div id="gallery-modal" class="fixed inset-0 z-[100] bg-black/95 hidden flex flex-col items-center justify-center p-4">
+			<button onclick="closeGallery()" class="absolute top-6 right-6 text-white text-4xl">&times;</button>
+			<img id="gallery-img" src="" class="max-h-[80vh] max-w-full rounded-lg shadow-2xl object-contain mb-4">
+			<div class="flex items-center gap-6">
+				<button onclick="navGallery(-1)" class="text-white text-3xl">❮</button>
+				<p id="gallery-counter" class="text-slate-400 font-medium">1 / 1</p>
+				<button onclick="navGallery(1)" class="text-white text-3xl">❯</button>
+			</div>
+		</div>
+
+		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-200%] transition-transform duration-500 z-[60] flex items-center gap-2">
 			<span class="text-lg">✨</span> <span id="toast-msg">Notification</span>
 		</div>
 		<script>
@@ -163,6 +166,14 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				fetchHouses();
 				startAutoScroll();
 			});
+
+			// --- MOBILE MENU TOGGLE ---
+			function toggleMenu() {
+				const sb = document.getElementById('sidebar');
+				const bd = document.getElementById('backdrop');
+				sb.classList.toggle('-translate-x-full');
+				bd.classList.toggle('hidden');
+			}
 
 			function showToast(msg) {
 				const t = document.getElementById("toast"); 
@@ -180,9 +191,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				document.getElementById('gallery-modal').classList.remove('hidden');
 			}
 
-			function closeGallery() {
-				document.getElementById('gallery-modal').classList.add('hidden');
-			}
+			function closeGallery() { document.getElementById('gallery-modal').classList.add('hidden'); }
 
 			function navGallery(step) {
 				const images = houseImages[currentGalleryID];
@@ -203,9 +212,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				autoScrollInterval = setInterval(() => {
 					document.querySelectorAll('[id^="img-"]').forEach(img => {
 						let id = img.id.split('-')[1];
-						if (document.getElementById('gallery-modal').classList.contains('hidden')) {
-							changeSlide(id, 1); 
-						}
+						if (document.getElementById('gallery-modal').classList.contains('hidden')) { changeSlide(id, 1); }
 					});
 				}, 3500);
 			}
@@ -238,7 +245,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					filtered.forEach((h, index) => {
 						houseImages[h.id] = h.image_urls;
 						const isOwner = (h.owner === currentUsername);
-						let gridClass = (index === 0) ? "md:col-span-2 row-span-2" : "";
 						let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
 						
 						let arrows = "";
@@ -286,9 +292,9 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						}
 
 						const html = 
-						'<div class="glass-card rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl ' + gridClass + ' ' + opacityClass + '">' +
+						'<div class="glass-card rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl ' + opacityClass + '">' +
 							statusBadge + photoBadge +
-							'<div class="w-full h-48 ' + (index===0 ? 'h-64' : '') + ' bg-slate-800 rounded-2xl overflow-hidden relative mb-4">' +
+							'<div class="w-full h-48 bg-slate-800 rounded-2xl overflow-hidden relative mb-4">' +
 								'<img id="img-' + h.id + '" src="' + imageSrc + '" class="w-full h-full object-cover transition duration-700 ease-out">' +
 								'<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent pointer-events-none"></div>' +
 								arrows + viewBtn +
@@ -331,22 +337,13 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				let phone = prompt("M-Pesa Number:");
 				if (!phone) return;
 				showToast("Requesting M-Pesa...");
-				
-				// --- FETCH LOGIC TO HANDLE ERRORS ---
 				fetch('/pay?id=' + id + '&phone=' + phone, {method: 'POST'})
 				.then(res => res.json())
 				.then(data => { 
-					if(data.ResponseCode === "0") { 
-						showToast("Check your phone!"); 
-						fetchHouses(); 
-					} else { 
-						showToast(data.CustomerMessage || "Connection Failed"); 
-					} 
+					if(data.ResponseCode === "0") { showToast("Check your phone!"); fetchHouses(); } 
+					else { showToast(data.CustomerMessage || "Connection Failed"); } 
 				})
-				.catch(err => {
-					console.error(err);
-					showToast("System Error");
-				});
+				.catch(err => { showToast("System Error"); });
 			}
 		</script>
 	</body>
@@ -443,13 +440,12 @@ func deleteHouseHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
-// 6. PAY HANDLER (Fixes the Silent Crash)
+// 6. PAY HANDLER
 func payHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json") // Always send JSON
-
+	w.Header().Set("Content-Type", "application/json")
 	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
 	rawPhone := r.URL.Query().Get("phone")
-	phone := formatPhoneNumber(rawPhone) // Use Helper
+	phone := formatPhoneNumber(rawPhone)
 
 	var selectedHouse *House
 	for i, h := range houses {
@@ -467,7 +463,6 @@ func payHandler(w http.ResponseWriter, r *http.Request) {
 
 	err := initiateSTKPush(phone, "1")
 	if err != nil {
-		// Return 200 OK but with Error Message inside JSON (so the frontend reads it)
 		fmt.Fprintf(w, `{"ResponseCode": "1", "CustomerMessage": "M-Pesa Error: %s"}`, err.Error())
 		return
 	}
@@ -481,8 +476,7 @@ func payHandler(w http.ResponseWriter, r *http.Request) {
 // 7. FILE SERVER
 func serveMedia(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "."+r.URL.Path) }
 
-// --- CONNECTORS FOR MAIN.GO ---
-
+// --- CONNECTORS ---
 func getHouses(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(houses)
@@ -494,7 +488,6 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 func uploadHouseHandler(w http.ResponseWriter, r *http.Request) { uploadHouse(w, r) }
 
 // --- INTERNAL MPESA LOGIC ---
-
 func initiateSTKPush(phoneNumber, amount string) error {
 	token, err := getAccessToken()
 	if err != nil {
