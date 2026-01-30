@@ -23,6 +23,21 @@ const (
 	callbackURL    = "https://nyumba-app.onrender.com/callback"
 )
 
+// --- HELPER: FORMAT PHONE NUMBER ---
+func formatPhoneNumber(phone string) string {
+	// Remove spaces and ensure string
+	phone = "" + phone
+	// If starts with "0", change to "254"
+	if len(phone) > 0 && phone[0] == '0' {
+		return "254" + phone[1:]
+	}
+	// If starts with "+254", remove "+"
+	if len(phone) > 4 && phone[0] == '+' {
+		return phone[1:]
+	}
+	return phone
+}
+
 // 1. HOME PAGE
 func homePage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -313,27 +328,27 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				let phone = prompt("M-Pesa Number:");
 				if (!phone) return;
 				showToast("Requesting M-Pesa...");
+				
+				// --- FETCH LOGIC TO HANDLE ERRORS ---
 				fetch('/pay?id=' + id + '&phone=' + phone, {method: 'POST'})
 				.then(res => res.json())
-				.then(data => { if(data.ResponseCode === "0") { showToast("Check your phone!"); fetchHouses(); } else { showToast("Connection Failed"); } });
+				.then(data => { 
+					if(data.ResponseCode === "0") { 
+						showToast("Check your phone!"); 
+						fetchHouses(); 
+					} else { 
+						showToast(data.CustomerMessage || "Connection Failed"); 
+					} 
+				})
+				.catch(err => {
+					console.error(err);
+					showToast("System Error");
+				});
 			}
 		</script>
 	</body>
 	</html>`
 	fmt.Fprint(w, html)
-}
-
-// --- HELPER: FORMAT PHONE NUMBER ---
-func formatPhoneNumber(phone string) string {
-	// If starts with "0", change to "254"
-	if len(phone) > 0 && phone[0] == '0' {
-		return "254" + phone[1:]
-	}
-	// If starts with "+254", remove "+"
-	if len(phone) > 4 && phone[0] == '+' {
-		return phone[1:]
-	}
-	return phone
 }
 
 // 2. LOGIN HANDLER
@@ -425,15 +440,13 @@ func deleteHouseHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
-// 6. PAY HANDLER (Now with Auto-Formatting!)
+// 6. PAY HANDLER (Fixes the Silent Crash)
 func payHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json") // Always send JSON
+
 	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
-	rawPhone := r.URL.Query().Get("phone") // Get the raw input
-
-	// --- FIX: Auto-Format the number to 254... ---
-	phone := formatPhoneNumber(rawPhone)
-
-	fmt.Println("Attempting M-Pesa for:", phone) // This logs to your Render console
+	rawPhone := r.URL.Query().Get("phone")
+	phone := formatPhoneNumber(rawPhone) // Use Helper
 
 	var selectedHouse *House
 	for i, h := range houses {
@@ -442,22 +455,23 @@ func payHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
+
 	if selectedHouse == nil {
-		http.Error(w, "Not found", 404)
+		w.WriteHeader(404)
+		fmt.Fprint(w, `{"ResponseCode": "1", "CustomerMessage": "House Not Found"}`)
 		return
 	}
 
 	err := initiateSTKPush(phone, "1")
 	if err != nil {
-		fmt.Println("M-Pesa Error:", err) // See the real error in logs
-		http.Error(w, "M-Pesa Failed: "+err.Error(), 500)
+		// Return 200 OK but with Error Message inside JSON (so the frontend reads it)
+		fmt.Fprintf(w, `{"ResponseCode": "1", "CustomerMessage": "M-Pesa Error: %s"}`, err.Error())
 		return
 	}
 
 	selectedHouse.IsBooked = true
 	selectedHouse.TenantPhone = phone
 	saveData(houseFile, houses)
-	w.Header().Set("Content-Type", "application/json")
 	fmt.Fprint(w, `{"ResponseCode": "0", "CustomerMessage": "Sent"}`)
 }
 
