@@ -231,7 +231,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				imgEl.src = images[next];
 			}
 
-			// --- OFFLINE-CAPABLE FETCH ---
 			function fetchHouses() {
 				const sLoc = document.getElementById('searchLoc').value.toLowerCase();
 				const sPrice = document.getElementById('searchPrice').value;
@@ -239,15 +238,13 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				fetch('/houses')
 				.then(res => res.json())
 				.then(data => {
-					// 1. ONLINE SUCCESS: Save to Cache & Render
 					localStorage.setItem('nyumba_cache', JSON.stringify(data));
-					renderList(data, sLoc, sPrice, true); // true = Online
+					renderList(data, sLoc, sPrice, true);
 				})
 				.catch(err => {
-					// 2. OFFLINE FAIL: Load from Cache
 					const cached = localStorage.getItem('nyumba_cache');
 					if(cached) {
-						renderList(JSON.parse(cached), sLoc, sPrice, false); // false = Offline
+						renderList(JSON.parse(cached), sLoc, sPrice, false);
 						showToast("Offline Mode: Showing Saved Data");
 					} else {
 						showToast("Connection Lost");
@@ -259,7 +256,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				const container = document.getElementById('results-area');
 				container.innerHTML = "";
 				
-				// Show/Hide Offline Badge
 				const badge = document.getElementById('offline-badge');
 				if(isOnline) { badge.classList.add('hidden'); } else { badge.classList.remove('hidden'); }
 
@@ -310,10 +306,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						if (isOwner) {
 							actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl border border-red-500/30 text-red-400 text-xs font-bold">Remove Listing</button>';
 						} else if (isLoggedIn) {
-							// Disable Pay button if Offline
 							let payOnClick = isOnline ? 'onclick="payWithMpesa(' + h.id + ')"' : 'onclick="showToast(\'Cannot pay while offline\')"';
 							let btnColor = isOnline ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-slate-700 cursor-not-allowed';
-							
 							let waLink = "https://wa.me/" + h.phone + "?text=Hi, I found your " + h.type + " on Nyumba.";
 							actionBtn = '<div class="grid grid-cols-2 gap-2 mt-4">' +
 								'<a href="' + waLink + '" target="_blank" class="flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold py-3 rounded-xl transition">Chat</a>' +
@@ -384,6 +378,25 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, html)
 }
 
+// 2. LOGIN HANDLER
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+		for _, u := range users {
+			if u.Username == username && u.Password == password {
+				http.SetCookie(w, &http.Cookie{Name: CookieName, Value: username, Path: "/"})
+				http.Redirect(w, r, "/", http.StatusSeeOther)
+				return
+			}
+		}
+		http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
+		return
+	}
+	html := `<!DOCTYPE html><html><head><title>Login</title><meta name="viewport" content="width=device-width"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><style>body{font-family:'Outfit',sans-serif;background:#0b0f19;color:#fff}.glass{background:rgba(30,41,59,0.4);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.05)}</style></head><body class="h-screen flex items-center justify-center"><div class="glass p-10 rounded-3xl w-full max-w-sm"><h1 class="text-3xl font-bold mb-6 text-center">Login</h1><form method="POST"><input name="username" placeholder="Username" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><input name="password" type="password" placeholder="Password" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><button class="w-full bg-indigo-600 py-3 rounded-xl font-bold">Sign In</button></form><a href="/signup" class="block text-center mt-6 text-slate-400 text-sm">Create Account</a></div></body></html>`
+	fmt.Fprint(w, html)
+}
+
 // 3. SIGNUP HANDLER
 func signupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
@@ -432,8 +445,14 @@ func uploadHouse(w http.ResponseWriter, r *http.Request) {
 		BuildingName: r.FormValue("building_name"),
 		Location:     r.FormValue("location"),
 		Type:         r.FormValue("type"),
-		Price:        p, Utilities: u, Details: r.FormValue("details"), ImageURLs: imageURLs,
-		Phone: currentUser.Phone, Owner: currentUser.Username, IsBooked: false, MapURL: r.FormValue("map_url"),
+		Price:        p,
+		Utilities:    u,
+		Details:      r.FormValue("details"),
+		ImageURLs:    imageURLs,
+		Phone:        currentUser.Phone,
+		Owner:        currentUser.Username,
+		IsBooked:     false,
+		MapURL:       r.FormValue("map_url"),
 	}
 	houses = append(houses, newHouse)
 	saveData(houseFile, houses)
@@ -513,8 +532,11 @@ func initiateSTKPush(phoneNumber, amount string) error {
 	payload := map[string]string{
 		"BusinessShortCode": shortCode, "Password": password, "Timestamp": timestamp,
 		"TransactionType": "CustomerPayBillOnline", "Amount": amount, "PartyA": phoneNumber,
-		"PartyB": shortCode, "PhoneNumber": phoneNumber, "CallBackURL": callbackURL,
-		"AccountReference": "NyumbaApp", "TransactionDesc": "Viewing Fee",
+		"PartyB":           shortCode,
+		"PhoneNumber":      phoneNumber,
+		"CallBackURL":      callbackURL,
+		"AccountReference": "NyumbaApp",
+		"TransactionDesc":  "Viewing Fee",
 	}
 	jsonPayload, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", mpesaPushURL, bytes.NewBuffer(jsonPayload))
