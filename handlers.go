@@ -38,6 +38,7 @@ func formatPhoneNumber(phone string) string {
 }
 
 // 1. HOME PAGE & MANIFEST HANDLER
+// 1. HOME PAGE & MANIFEST HANDLER
 func homePage(w http.ResponseWriter, r *http.Request) {
 	// --- SPECIAL: SERVE MANIFEST FILE AUTOMATICALLY ---
 	if r.URL.Path == "/manifest.json" {
@@ -76,6 +77,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// COMBINED HTML AND JAVASCRIPT
 	html := `
 	<!DOCTYPE html>
 	<html>
@@ -84,9 +86,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<link rel="manifest" href="/manifest.json">
 		<meta name="theme-color" content="#0f172a">
-		<meta name="apple-mobile-web-app-capable" content="yes">
-		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-		
 		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 		<script src="https://cdn.tailwindcss.com"></script>
 		<style>
@@ -181,6 +180,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-200%] transition-transform duration-500 z-[60] flex items-center gap-2">
 			<span class="text-lg">✨</span> <span id="toast-msg">Notification</span>
 		</div>
+
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
 			const currentUsername = "` + currentUsername + `";
