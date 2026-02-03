@@ -136,6 +136,9 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						<h2 class="text-2xl md:text-3xl font-light text-white">Discover <span class="font-bold text-indigo-400">Sanctuary</span></h2>
 						<p class="text-slate-400 mt-1 text-sm">Pay the service fee to unlock locations instantly.</p>
 					</div>
+					<div id="offline-badge" class="hidden bg-amber-500/20 text-amber-500 border border-amber-500/50 px-4 py-2 rounded-lg text-xs font-bold animate-pulse">
+						⚠️ OFFLINE MODE
+					</div>
 				</header>
 				<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20"></div>
 			</div>
@@ -167,7 +170,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				startAutoScroll();
 			});
 
-			// --- MOBILE MENU TOGGLE ---
 			function toggleMenu() {
 				const sb = document.getElementById('sidebar');
 				const bd = document.getElementById('backdrop');
@@ -229,92 +231,123 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				imgEl.src = images[next];
 			}
 
+			// --- OFFLINE-CAPABLE FETCH ---
 			function fetchHouses() {
 				const sLoc = document.getElementById('searchLoc').value.toLowerCase();
 				const sPrice = document.getElementById('searchPrice').value;
-				fetch('/houses').then(res => res.json()).then(data => {
-					const container = document.getElementById('results-area');
-					container.innerHTML = "";
-					let filtered = data.filter(h => {
-						if(sLoc && !h.location.toLowerCase().includes(sLoc)) return false;
-						if(sPrice && h.price > parseFloat(sPrice)) return false;
-						return true;
-					});
-					if (filtered.length === 0) { container.innerHTML = "<div class='col-span-full text-center text-slate-500 py-20'>No sanctuaries found.</div>"; return; }
-					
-					filtered.forEach((h, index) => {
-						houseImages[h.id] = h.image_urls;
-						const isOwner = (h.owner === currentUsername);
-						let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
-						
-						let arrows = "";
-						let photoBadge = "";
-						let viewBtn = "";
-
-						if (h.image_urls && h.image_urls.length > 0) {
-							viewBtn = '<button onclick="openGallery(' + h.id + ')" class="gallery-btn absolute bottom-4 right-4 z-30">View Photos</button>';
-							if (h.image_urls.length > 1) {
-								photoBadge = '<div class="absolute top-3 left-3 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-md z-30 pointer-events-none">📸 ' + h.image_urls.length + ' Photos</div>';
-								arrows = '<div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-30">' + 
-									'<button onclick="changeSlide(' + h.id + ', -1)" class="nav-arrow">❮</button>' +
-									'<button onclick="changeSlide(' + h.id + ', 1)" class="nav-arrow">❯</button>' +
-								'</div>';
-							}
-						}
-						
-						let buildingName = h.building_name ? h.building_name : "Private Property";
-						let statusBadge, opacityClass, actionBtn;
-
-						if (h.is_booked) {
-							if (isOwner) {
-								statusBadge = '<span class="absolute top-4 right-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full z-20">Paid by: ' + h.tenant_phone + '</span>';
-								opacityClass = "border-2 border-indigo-500";
-								actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl bg-slate-800 text-red-400 text-xs font-bold">Delete Listing</button>';
-							} else {
-								statusBadge = '<span class="absolute top-4 right-4 bg-slate-900/90 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-full z-20">TAKEN</span>';
-								opacityClass = "opacity-50 grayscale";
-								actionBtn = '<button disabled class="mt-4 w-full py-3 rounded-xl bg-slate-800/50 text-slate-500 text-xs font-bold cursor-not-allowed">Unavailable</button>';
-							}
-						} else {
-							statusBadge = '<span class="absolute top-4 right-4 bg-white text-black text-[10px] font-bold px-3 py-1 rounded-full z-20 shadow-xl">AVAILABLE</span>';
-							opacityClass = "";
-							if (isOwner) {
-								actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl border border-red-500/30 text-red-400 text-xs font-bold">Remove Listing</button>';
-							} else if (isLoggedIn) {
-								let waLink = "https://wa.me/" + h.phone + "?text=Hi, I found your " + h.type + " on Nyumba.";
-								actionBtn = '<div class="grid grid-cols-2 gap-2 mt-4">' +
-									'<a href="' + waLink + '" target="_blank" class="flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold py-3 rounded-xl transition">Chat</a>' +
-									'<button onclick="payWithMpesa(' + h.id + ')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-xl transition">💳 Pay Fee (1k)</button>' +
-								'</div>';
-							} else {
-								actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock</a>';
-							}
-						}
-
-						const html = 
-						'<div class="glass-card rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl ' + opacityClass + '">' +
-							statusBadge + photoBadge +
-							'<div class="w-full h-48 bg-slate-800 rounded-2xl overflow-hidden relative mb-4">' +
-								'<img id="img-' + h.id + '" src="' + imageSrc + '" class="w-full h-full object-cover transition duration-700 ease-out">' +
-								'<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent pointer-events-none"></div>' +
-								arrows + viewBtn +
-								'<div class="absolute bottom-4 left-4 pointer-events-none">' +
-									'<p class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-1">' + h.type + '</p>' +
-									'<h3 class="text-2xl font-bold text-white leading-none">' + buildingName + '</h3>' +
-									'<p class="text-xs text-slate-300 mt-1">📍 ' + h.location + '</p>' +
-								'</div>' +
-							'</div>' +
-							'<div class="flex-1"><p class="text-slate-400 text-sm line-clamp-2 leading-relaxed">' + h.details + '</p></div>' +
-							'<div class="mt-4 pt-4 border-t border-white/5 flex items-end justify-between">' +
-								'<div><p class="text-[10px] text-slate-500 uppercase font-bold">Monthly Rent</p><p class="text-xl font-bold text-white">KES ' + h.price.toLocaleString() + '</p></div>' +
-								'<div class="text-right"><p class="text-[10px] text-slate-500 uppercase font-bold">Bills</p><p class="text-sm font-medium text-slate-300">~' + h.utilities.toLocaleString() + '</p></div>' +
-							'</div>' +
-							actionBtn +
-						'</div>';
-						container.innerHTML += html;
-					});
+				
+				fetch('/houses')
+				.then(res => res.json())
+				.then(data => {
+					// 1. ONLINE SUCCESS: Save to Cache & Render
+					localStorage.setItem('nyumba_cache', JSON.stringify(data));
+					renderList(data, sLoc, sPrice, true); // true = Online
+				})
+				.catch(err => {
+					// 2. OFFLINE FAIL: Load from Cache
+					const cached = localStorage.getItem('nyumba_cache');
+					if(cached) {
+						renderList(JSON.parse(cached), sLoc, sPrice, false); // false = Offline
+						showToast("Offline Mode: Showing Saved Data");
+					} else {
+						showToast("Connection Lost");
+					}
 				});
 			}
+
+			function renderList(data, sLoc, sPrice, isOnline) {
+				const container = document.getElementById('results-area');
+				container.innerHTML = "";
+				
+				// Show/Hide Offline Badge
+				const badge = document.getElementById('offline-badge');
+				if(isOnline) { badge.classList.add('hidden'); } else { badge.classList.remove('hidden'); }
+
+				let filtered = data.filter(h => {
+					if(sLoc && !h.location.toLowerCase().includes(sLoc)) return false;
+					if(sPrice && h.price > parseFloat(sPrice)) return false;
+					return true;
+				});
+
+				if (filtered.length === 0) { container.innerHTML = "<div class='col-span-full text-center text-slate-500 py-20'>No sanctuaries found.</div>"; return; }
+				
+				filtered.forEach((h, index) => {
+					houseImages[h.id] = h.image_urls;
+					const isOwner = (h.owner === currentUsername);
+					let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
+					
+					let arrows = "";
+					let photoBadge = "";
+					let viewBtn = "";
+
+					if (h.image_urls && h.image_urls.length > 0) {
+						viewBtn = '<button onclick="openGallery(' + h.id + ')" class="gallery-btn absolute bottom-4 right-4 z-30">View Photos</button>';
+						if (h.image_urls.length > 1) {
+							photoBadge = '<div class="absolute top-3 left-3 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-md z-30 pointer-events-none">📸 ' + h.image_urls.length + ' Photos</div>';
+							arrows = '<div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-30">' + 
+								'<button onclick="changeSlide(' + h.id + ', -1)" class="nav-arrow">❮</button>' +
+								'<button onclick="changeSlide(' + h.id + ', 1)" class="nav-arrow">❯</button>' +
+							'</div>';
+						}
+					}
+					
+					let buildingName = h.building_name ? h.building_name : "Private Property";
+					let statusBadge, opacityClass, actionBtn;
+
+					if (h.is_booked) {
+						if (isOwner) {
+							statusBadge = '<span class="absolute top-4 right-4 bg-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-full z-20">Paid by: ' + h.tenant_phone + '</span>';
+							opacityClass = "border-2 border-indigo-500";
+							actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl bg-slate-800 text-red-400 text-xs font-bold">Delete Listing</button>';
+						} else {
+							statusBadge = '<span class="absolute top-4 right-4 bg-slate-900/90 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-full z-20">TAKEN</span>';
+							opacityClass = "opacity-50 grayscale";
+							actionBtn = '<button disabled class="mt-4 w-full py-3 rounded-xl bg-slate-800/50 text-slate-500 text-xs font-bold cursor-not-allowed">Unavailable</button>';
+						}
+					} else {
+						statusBadge = '<span class="absolute top-4 right-4 bg-white text-black text-[10px] font-bold px-3 py-1 rounded-full z-20 shadow-xl">AVAILABLE</span>';
+						opacityClass = "";
+						if (isOwner) {
+							actionBtn = '<button onclick="deleteHouse(' + h.id + ')" class="mt-4 w-full py-3 rounded-xl border border-red-500/30 text-red-400 text-xs font-bold">Remove Listing</button>';
+						} else if (isLoggedIn) {
+							// Disable Pay button if Offline
+							let payOnClick = isOnline ? 'onclick="payWithMpesa(' + h.id + ')"' : 'onclick="showToast(\'Cannot pay while offline\')"';
+							let btnColor = isOnline ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-slate-700 cursor-not-allowed';
+							
+							let waLink = "https://wa.me/" + h.phone + "?text=Hi, I found your " + h.type + " on Nyumba.";
+							actionBtn = '<div class="grid grid-cols-2 gap-2 mt-4">' +
+								'<a href="' + waLink + '" target="_blank" class="flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold py-3 rounded-xl transition">Chat</a>' +
+								'<button ' + payOnClick + ' class="' + btnColor + ' text-white text-xs font-bold py-3 rounded-xl transition">💳 Pay Fee (1k)</button>' +
+							'</div>';
+						} else {
+							actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock</a>';
+						}
+					}
+
+					const html = 
+					'<div class="glass-card rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl ' + opacityClass + '">' +
+						statusBadge + photoBadge +
+						'<div class="w-full h-48 bg-slate-800 rounded-2xl overflow-hidden relative mb-4">' +
+							'<img id="img-' + h.id + '" src="' + imageSrc + '" class="w-full h-full object-cover transition duration-700 ease-out">' +
+							'<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent pointer-events-none"></div>' +
+							arrows + viewBtn +
+							'<div class="absolute bottom-4 left-4 pointer-events-none">' +
+								'<p class="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-1">' + h.type + '</p>' +
+								'<h3 class="text-2xl font-bold text-white leading-none">' + buildingName + '</h3>' +
+								'<p class="text-xs text-slate-300 mt-1">📍 ' + h.location + '</p>' +
+							'</div>' +
+						'</div>' +
+						'<div class="flex-1"><p class="text-slate-400 text-sm line-clamp-2 leading-relaxed">' + h.details + '</p></div>' +
+						'<div class="mt-4 pt-4 border-t border-white/5 flex items-end justify-between">' +
+							'<div><p class="text-[10px] text-slate-500 uppercase font-bold">Monthly Rent</p><p class="text-xl font-bold text-white">KES ' + h.price.toLocaleString() + '</p></div>' +
+							'<div class="text-right"><p class="text-[10px] text-slate-500 uppercase font-bold">Bills</p><p class="text-sm font-medium text-slate-300">~' + h.utilities.toLocaleString() + '</p></div>' +
+						'</div>' +
+						actionBtn +
+					'</div>';
+					container.innerHTML += html;
+				});
+			}
+
 			function uploadHouse() {
 				const formData = new FormData();
 				formData.append("building_name", document.getElementById('building').value);
@@ -348,25 +381,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		</script>
 	</body>
 	</html>`
-	fmt.Fprint(w, html)
-}
-
-// 2. LOGIN HANDLER
-func loginHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		username := r.FormValue("username")
-		password := r.FormValue("password")
-		for _, u := range users {
-			if u.Username == username && u.Password == password {
-				http.SetCookie(w, &http.Cookie{Name: CookieName, Value: username, Path: "/"})
-				http.Redirect(w, r, "/", http.StatusSeeOther)
-				return
-			}
-		}
-		http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
-		return
-	}
-	html := `<!DOCTYPE html><html><head><title>Login</title><meta name="viewport" content="width=device-width"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><style>body{font-family:'Outfit',sans-serif;background:#0b0f19;color:#fff}.glass{background:rgba(30,41,59,0.4);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.05)}</style></head><body class="h-screen flex items-center justify-center"><div class="glass p-10 rounded-3xl w-full max-w-sm"><h1 class="text-3xl font-bold mb-6 text-center">Login</h1><form method="POST"><input name="username" placeholder="Username" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><input name="password" type="password" placeholder="Password" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><button class="w-full bg-indigo-600 py-3 rounded-xl font-bold">Sign In</button></form><a href="/signup" class="block text-center mt-6 text-slate-400 text-sm">Create Account</a></div></body></html>`
 	fmt.Fprint(w, html)
 }
 
