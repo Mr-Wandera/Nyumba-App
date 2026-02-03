@@ -37,8 +37,27 @@ func formatPhoneNumber(phone string) string {
 	return phone
 }
 
-// 1. HOME PAGE
+// 1. HOME PAGE & MANIFEST HANDLER
 func homePage(w http.ResponseWriter, r *http.Request) {
+	// --- SPECIAL: SERVE MANIFEST FILE AUTOMATICALLY ---
+	if r.URL.Path == "/manifest.json" {
+		w.Header().Set("Content-Type", "application/json")
+		manifest := `{
+			"name": "Nyumba Discovery",
+			"short_name": "Nyumba",
+			"start_url": "/",
+			"display": "standalone",
+			"background_color": "#0f172a",
+			"theme_color": "#0f172a",
+			"icons": [
+				{ "src": "https://cdn-icons-png.flaticon.com/512/25/25694.png", "sizes": "192x192", "type": "image/png" },
+				{ "src": "https://cdn-icons-png.flaticon.com/512/25/25694.png", "sizes": "512x512", "type": "image/png" }
+			]
+		}`
+		fmt.Fprint(w, manifest)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
 	currentUser := getCurrentUser(r)
@@ -63,6 +82,11 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	<head>
 		<title>Nyumba Discovery</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="manifest" href="/manifest.json">
+		<meta name="theme-color" content="#0f172a">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		
 		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 		<script src="https://cdn.tailwindcss.com"></script>
 		<style>
