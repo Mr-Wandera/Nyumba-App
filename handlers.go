@@ -90,7 +90,13 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			.glass-sidebar { background: #1e293b; border-right: 1px solid rgba(255, 255, 255, 0.05); }
 			.nav-arrow { background: rgba(0,0,0,0.8); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); z-index: 40; transition: 0.2s; }
 			.gallery-btn { background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 99px; font-size: 12px; font-weight: bold; color: white; cursor: pointer; }
-		</style>
+		/* Make badges/buttons float above the card */
+.glass-card > .absolute, 
+.glass-card > div.mt-4 {
+    transform: translateZ(40px); /* Pushes elements 40px towards the user */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3); /* Adds a shadow to prove it's floating */
+}
+			</style>
 	</head>
 	<body class="h-screen flex flex-col md:flex-row overflow-hidden">
 		<div class="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/5 z-40">
