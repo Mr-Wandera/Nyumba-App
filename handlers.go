@@ -40,11 +40,7 @@ func formatPhoneNumber(phone string) string {
 func homePage(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/manifest.json" {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, `{
-			"name": "Nyumba Discovery", "short_name": "Nyumba", "start_url": "/", "display": "standalone",
-			"background_color": "#0f172a", "theme_color": "#0f172a",
-			"icons": [{ "src": "https://cdn-icons-png.flaticon.com/512/25/25694.png", "sizes": "192x192", "type": "image/png" }]
-		}`)
+		fmt.Fprint(w, `{"name": "Nyumba", "short_name": "Nyumba", "start_url": "/", "display": "standalone", "background_color": "#0f172a", "theme_color": "#0f172a", "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/25/25694.png", "sizes": "192x192", "type": "image/png"}]}`)
 		return
 	}
 
@@ -66,38 +62,20 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		myHubButton = `<button onclick="openDashboard()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition mb-4 border border-white/10">🔐 My Unlocked Contacts</button>`
 	}
 
-	// START OF HTML
-	html := `<!DOCTYPE html>
-	<html>
-	<head>
-		<title>Nyumba Discovery</title>
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<link rel="manifest" href="/manifest.json">
-		<meta name="theme-color" content="#0f172a">
-		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
-		<script src="https://cdn.tailwindcss.com"></script>
-		<style>
-			body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; }
-			.glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); transform-style: preserve-3d; transition: transform 0.1s ease-out; }
-			.glass-sidebar { background: #1e293b; border-right: 1px solid rgba(255, 255, 255, 0.05); }
-			.nav-arrow { background: rgba(0,0,0,0.8); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); z-index: 40; transition: 0.2s; }
-			.gallery-btn { background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 99px; font-size: 12px; font-weight: bold; color: white; cursor: pointer; }
-			/* 3D PARALLAX CSS */
-			.glass-card > .absolute, .glass-card > div.mt-4 { transform: translateZ(40px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
-		</style>
-	</head>
+	html := `<!DOCTYPE html><html><head><title>Nyumba</title><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0f172a"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script>
+	<style>
+		body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; }
+		.glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); transform-style: preserve-3d; transition: transform 0.1s ease-out; }
+		.glass-card > .absolute, .glass-card > div.mt-4 { transform: translateZ(40px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+		.glass-sidebar { background: #1e293b; border-right: 1px solid rgba(255, 255, 255, 0.05); }
+		.nav-arrow { background: rgba(0,0,0,0.8); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); z-index: 40; transition: 0.2s; }
+	</style></head>
 	<body class="h-screen flex flex-col md:flex-row overflow-hidden">
-		<div class="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/5 z-40">
-			<h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1>
-			<button onclick="toggleMenu()" class="text-white text-2xl px-2">☰</button>
-		</div>
+		<div class="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/5 z-40"><h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1><button onclick="toggleMenu()" class="text-white text-2xl px-2">☰</button></div>
 		<div id="backdrop" onclick="toggleMenu()" class="fixed inset-0 bg-black/80 z-40 hidden md:hidden transition-opacity"></div>
 
 		<aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-80 bg-[#1e293b] md:bg-transparent md:static md:flex flex-col h-full transform -translate-x-full md:translate-x-0 transition-transform duration-300 glass-sidebar">
-			<div class="p-8 pb-4 flex justify-between items-center">
-				<div><h1 class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1><p class="text-xs text-slate-500 font-medium tracking-widest uppercase mt-2">Curated Living</p></div>
-				<button onclick="toggleMenu()" class="md:hidden text-white text-3xl">&times;</button>
-			</div>
+			<div class="p-8 pb-4 flex justify-between items-center"><div><h1 class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1><p class="text-xs text-slate-500 font-medium tracking-widest uppercase mt-2">Curated Living</p></div><button onclick="toggleMenu()" class="md:hidden text-white text-3xl">&times;</button></div>
 			<div class="px-6 py-4 space-y-6 flex-1 overflow-y-auto">
 				` + myHubButton + `
 				<div style="display: ` + landlordPanelDisplay + `;" class="glass-card rounded-2xl p-5 mb-8">
@@ -123,6 +101,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				` + navLinks + `
 			</div>
 		</aside>
+
 		<main class="flex-1 h-full overflow-y-auto bg-slate-900 relative z-10">
 			<div class="p-4 md:p-8 max-w-[1600px] mx-auto">
 				<header class="flex justify-between items-end mb-8 mt-4 md:mt-0">
@@ -148,31 +127,35 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			<div class="flex items-center gap-6"><button onclick="navGallery(-1)" class="text-white text-3xl">❮</button><p id="gallery-counter" class="text-slate-400 font-medium">1 / 1</p><button onclick="navGallery(1)" class="text-white text-3xl">❯</button></div>
 		</div>
 		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-200%] transition-transform duration-500 z-[60] flex items-center gap-2"><span class="text-lg">✨</span> <span id="toast-msg">Notification</span></div>
-
+` // JAVASCRIPT START
+	js := `
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
 			const currentUsername = "` + currentUsername + `";
 			let houseImages = {}; let currentGalleryID = 0; let galleryIndex = 0; let autoScrollInterval;
-			let allHousesData = []; // Store raw data for the dashboard
+			let allHousesData = []; 
 
-			// --- SKELETON LOADER ---
-			const skeletonHTML = '<div class="glass-card rounded-3xl p-4 flex flex-col relative animate-pulse border border-white/5"><div class="w-full h-48 bg-slate-800 rounded-2xl mb-4"></div><div class="h-4 bg-slate-800 rounded w-1/3 mb-2"></div><div class="h-6 bg-slate-800 rounded w-3/4 mb-4"></div><div class="grid grid-cols-2 gap-2 mt-4"><div class="h-10 bg-slate-800 rounded-xl"></div><div class="h-10 bg-slate-800 rounded-xl"></div></div></div>';
+			const skeletonHTML = '<div class="glass-card rounded-3xl p-4 flex flex-col relative animate-pulse border border-white/5"><div class="w-full h-48 bg-slate-800 rounded-2xl mb-4"></div><div class="h-4 bg-slate-800 rounded w-1/3 mb-2"></div><div class="h-6 bg-slate-800 rounded w-3/4 mb-4"></div><div class="h-12 bg-slate-800 rounded-xl mt-4"></div></div>';
 
 			document.addEventListener("DOMContentLoaded", () => { fetchHouses(); startAutoScroll(); });
 
-			// --- DASHBOARD LOGIC ---
 			function openDashboard() {
 				const container = document.getElementById('dashboard-list');
 				container.innerHTML = "";
-				// Filter houses where I AM the tenant (I paid the fee)
+				// Show houses that are BOOKED
 				const myHouses = allHousesData.filter(h => h.is_booked === true); 
+				
 				if(myHouses.length === 0) {
-					container.innerHTML = "<div class='text-center text-slate-500 py-10'>No contacts unlocked yet.</div>";
+					container.innerHTML = "<div class='text-center text-slate-500 py-10'>You haven't paid any viewing fees yet.</div>";
 				} else {
 					myHouses.forEach(h => {
-						let item = '<div class="bg-slate-800 p-4 rounded-xl flex justify-between items-center">' +
-							'<div><div class="font-bold text-white">' + h.building_name + '</div><div class="text-xs text-slate-400">' + h.location + '</div></div>' +
-							'<a href="tel:' + h.phone + '" class="bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-bold">📞 ' + h.phone + '</a>' +
+						// IN THE DASHBOARD: We show EVERYTHING (Phone, WhatsApp, Maps)
+						let item = '<div class="bg-slate-800 p-4 rounded-xl mb-3 border border-white/10">' +
+							'<div class="flex justify-between mb-2"><span class="font-bold text-white">' + h.building_name + '</span><span class="text-xs text-emerald-400 font-bold">UNLOCKED</span></div>' +
+							'<div class="grid grid-cols-2 gap-2">' +
+								'<a href="tel:' + h.phone + '" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-xs font-bold text-center">📞 Call Owner</a>' +
+								'<a href="https://wa.me/' + h.phone + '" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-bold text-center">💬 WhatsApp</a>' +
+							'</div>' +
 						'</div>';
 						container.innerHTML += item;
 					});
@@ -185,8 +168,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				card.addEventListener('mousemove', (e) => {
 					const rect = card.getBoundingClientRect();
 					const x = e.clientX - rect.left; const y = e.clientY - rect.top;
-					const centerX = rect.width / 2; const centerY = rect.height / 2;
-					const rotateX = ((y - centerY) / centerY) * -10; const rotateY = ((x - centerX) / centerX) * 10;
+					const rotateX = ((y - rect.height/2) / (rect.height/2)) * -5; 
+					const rotateY = ((x - rect.width/2) / (rect.width/2)) * 5;
 					card.style.transform = "perspective(1000px) rotateX(" + rotateX + "deg) rotateY(" + rotateY + "deg) scale(1.02)";
 				});
 				card.addEventListener('mouseleave', () => { card.style.transform = "perspective(1000px) rotateX(0) rotateY(0) scale(1)"; });
@@ -203,9 +186,9 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 
 			function fetchHouses() {
 				const container = document.getElementById('results-area');
-				container.innerHTML = skeletonHTML + skeletonHTML + skeletonHTML + skeletonHTML;
+				container.innerHTML = skeletonHTML + skeletonHTML + skeletonHTML;
 				fetch('/houses').then(res => res.json()).then(data => {
-					allHousesData = data; // Save for dashboard
+					allHousesData = data; 
 					localStorage.setItem('nyumba_cache', JSON.stringify(data));
 					renderList(data, true);
 				}).catch(err => {
@@ -232,29 +215,28 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				
 				filtered.forEach((h) => {
 					houseImages[h.id] = h.image_urls;
-					const isOwner = (h.owner === currentUsername);
 					let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
 					
+					// --- STRICT MODE: PAY FIRST ---
 					let actionBtn;
 					if (h.is_booked) {
-						// For the lead-gen model, if it's booked (unlocked), we show a button telling them to check the dashboard
-						if (isLoggedIn) {
-							actionBtn = '<button onclick="openDashboard()" class="mt-4 w-full py-3 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 text-xs font-bold">✨ Contact Unlocked (Check Hub)</button>';
-						} else {
-							actionBtn = '<button disabled class="mt-4 w-full py-3 rounded-xl bg-slate-800/50 text-slate-500 text-xs font-bold">Taken</button>';
-						}
+						actionBtn = '<button onclick="openDashboard()" class="mt-4 w-full py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/50 text-xs font-bold tracking-widest uppercase">🔓 Contact Unlocked</button>';
 					} else if (isLoggedIn) {
-						actionBtn = '<div class="grid grid-cols-2 gap-2 mt-4"><a href="https://wa.me/' + h.phone + '" class="flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold py-3 rounded-xl transition">Chat</a><button onclick="payWithMpesa(' + h.id + ')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-xl transition">💳 Unlock (1k)</button></div>';
+						actionBtn = '<button onclick="payWithMpesa(' + h.id + ')" class="mt-4 w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">👁️ Pay Viewing Fee (1k)</button>';
 					} else {
-						actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock</a>';
+						actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock Details</a>';
 					}
 
 					const card = document.createElement('div');
 					card.className = "glass-card rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl";
 					card.innerHTML = 
 						'<div class="w-full h-48 bg-slate-800 rounded-2xl overflow-hidden relative mb-4"><img id="img-' + h.id + '" src="' + imageSrc + '" class="w-full h-full object-cover transition duration-700 ease-out"></div>' +
-						'<div class="flex-1"><h3 class="text-xl font-bold text-white">' + h.building_name + '</h3><p class="text-xs text-slate-400 mb-2">📍 ' + h.location + '</p><p class="text-slate-400 text-sm line-clamp-2">' + h.details + '</p></div>' +
-						'<div class="mt-4 pt-4 border-t border-white/5 flex items-end justify-between"><div><p class="text-[10px] text-slate-500 uppercase font-bold">Rent</p><p class="text-xl font-bold text-white">KES ' + h.price.toLocaleString() + '</p></div></div>' +
+						'<div class="flex-1">' + 
+							'<h3 class="text-xl font-bold text-white">' + h.building_name + '</h3>' + 
+							'<p class="text-xs text-slate-400 mb-2">📍 ' + h.location + '</p>' + 
+							'<p class="text-slate-400 text-sm line-clamp-2">' + h.details + '</p>' + 
+						'</div>' +
+						'<div class="mt-4 pt-4 border-t border-white/5 flex items-end justify-between"><div><p class="text-[10px] text-slate-500 uppercase font-bold">Monthly Rent</p><p class="text-xl font-bold text-white">KES ' + h.price.toLocaleString() + '</p></div></div>' +
 						actionBtn;
 					
 					add3DEffect(card);
@@ -281,13 +263,13 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				fetch('/houses/delete?id=' + id, {method: 'POST'}).then(() => { showToast("Listing Deleted"); fetchHouses(); });
 			}
 			function payWithMpesa(id) {
-				let phone = prompt("M-Pesa Number:");
+				let phone = prompt("Enter M-Pesa Number to Pay Viewing Fee:");
 				if (!phone) return;
 				showToast("Requesting M-Pesa...");
 				fetch('/pay?id=' + id + '&phone=' + phone, {method: 'POST'})
 				.then(res => res.json())
 				.then(data => { 
-					if(data.ResponseCode === "0") { showToast("Success! Check 'My Hub'"); fetchHouses(); } 
+					if(data.ResponseCode === "0") { showToast("Success! Check 'My Unlocked Contacts'"); fetchHouses(); } 
 					else { showToast(data.CustomerMessage || "Connection Failed"); } 
 				})
 				.catch(err => { showToast("System Error"); });
@@ -295,7 +277,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		</script>
 	</body>
 	</html>`
-	fmt.Fprint(w, html)
+	fmt.Fprint(w, html+js)
 }
 
 // 2. LOGIN HANDLER
