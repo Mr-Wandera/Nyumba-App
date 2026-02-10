@@ -127,7 +127,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			<div class="flex items-center gap-6"><button onclick="navGallery(-1)" class="text-white text-3xl">❮</button><p id="gallery-counter" class="text-slate-400 font-medium">1 / 1</p><button onclick="navGallery(1)" class="text-white text-3xl">❯</button></div>
 		</div>
 		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-200%] transition-transform duration-500 z-[60] flex items-center gap-2"><span class="text-lg">✨</span> <span id="toast-msg">Notification</span></div>
-` // JAVASCRIPT START
+`
+	// JAVASCRIPT START
 	js := `
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
@@ -142,14 +143,12 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			function openDashboard() {
 				const container = document.getElementById('dashboard-list');
 				container.innerHTML = "";
-				// Show houses that are BOOKED
 				const myHouses = allHousesData.filter(h => h.is_booked === true); 
 				
 				if(myHouses.length === 0) {
 					container.innerHTML = "<div class='text-center text-slate-500 py-10'>You haven't paid any viewing fees yet.</div>";
 				} else {
 					myHouses.forEach(h => {
-						// IN THE DASHBOARD: We show EVERYTHING (Phone, WhatsApp, Maps)
 						let item = '<div class="bg-slate-800 p-4 rounded-xl mb-3 border border-white/10">' +
 							'<div class="flex justify-between mb-2"><span class="font-bold text-white">' + h.building_name + '</span><span class="text-xs text-emerald-400 font-bold">UNLOCKED</span></div>' +
 							'<div class="grid grid-cols-2 gap-2">' +
@@ -222,7 +221,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					if (h.is_booked) {
 						actionBtn = '<button onclick="openDashboard()" class="mt-4 w-full py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/50 text-xs font-bold tracking-widest uppercase">🔓 Contact Unlocked</button>';
 					} else if (isLoggedIn) {
-						actionBtn = '<button onclick="payWithMpesa(' + h.id + ')" class="mt-4 w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">👁️ Pay Viewing Fee (1k)</button>';
+						// PROFESSIONAL BUTTON - NO EMOJI
+						actionBtn = '<button onclick="payWithMpesa(' + h.id + ')" class="mt-4 w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">Pay Viewing Fee (1k)</button>';
 					} else {
 						actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock Details</a>';
 					}
