@@ -10,19 +10,19 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"golang.org/x/crypto/bcrypt" // New Security Package
 )
 
 // --- SAFARICOM CONFIG ---
 const (
-	// Your Sandbox Keys
 	consumerKey    = "COBGyH3dHvYrVjLKG0Znfh8RR1yAPeVbZ6hZitAwgvquIqhL"
 	consumerSecret = "ovklACIWd4ZMihM4Vv28TAwgEBG8MywaI5FOnHahzIPXAG16CTCikL2RSSqT4cog"
-
-	shortCode    = "174379"
-	passkey      = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
-	mpesaAuthURL = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-	mpesaPushURL = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-	callbackURL  = "https://nyumba-app.onrender.com/callback"
+	shortCode      = "174379"
+	passkey        = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+	mpesaAuthURL   = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+	mpesaPushURL   = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+	callbackURL    = "https://nyumba-app.onrender.com/callback"
 )
 
 func formatPhoneNumber(phone string) string {
@@ -127,8 +127,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			<div class="flex items-center gap-6"><button onclick="navGallery(-1)" class="text-white text-3xl">❮</button><p id="gallery-counter" class="text-slate-400 font-medium">1 / 1</p><button onclick="navGallery(1)" class="text-white text-3xl">❯</button></div>
 		</div>
 		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-200%] transition-transform duration-500 z-[60] flex items-center gap-2"><span class="text-lg">✨</span> <span id="toast-msg">Notification</span></div>
-`
-	// JAVASCRIPT START
+` // JAVASCRIPT START
 	js := `
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
@@ -144,7 +143,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				const container = document.getElementById('dashboard-list');
 				container.innerHTML = "";
 				const myHouses = allHousesData.filter(h => h.is_booked === true); 
-				
 				if(myHouses.length === 0) {
 					container.innerHTML = "<div class='text-center text-slate-500 py-10'>You haven't paid any viewing fees yet.</div>";
 				} else {
@@ -216,12 +214,10 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					houseImages[h.id] = h.image_urls;
 					let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
 					
-					// --- STRICT MODE: PAY FIRST ---
 					let actionBtn;
 					if (h.is_booked) {
 						actionBtn = '<button onclick="openDashboard()" class="mt-4 w-full py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/50 text-xs font-bold tracking-widest uppercase">🔓 Contact Unlocked</button>';
 					} else if (isLoggedIn) {
-						// PROFESSIONAL BUTTON - NO EMOJI
 						actionBtn = '<button onclick="payWithMpesa(' + h.id + ')" class="mt-4 w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">Pay Viewing Fee (1k)</button>';
 					} else {
 						actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock Details</a>';
@@ -278,18 +274,20 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	</body>
 	</html>`
 	fmt.Fprint(w, html+js)
-}
-
-// 2. LOGIN HANDLER
+} // 2. LOGIN HANDLER (Now Secure!)
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 		for _, u := range users {
-			if u.Username == username && u.Password == password {
-				http.SetCookie(w, &http.Cookie{Name: CookieName, Value: username, Path: "/"})
-				http.Redirect(w, r, "/", http.StatusSeeOther)
-				return
+			if u.Username == username {
+				// SECURE CHECK: Compare the hashed password, not the plain text
+				err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+				if err == nil {
+					http.SetCookie(w, &http.Cookie{Name: CookieName, Value: username, Path: "/"})
+					http.Redirect(w, r, "/", http.StatusSeeOther)
+					return
+				}
 			}
 		}
 		http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
@@ -299,14 +297,22 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, html)
 }
 
-// 3. SIGNUP HANDLER
+// 3. SIGNUP HANDLER (Now Hashes Passwords!)
 func signupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 		phone := r.FormValue("phone")
 		role := r.FormValue("role")
-		newUser := User{Username: username, Password: password, Phone: phone, Role: role}
+
+		// SECURE: Hash the password before saving!
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			http.Error(w, "Server Error", 500)
+			return
+		}
+
+		newUser := User{Username: username, Password: string(hashedPassword), Phone: phone, Role: role}
 		users = append(users, newUser)
 		saveData(userFile, users)
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
