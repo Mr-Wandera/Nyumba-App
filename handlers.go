@@ -73,6 +73,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// HTML STRING START
 	html := `
 	<!DOCTYPE html>
 	<html>
@@ -85,25 +86,19 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<script src="https://cdn.tailwindcss.com"></script>
 		<style>
 			body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; }
-			/* 3D FLIGHT SIMULATOR CSS */
+			/* 3D PARALLAX CSS */
 			.glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); transform-style: preserve-3d; transition: transform 0.1s ease-out; }
+			.glass-card > .absolute, .glass-card > div.mt-4 { transform: translateZ(40px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
 			.glass-sidebar { background: #1e293b; border-right: 1px solid rgba(255, 255, 255, 0.05); }
 			.nav-arrow { background: rgba(0,0,0,0.8); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); z-index: 40; transition: 0.2s; }
 			.gallery-btn { background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 99px; font-size: 12px; font-weight: bold; color: white; cursor: pointer; }
-		/* Make badges/buttons float above the card */
-.glass-card > .absolute, 
-.glass-card > div.mt-4 {
-    transform: translateZ(40px); /* Pushes elements 40px towards the user */
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3); /* Adds a shadow to prove it's floating */
-}
-			</style>
+		</style>
 	</head>
 	<body class="h-screen flex flex-col md:flex-row overflow-hidden">
 		<div class="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/5 z-40">
 			<h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1>
 			<button onclick="toggleMenu()" class="text-white text-2xl px-2">☰</button>
 		</div>
-
 		<div id="backdrop" onclick="toggleMenu()" class="fixed inset-0 bg-black/80 z-40 hidden md:hidden transition-opacity"></div>
 
 		<aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-80 bg-[#1e293b] md:bg-transparent md:static md:flex flex-col h-full transform -translate-x-full md:translate-x-0 transition-transform duration-300 glass-sidebar">
@@ -114,7 +109,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				</div>
 				<button onclick="toggleMenu()" class="md:hidden text-white text-3xl">&times;</button>
 			</div>
-
 			<div class="px-6 py-4 space-y-6 flex-1 overflow-y-auto">
 				<div style="display: ` + landlordPanelDisplay + `;" class="glass-card rounded-2xl p-5 mb-8">
 					<h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4">Landlord Mode</h3>
@@ -153,6 +147,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				` + navLinks + `
 			</div>
 		</aside>
+
 		<main class="flex-1 h-full overflow-y-auto bg-slate-900 relative z-10">
 			<div class="p-4 md:p-8 max-w-[1600px] mx-auto">
 				<header class="flex justify-between items-end mb-8 mt-4 md:mt-0">
@@ -179,7 +174,10 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-200%] transition-transform duration-500 z-[60] flex items-center gap-2">
 			<span class="text-lg">✨</span> <span id="toast-msg">Notification</span>
 		</div>
-
+`
+	fmt.Fprint(w, html)
+	// JAVASCRIPT START
+	js := `
 		<script>
 			const isLoggedIn = ` + isLoggedIn + `;
 			const currentUsername = "` + currentUsername + `";
@@ -188,12 +186,27 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			let galleryIndex = 0;
 			let autoScrollInterval;
 
+			// --- SKELETON LOADER ---
+			const skeletonHTML = 
+			'<div class="glass-card rounded-3xl p-4 flex flex-col relative animate-pulse border border-white/5">' +
+				'<div class="w-full h-48 bg-slate-800 rounded-2xl mb-4"></div>' +
+				'<div class="h-4 bg-slate-800 rounded w-1/3 mb-2"></div>' +
+				'<div class="h-6 bg-slate-800 rounded w-3/4 mb-4"></div>' +
+				'<div class="mt-auto pt-4 border-t border-white/5 flex justify-between items-end">' +
+					'<div><div class="h-3 w-12 bg-slate-800 rounded mb-1"></div><div class="h-6 w-24 bg-slate-800 rounded"></div></div>' +
+					'<div class="h-4 w-16 bg-slate-800 rounded"></div>' +
+				'</div>' +
+				'<div class="grid grid-cols-2 gap-2 mt-4">' +
+					'<div class="h-10 bg-slate-800 rounded-xl"></div><div class="h-10 bg-slate-800 rounded-xl"></div>' +
+				'</div>' +
+			'</div>';
+
 			document.addEventListener("DOMContentLoaded", () => {
 				fetchHouses();
 				startAutoScroll();
 			});
 
-			// --- 3D FLIGHT SIMULATOR EFFECT ---
+			// --- 3D EFFECT ---
 			function add3DEffect(card) {
 				card.addEventListener('mousemove', (e) => {
 					const rect = card.getBoundingClientRect();
@@ -201,83 +214,33 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					const y = e.clientY - rect.top;
 					const centerX = rect.width / 2;
 					const centerY = rect.height / 2;
-					
-					// Calculate Rotation (Pitch & Yaw)
-					const rotateX = ((y - centerY) / centerY) * -10; // Max 10 deg tilt
+					const rotateX = ((y - centerY) / centerY) * -10; 
 					const rotateY = ((x - centerX) / centerX) * 10;
-
 					card.style.transform = "perspective(1000px) rotateX(" + rotateX + "deg) rotateY(" + rotateY + "deg) scale(1.02)";
 				});
-
 				card.addEventListener('mouseleave', () => {
 					card.style.transform = "perspective(1000px) rotateX(0) rotateY(0) scale(1)";
 				});
 			}
 
-			function toggleMenu() {
-				const sb = document.getElementById('sidebar');
-				const bd = document.getElementById('backdrop');
-				sb.classList.toggle('-translate-x-full');
-				bd.classList.toggle('hidden');
-			}
+			function toggleMenu() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('backdrop').classList.toggle('hidden'); }
+			function showToast(msg) { const t = document.getElementById("toast"); document.getElementById("toast-msg").innerText = msg; t.classList.remove("translate-y-[-200%]"); setTimeout(() => t.classList.add("translate-y-[-200%]"), 3000); }
 
-			function showToast(msg) {
-				const t = document.getElementById("toast"); 
-				document.getElementById("toast-msg").innerText = msg;
-				t.classList.remove("translate-y-[-200%]"); 
-				setTimeout(() => t.classList.add("translate-y-[-200%]"), 3000);
-			}
-
-			function openGallery(id) {
-				const images = houseImages[id];
-				if(!images || images.length === 0) return;
-				currentGalleryID = id;
-				galleryIndex = 0;
-				updateGalleryView();
-				document.getElementById('gallery-modal').classList.remove('hidden');
-			}
-
+			function openGallery(id) { const images = houseImages[id]; if(!images || images.length === 0) return; currentGalleryID = id; galleryIndex = 0; updateGalleryView(); document.getElementById('gallery-modal').classList.remove('hidden'); }
 			function closeGallery() { document.getElementById('gallery-modal').classList.add('hidden'); }
+			function navGallery(step) { const images = houseImages[currentGalleryID]; galleryIndex += step; if(galleryIndex >= images.length) galleryIndex = 0; if(galleryIndex < 0) galleryIndex = images.length - 1; updateGalleryView(); }
+			function updateGalleryView() { const images = houseImages[currentGalleryID]; document.getElementById('gallery-img').src = images[galleryIndex]; document.getElementById('gallery-counter').innerText = (galleryIndex + 1) + " / " + images.length; }
 
-			function navGallery(step) {
-				const images = houseImages[currentGalleryID];
-				galleryIndex += step;
-				if(galleryIndex >= images.length) galleryIndex = 0;
-				if(galleryIndex < 0) galleryIndex = images.length - 1;
-				updateGalleryView();
-			}
-
-			function updateGalleryView() {
-				const images = houseImages[currentGalleryID];
-				document.getElementById('gallery-img').src = images[galleryIndex];
-				document.getElementById('gallery-counter').innerText = (galleryIndex + 1) + " / " + images.length;
-			}
-
-			function startAutoScroll() {
-				if (autoScrollInterval) clearInterval(autoScrollInterval);
-				autoScrollInterval = setInterval(() => {
-					document.querySelectorAll('[id^="img-"]').forEach(img => {
-						let id = img.id.split('-')[1];
-						if (document.getElementById('gallery-modal').classList.contains('hidden')) { changeSlide(id, 1); }
-					});
-				}, 3500);
-			}
-
-			function changeSlide(id, step) {
-				const images = houseImages[id];
-				if (!images || images.length <= 1) return;
-				let imgEl = document.getElementById('img-' + id);
-				let current = parseInt(imgEl.dataset.index || 0);
-				let next = current + step;
-				if (next >= images.length) next = 0;
-				if (next < 0) next = images.length - 1;
-				imgEl.dataset.index = next;
-				imgEl.src = images[next];
-			}
+			function startAutoScroll() { if (autoScrollInterval) clearInterval(autoScrollInterval); autoScrollInterval = setInterval(() => { document.querySelectorAll('[id^="img-"]').forEach(img => { let id = img.id.split('-')[1]; if (document.getElementById('gallery-modal').classList.contains('hidden')) { changeSlide(id, 1); } }); }, 3500); }
+			function changeSlide(id, step) { const images = houseImages[id]; if (!images || images.length <= 1) return; let imgEl = document.getElementById('img-' + id); let current = parseInt(imgEl.dataset.index || 0); let next = current + step; if (next >= images.length) next = 0; if (next < 0) next = images.length - 1; imgEl.dataset.index = next; imgEl.src = images[next]; }
 
 			function fetchHouses() {
 				const sLoc = document.getElementById('searchLoc').value.toLowerCase();
 				const sPrice = document.getElementById('searchPrice').value;
+				const container = document.getElementById('results-area');
+
+				// SHOW SKELETONS
+				container.innerHTML = skeletonHTML + skeletonHTML + skeletonHTML + skeletonHTML;
 				
 				fetch('/houses')
 				.then(res => res.json())
@@ -291,6 +254,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						renderList(JSON.parse(cached), sLoc, sPrice, false);
 						showToast("Offline Mode: Showing Saved Data");
 					} else {
+						container.innerHTML = "<div class='col-span-full text-center text-slate-500 py-20'>Connection Failed</div>";
 						showToast("Connection Lost");
 					}
 				});
@@ -354,7 +318,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						}
 					}
 
-					// Create Card Element
 					const card = document.createElement('div');
 					card.className = "glass-card rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl " + opacityClass;
 					card.innerHTML = statusBadge + photoBadge +
@@ -375,9 +338,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						'</div>' +
 						actionBtn;
 					
-					// ADD THE 3D PHYSICS TO THE CARD
 					add3DEffect(card);
-
 					container.appendChild(card);
 				});
 			}
@@ -415,7 +376,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		</script>
 	</body>
 	</html>`
-	fmt.Fprint(w, html)
+	fmt.Fprint(w, js)
 }
 
 // 2. LOGIN HANDLER
