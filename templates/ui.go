@@ -1,68 +1,12 @@
-package main
+package templates
 
-import (
-	"bytes"
-	"encoding/base64"
-	"encoding/json"
-	"fmt"
-	"io"
-	"net/http"
-	"os"
-	"strconv"
-	"time"
+import "fmt"
 
-	"golang.org/x/crypto/bcrypt" // New Security Package
-)
-
-// --- SAFARICOM CONFIG ---
-const (
-	consumerKey    = "COBGyH3dHvYrVjLKG0Znfh8RR1yAPeVbZ6hZitAwgvquIqhL"
-	consumerSecret = "ovklACIWd4ZMihM4Vv28TAwgEBG8MywaI5FOnHahzIPXAG16CTCikL2RSSqT4cog"
-	shortCode      = "174379"
-	passkey        = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
-	mpesaAuthURL   = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-	mpesaPushURL   = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-	callbackURL    = "https://nyumba-app.onrender.com/callback"
-)
-
-func formatPhoneNumber(phone string) string {
-	phone = "" + phone
-	if len(phone) > 0 && phone[0] == '0' {
-		return "254" + phone[1:]
-	}
-	if len(phone) > 4 && phone[0] == '+' {
-		return phone[1:]
-	}
-	return phone
-}
-
-// 1. HOME PAGE
-func homePage(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path == "/manifest.json" {
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, `{"name": "Nyumba", "short_name": "Nyumba", "start_url": "/", "display": "standalone", "background_color": "#0f172a", "theme_color": "#0f172a", "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/25/25694.png", "sizes": "192x192", "type": "image/png"}]}`)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	currentUser := getCurrentUser(r)
-	isLoggedIn := "false"
-	currentUsername := ""
-	navLinks := `<a href="/login" class="text-sm font-medium text-slate-300 hover:text-white transition">Login</a>`
-	landlordPanelDisplay := "none"
-	myHubButton := ""
-
-	if currentUser != nil {
-		isLoggedIn = "true"
-		currentUsername = currentUser.Username
-		navLinks = `<a href="/logout" class="text-sm font-bold text-red-400 border border-red-500/30 px-3 py-1 rounded-full hover:bg-red-500/10 transition">Logout</a>`
-		if currentUser.Role == "landlord" {
-			landlordPanelDisplay = "block"
-		}
-		myHubButton = `<button onclick="openDashboard()" class="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition mb-4 border border-white/10">🔐 My Unlocked Contacts</button>`
-	}
-
-	html := `<!DOCTYPE html><html><head><title>Nyumba</title><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0f172a"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script>
+// GetHTML returns the full website HTML with dynamic data injected
+func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay string) string {
+	
+	// We split the HTML string here to make it readable in this file
+	return fmt.Sprintf(`<!DOCTYPE html><html><head><title>Nyumba</title><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0f172a"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script>
 	<style>
 		body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; }
 		.glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); transform-style: preserve-3d; transition: transform 0.1s ease-out; }
@@ -77,8 +21,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-80 bg-[#1e293b] md:bg-transparent md:static md:flex flex-col h-full transform -translate-x-full md:translate-x-0 transition-transform duration-300 glass-sidebar">
 			<div class="p-8 pb-4 flex justify-between items-center"><div><h1 class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1><p class="text-xs text-slate-500 font-medium tracking-widest uppercase mt-2">Curated Living</p></div><button onclick="toggleMenu()" class="md:hidden text-white text-3xl">&times;</button></div>
 			<div class="px-6 py-4 space-y-6 flex-1 overflow-y-auto">
-				` + myHubButton + `
-				<div style="display: ` + landlordPanelDisplay + `;" class="glass-card rounded-2xl p-5 mb-8">
+				%s 
+				<div style="display: %s;" class="glass-card rounded-2xl p-5 mb-8">
 					<h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4">Landlord Mode</h3>
 					<div class="space-y-3">
 						<input id="building" type="text" placeholder="Apartment Name" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
@@ -97,8 +41,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				</div>
 			</div>
 			<div class="p-6 border-t border-white/5 flex items-center justify-between bg-[#1e293b]">
-				<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-bold">👤</div><div class="text-sm"><div class="font-bold text-white">` + currentUsername + `</div></div></div>
-				` + navLinks + `
+				<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-bold">👤</div><div class="text-sm"><div class="font-bold text-white">%s</div></div></div>
+				<a href="/logout" class="text-sm font-bold text-red-400 border border-red-500/30 px-3 py-1 rounded-full hover:bg-red-500/10 transition">Logout</a>
 			</div>
 		</aside>
 
@@ -127,11 +71,10 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			<div class="flex items-center gap-6"><button onclick="navGallery(-1)" class="text-white text-3xl">❮</button><p id="gallery-counter" class="text-slate-400 font-medium">1 / 1</p><button onclick="navGallery(1)" class="text-white text-3xl">❯</button></div>
 		</div>
 		<div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl translate-y-[-200%] transition-transform duration-500 z-[60] flex items-center gap-2"><span class="text-lg">✨</span> <span id="toast-msg">Notification</span></div>
-` // JAVASCRIPT START
-	js := `
+
 		<script>
-			const isLoggedIn = ` + isLoggedIn + `;
-			const currentUsername = "` + currentUsername + `";
+			const isLoggedIn = %s;
+			const currentUsername = "%s";
 			let houseImages = {}; let currentGalleryID = 0; let galleryIndex = 0; let autoScrollInterval;
 			let allHousesData = []; 
 
@@ -214,10 +157,12 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					houseImages[h.id] = h.image_urls;
 					let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
 					
+					// --- STRICT MODE: PAY FIRST ---
 					let actionBtn;
 					if (h.is_booked) {
 						actionBtn = '<button onclick="openDashboard()" class="mt-4 w-full py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/50 text-xs font-bold tracking-widest uppercase">🔓 Contact Unlocked</button>';
 					} else if (isLoggedIn) {
+						// PROFESSIONAL BUTTON - NO EMOJI
 						actionBtn = '<button onclick="payWithMpesa(' + h.id + ')" class="mt-4 w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">Pay Viewing Fee (1k)</button>';
 					} else {
 						actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock Details</a>';
@@ -272,212 +217,5 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 			}
 		</script>
 	</body>
-	</html>`
-	fmt.Fprint(w, html+js)
-} // 2. LOGIN HANDLER (Now Secure!)
-func loginHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		username := r.FormValue("username")
-		password := r.FormValue("password")
-		for _, u := range users {
-			if u.Username == username {
-				// SECURE CHECK: Compare the hashed password, not the plain text
-				err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
-				if err == nil {
-					http.SetCookie(w, &http.Cookie{Name: CookieName, Value: username, Path: "/"})
-					http.Redirect(w, r, "/", http.StatusSeeOther)
-					return
-				}
-			}
-		}
-		http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
-		return
-	}
-	html := `<!DOCTYPE html><html><head><title>Login</title><meta name="viewport" content="width=device-width"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><style>body{font-family:'Outfit',sans-serif;background:#0b0f19;color:#fff}.glass{background:rgba(30,41,59,0.4);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.05)}</style></head><body class="h-screen flex items-center justify-center"><div class="glass p-10 rounded-3xl w-full max-w-sm"><h1 class="text-3xl font-bold mb-6 text-center">Login</h1><form method="POST"><input name="username" placeholder="Username" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><input name="password" type="password" placeholder="Password" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><button class="w-full bg-indigo-600 py-3 rounded-xl font-bold">Sign In</button></form><a href="/signup" class="block text-center mt-6 text-slate-400 text-sm">Create Account</a></div></body></html>`
-	fmt.Fprint(w, html)
-}
-
-// 3. SIGNUP HANDLER (Now Hashes Passwords!)
-func signupHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		username := r.FormValue("username")
-		password := r.FormValue("password")
-		phone := r.FormValue("phone")
-		role := r.FormValue("role")
-
-		// SECURE: Hash the password before saving!
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-		if err != nil {
-			http.Error(w, "Server Error", 500)
-			return
-		}
-
-		newUser := User{Username: username, Password: string(hashedPassword), Phone: phone, Role: role}
-		users = append(users, newUser)
-		saveData(userFile, users)
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
-		return
-	}
-	html := `<!DOCTYPE html><html><head><title>Join</title><meta name="viewport" content="width=device-width"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><style>body{font-family:'Outfit',sans-serif;background:#0b0f19;color:#fff}.glass{background:rgba(30,41,59,0.4);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.05)}</style></head><body class="h-screen flex items-center justify-center"><div class="glass p-10 rounded-3xl w-full max-w-sm"><h1 class="text-3xl font-bold mb-6 text-center">Join</h1><form method="POST"><input name="username" placeholder="Username" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><input name="phone" placeholder="Phone" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><input name="password" type="password" placeholder="Password" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><select name="role" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><option value="renter">Renter</option><option value="landlord">Landlord</option></select><button class="w-full bg-indigo-600 py-3 rounded-xl font-bold">Create Account</button></form><a href="/login" class="block text-center mt-6 text-slate-400 text-sm">Login Here</a></div></body></html>`
-	fmt.Fprint(w, html)
-}
-
-// 4. UPLOAD LOGIC
-func uploadHouse(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", 405)
-		return
-	}
-	r.ParseMultipartForm(20 << 20)
-	currentUser := getCurrentUser(r)
-	if currentUser == nil || currentUser.Role != "landlord" {
-		http.Error(w, "Unauthorized", 401)
-		return
-	}
-
-	var imageURLs []string
-	for _, fileHeader := range r.MultipartForm.File["photos"] {
-		file, _ := fileHeader.Open()
-		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), fileHeader.Filename)
-		dst, _ := os.Create("uploads/" + filename)
-		io.Copy(dst, file)
-		dst.Close()
-		file.Close()
-		imageURLs = append(imageURLs, "/uploads/"+filename)
-	}
-
-	p, _ := strconv.ParseFloat(r.FormValue("price"), 64)
-	u, _ := strconv.ParseFloat(r.FormValue("utilities"), 64)
-	newHouse := House{
-		ID:           len(houses) + 1,
-		BuildingName: r.FormValue("building_name"),
-		Location:     r.FormValue("location"),
-		Type:         r.FormValue("type"),
-		Price:        p,
-		Utilities:    u,
-		Details:      r.FormValue("details"),
-		ImageURLs:    imageURLs,
-		Phone:        currentUser.Phone,
-		Owner:        currentUser.Username,
-		IsBooked:     false,
-		MapURL:       r.FormValue("map_url"),
-	}
-	houses = append(houses, newHouse)
-	saveData(houseFile, houses)
-	w.WriteHeader(http.StatusCreated)
-}
-
-// 5. DELETE HANDLER
-func deleteHouseHandler(w http.ResponseWriter, r *http.Request) {
-	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
-	newHouses := []House{}
-	for _, h := range houses {
-		if h.ID != id {
-			newHouses = append(newHouses, h)
-		}
-	}
-	houses = newHouses
-	saveData(houseFile, houses)
-	w.WriteHeader(200)
-}
-
-// 6. PAY HANDLER
-func payHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
-	rawPhone := r.URL.Query().Get("phone")
-	phone := formatPhoneNumber(rawPhone)
-
-	var selectedHouse *House
-	for i, h := range houses {
-		if h.ID == id {
-			selectedHouse = &houses[i]
-			break
-		}
-	}
-
-	if selectedHouse == nil {
-		w.WriteHeader(404)
-		fmt.Fprint(w, `{"ResponseCode": "1", "CustomerMessage": "House Not Found"}`)
-		return
-	}
-
-	err := initiateSTKPush(phone, "1")
-	if err != nil {
-		fmt.Fprintf(w, `{"ResponseCode": "1", "CustomerMessage": "M-Pesa Error: %s"}`, err.Error())
-		return
-	}
-
-	selectedHouse.IsBooked = true
-	selectedHouse.TenantPhone = phone
-	saveData(houseFile, houses)
-	fmt.Fprint(w, `{"ResponseCode": "0", "CustomerMessage": "Sent"}`)
-}
-
-// 7. FILE SERVER
-func serveMedia(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "."+r.URL.Path) }
-
-// --- CONNECTORS ---
-func getHouses(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(houses)
-}
-func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	http.SetCookie(w, &http.Cookie{Name: CookieName, Value: "", Path: "/", MaxAge: -1})
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
-}
-func uploadHouseHandler(w http.ResponseWriter, r *http.Request) { uploadHouse(w, r) }
-
-// --- INTERNAL MPESA LOGIC ---
-func initiateSTKPush(phoneNumber, amount string) error {
-	token, err := getAccessToken()
-	if err != nil {
-		return err
-	}
-	timestamp := time.Now().Format("20060102150405")
-	password := base64.StdEncoding.EncodeToString([]byte(shortCode + passkey + timestamp))
-	headers := map[string]string{"Authorization": "Bearer " + token, "Content-Type": "application/json"}
-	payload := map[string]string{
-		"BusinessShortCode": shortCode, "Password": password, "Timestamp": timestamp,
-		"TransactionType": "CustomerPayBillOnline", "Amount": amount, "PartyA": phoneNumber,
-		"PartyB":           shortCode,
-		"PhoneNumber":      phoneNumber,
-		"CallBackURL":      callbackURL,
-		"AccountReference": "NyumbaApp",
-		"TransactionDesc":  "Viewing Fee",
-	}
-	jsonPayload, _ := json.Marshal(payload)
-	req, _ := http.NewRequest("POST", mpesaPushURL, bytes.NewBuffer(jsonPayload))
-	for k, v := range headers {
-		req.Header.Set(k, v)
-	}
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("failed: %s", string(body))
-	}
-	return nil
-}
-
-func getAccessToken() (string, error) {
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", mpesaAuthURL, nil)
-	auth := base64.StdEncoding.EncodeToString([]byte(consumerKey + ":" + consumerSecret))
-	req.Header.Add("Authorization", "Basic "+auth)
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("failed to get token")
-	}
-	var result map[string]interface{}
-	json.NewDecoder(resp.Body).Decode(&result)
-	return result["access_token"].(string), nil
+	</html>`, myHubButton, landlordPanelDisplay, currentUsername, isLoggedIn, currentUsername)
 }

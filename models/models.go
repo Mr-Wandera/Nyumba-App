@@ -1,16 +1,6 @@
-package main
+package models
 
-import "sync"
-
-// --- CONSTANTS ---
-const (
-	userFile   = "users.json"
-	houseFile  = "uploads/houses.json"
-	CookieName = "session_token"
-)
-
-// --- DATA STRUCTURES ---
-
+// User structure
 type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -18,12 +8,13 @@ type User struct {
 	Role     string `json:"role"`
 }
 
+// House structure
 type House struct {
 	ID           int      `json:"id"`
-	BuildingName string   `json:"building_name"` // <-- NEW FIELD
+	BuildingName string   `json:"building_name"`
 	Location     string   `json:"location"`
-	Price        float64  `json:"price"`
 	Type         string   `json:"type"`
+	Price        float64  `json:"price"`
 	Utilities    float64  `json:"utilities"`
 	Details      string   `json:"details"`
 	ImageURLs    []string `json:"image_urls"`
@@ -33,10 +24,3 @@ type House struct {
 	TenantPhone  string   `json:"tenant_phone"`
 	MapURL       string   `json:"map_url"`
 }
-
-// --- GLOBAL MEMORY ---
-var (
-	users  []User
-	houses []House
-	mutex  sync.Mutex
-)
