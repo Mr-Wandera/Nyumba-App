@@ -38,9 +38,7 @@ func formatPhoneNumber(phone string) string {
 }
 
 // 1. HOME PAGE & MANIFEST HANDLER
-// 1. HOME PAGE & MANIFEST HANDLER
 func homePage(w http.ResponseWriter, r *http.Request) {
-	// --- SPECIAL: SERVE MANIFEST FILE AUTOMATICALLY ---
 	if r.URL.Path == "/manifest.json" {
 		w.Header().Set("Content-Type", "application/json")
 		manifest := `{
@@ -60,11 +58,9 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-
 	currentUser := getCurrentUser(r)
 	isLoggedIn := "false"
 	currentUsername := ""
-
 	navLinks := `<a href="/login" class="text-sm font-medium text-slate-300 hover:text-white transition">Login</a>`
 	landlordPanelDisplay := "none"
 
@@ -77,7 +73,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// COMBINED HTML AND JAVASCRIPT
 	html := `
 	<!DOCTYPE html>
 	<html>
@@ -90,7 +85,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 		<script src="https://cdn.tailwindcss.com"></script>
 		<style>
 			body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; }
-			.glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); }
+			/* 3D FLIGHT SIMULATOR CSS */
+			.glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); transform-style: preserve-3d; transition: transform 0.1s ease-out; }
 			.glass-sidebar { background: #1e293b; border-right: 1px solid rgba(255, 255, 255, 0.05); }
 			.nav-arrow { background: rgba(0,0,0,0.8); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); z-index: 40; transition: 0.2s; }
 			.gallery-btn { background: rgba(255,255,255,0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 99px; font-size: 12px; font-weight: bold; color: white; cursor: pointer; }
@@ -151,7 +147,6 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				` + navLinks + `
 			</div>
 		</aside>
-
 		<main class="flex-1 h-full overflow-y-auto bg-slate-900 relative z-10">
 			<div class="p-4 md:p-8 max-w-[1600px] mx-auto">
 				<header class="flex justify-between items-end mb-8 mt-4 md:mt-0">
@@ -159,9 +154,7 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 						<h2 class="text-2xl md:text-3xl font-light text-white">Discover <span class="font-bold text-indigo-400">Sanctuary</span></h2>
 						<p class="text-slate-400 mt-1 text-sm">Pay the service fee to unlock locations instantly.</p>
 					</div>
-					<div id="offline-badge" class="hidden bg-amber-500/20 text-amber-500 border border-amber-500/50 px-4 py-2 rounded-lg text-xs font-bold animate-pulse">
-						⚠️ OFFLINE MODE
-					</div>
+					<div id="offline-badge" class="hidden bg-amber-500/20 text-amber-500 border border-amber-500/50 px-4 py-2 rounded-lg text-xs font-bold animate-pulse">⚠️ OFFLINE MODE</div>
 				</header>
 				<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20"></div>
 			</div>
@@ -193,6 +186,27 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 				fetchHouses();
 				startAutoScroll();
 			});
+
+			// --- 3D FLIGHT SIMULATOR EFFECT ---
+			function add3DEffect(card) {
+				card.addEventListener('mousemove', (e) => {
+					const rect = card.getBoundingClientRect();
+					const x = e.clientX - rect.left;
+					const y = e.clientY - rect.top;
+					const centerX = rect.width / 2;
+					const centerY = rect.height / 2;
+					
+					// Calculate Rotation (Pitch & Yaw)
+					const rotateX = ((y - centerY) / centerY) * -10; // Max 10 deg tilt
+					const rotateY = ((x - centerX) / centerX) * 10;
+
+					card.style.transform = "perspective(1000px) rotateX(" + rotateX + "deg) rotateY(" + rotateY + "deg) scale(1.02)";
+				});
+
+				card.addEventListener('mouseleave', () => {
+					card.style.transform = "perspective(1000px) rotateX(0) rotateY(0) scale(1)";
+				});
+			}
 
 			function toggleMenu() {
 				const sb = document.getElementById('sidebar');
@@ -296,18 +310,13 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 					const isOwner = (h.owner === currentUsername);
 					let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
 					
-					let arrows = "";
-					let photoBadge = "";
-					let viewBtn = "";
+					let arrows = ""; let photoBadge = ""; let viewBtn = "";
 
 					if (h.image_urls && h.image_urls.length > 0) {
 						viewBtn = '<button onclick="openGallery(' + h.id + ')" class="gallery-btn absolute bottom-4 right-4 z-30">View Photos</button>';
 						if (h.image_urls.length > 1) {
 							photoBadge = '<div class="absolute top-3 left-3 bg-black/70 text-white text-[10px] font-bold px-2 py-1 rounded-md z-30 pointer-events-none">📸 ' + h.image_urls.length + ' Photos</div>';
-							arrows = '<div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-30">' + 
-								'<button onclick="changeSlide(' + h.id + ', -1)" class="nav-arrow">❮</button>' +
-								'<button onclick="changeSlide(' + h.id + ', 1)" class="nav-arrow">❯</button>' +
-							'</div>';
+							arrows = '<div class="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-2 z-30"><button onclick="changeSlide(' + h.id + ', -1)" class="nav-arrow">❮</button><button onclick="changeSlide(' + h.id + ', 1)" class="nav-arrow">❯</button></div>';
 						}
 					}
 					
@@ -333,18 +342,16 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 							let payOnClick = isOnline ? 'onclick="payWithMpesa(' + h.id + ')"' : 'onclick="showToast(\'Cannot pay while offline\')"';
 							let btnColor = isOnline ? 'bg-indigo-600 hover:bg-indigo-500' : 'bg-slate-700 cursor-not-allowed';
 							let waLink = "https://wa.me/" + h.phone + "?text=Hi, I found your " + h.type + " on Nyumba.";
-							actionBtn = '<div class="grid grid-cols-2 gap-2 mt-4">' +
-								'<a href="' + waLink + '" target="_blank" class="flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold py-3 rounded-xl transition">Chat</a>' +
-								'<button ' + payOnClick + ' class="' + btnColor + ' text-white text-xs font-bold py-3 rounded-xl transition">💳 Pay Fee (1k)</button>' +
-							'</div>';
+							actionBtn = '<div class="grid grid-cols-2 gap-2 mt-4"><a href="' + waLink + '" target="_blank" class="flex items-center justify-center bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold py-3 rounded-xl transition">Chat</a><button ' + payOnClick + ' class="' + btnColor + ' text-white text-xs font-bold py-3 rounded-xl transition">💳 Pay Fee (1k)</button></div>';
 						} else {
 							actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock</a>';
 						}
 					}
 
-					const html = 
-					'<div class="glass-card rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl ' + opacityClass + '">' +
-						statusBadge + photoBadge +
+					// Create Card Element
+					const card = document.createElement('div');
+					card.className = "glass-card rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl " + opacityClass;
+					card.innerHTML = statusBadge + photoBadge +
 						'<div class="w-full h-48 bg-slate-800 rounded-2xl overflow-hidden relative mb-4">' +
 							'<img id="img-' + h.id + '" src="' + imageSrc + '" class="w-full h-full object-cover transition duration-700 ease-out">' +
 							'<div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent pointer-events-none"></div>' +
@@ -360,9 +367,12 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 							'<div><p class="text-[10px] text-slate-500 uppercase font-bold">Monthly Rent</p><p class="text-xl font-bold text-white">KES ' + h.price.toLocaleString() + '</p></div>' +
 							'<div class="text-right"><p class="text-[10px] text-slate-500 uppercase font-bold">Bills</p><p class="text-sm font-medium text-slate-300">~' + h.utilities.toLocaleString() + '</p></div>' +
 						'</div>' +
-						actionBtn +
-					'</div>';
-					container.innerHTML += html;
+						actionBtn;
+					
+					// ADD THE 3D PHYSICS TO THE CARD
+					add3DEffect(card);
+
+					container.appendChild(card);
 				});
 			}
 
