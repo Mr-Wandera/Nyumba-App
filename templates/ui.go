@@ -4,14 +4,12 @@ import "fmt"
 
 func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay string) string {
 	
-	// We inject the variables into the HTML string
 	return fmt.Sprintf(`<!DOCTYPE html><html><head><title>Nyumba</title><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0f172a"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script>
 	<style>
 		body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; }
 		.glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); transform-style: preserve-3d; transition: transform 0.1s ease-out; }
 		.glass-card > .absolute, .glass-card > div.mt-4 { transform: translateZ(40px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
 		.glass-sidebar { background: #1e293b; border-right: 1px solid rgba(255, 255, 255, 0.05); }
-		/* Ensure toast is hidden by default */
 		#toast.hidden { display: none; } 
 	</style></head>
 	<body class="h-screen flex flex-col md:flex-row overflow-hidden">
@@ -118,7 +116,6 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 
 			function toggleMenu() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('backdrop').classList.toggle('hidden'); }
 			
-			// FIXED TOAST FUNCTION
 			function showToast(msg) { 
 				const t = document.getElementById("toast"); 
 				document.getElementById("toast-msg").innerText = msg; 
@@ -166,11 +163,11 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 					houseImages[h.id] = h.image_urls;
 					let imageSrc = (h.image_urls && h.image_urls.length > 0) ? h.image_urls[0] : 'https://via.placeholder.com/600x400?text=No+Image';
 					
-					// --- STRICT MODE: PAY FIRST ---
 					let actionBtn;
 					if (h.is_booked) {
 						actionBtn = '<button onclick="openDashboard()" class="mt-4 w-full py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/50 text-xs font-bold tracking-widest uppercase">🔓 Contact Unlocked</button>';
 					} else if (isLoggedIn) {
+						// UPDATED: Calls payWithMpesa correctly
 						actionBtn = '<button onclick="payWithMpesa(' + h.id + ')" class="mt-4 w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">Pay Viewing Fee (1k)</button>';
 					} else {
 						actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock Details</a>';
@@ -211,17 +208,28 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 				if(!confirm("Are you sure?")) return;
 				fetch('/houses/delete?id=' + id, {method: 'POST'}).then(() => { showToast("Listing Deleted"); fetchHouses(); });
 			}
+			
+			// --- UPDATED PAYMENT FUNCTION ---
 			function payWithMpesa(id) {
-				let phone = prompt("Enter M-Pesa Number to Pay Viewing Fee:");
+				let phone = prompt("Enter M-Pesa Number to Pay Viewing Fee (e.g., 0712345678):");
 				if (!phone) return;
+				
 				showToast("Requesting M-Pesa...");
+				
+				// Using formatted string correctly
 				fetch('/pay?id=' + id + '&phone=' + phone, {method: 'POST'})
-				.then(res => res.json())
+				.then(res => res.json()) // We now expect JSON response
 				.then(data => { 
-					if(data.ResponseCode === "0") { showToast("Success! Check 'My Unlocked Contacts'"); fetchHouses(); } 
-					else { showToast(data.CustomerMessage || "Connection Failed"); } 
+					if(data.ResponseCode === "0") { 
+						showToast("📲 check your phone to enter PIN!"); 
+					} else { 
+						showToast(data.CustomerMessage || "Connection Failed"); 
+					} 
 				})
-				.catch(err => { showToast("System Error"); });
+				.catch(err => { 
+					console.error(err);
+					showToast("System Error"); 
+				});
 			}
 		</script>
 	</body>
