@@ -22,6 +22,7 @@ func main() {
 	http.HandleFunc("/login", handlers.LoginHandler)
 	http.HandleFunc("/signup", handlers.SignupHandler)
 	http.HandleFunc("/logout", handlers.LogoutHandler)
+	http.HandleFunc("/callback", handlers.CallbackHandler)
 
 	// API & Features
 	http.HandleFunc("/houses", handlers.GetHouses)

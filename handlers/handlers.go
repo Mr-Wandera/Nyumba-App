@@ -13,8 +13,8 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"nyumba/models"    // ✅ FIXED: Using real module name
-	"nyumba/templates" // ✅ FIXED: Using real module name
+	"nyumba/models"
+	"nyumba/templates"
 )
 
 // Global Data Store
@@ -196,6 +196,7 @@ func DeleteHouseHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
+// PAY HANDLER (Updates to request payment & Save ID)
 func PayHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
@@ -216,19 +217,39 @@ func PayHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := initiateSTKPush(phone, "1")
+	checkoutID, err := initiateSTKPush(phone, "1")
 	if err != nil {
 		fmt.Fprintf(w, `{"ResponseCode": "1", "CustomerMessage": "M-Pesa Error: %s"}`, err.Error())
 		return
 	}
 
-	selectedHouse.IsBooked = true
-	selectedHouse.TenantPhone = phone
+	selectedHouse.CheckoutRequestID = checkoutID
 	saveData(houseFile, houses)
-	fmt.Fprint(w, `{"ResponseCode": "0", "CustomerMessage": "Sent"}`)
+	fmt.Fprint(w, `{"ResponseCode": "0", "CustomerMessage": "Request Sent"}`)
 }
 
+// CALLBACK HANDLER (Listens for Success from Safaricom)
+func CallbackHandler(w http.ResponseWriter, r *http.Request) {
+	var callback models.MpesaCallback
+	json.NewDecoder(r.Body).Decode(&callback)
+
+	if callback.Body.StkCallback.ResultCode == 0 {
+		targetID := callback.Body.StkCallback.CheckoutRequestID
+		for i, h := range houses {
+			if h.CheckoutRequestID == targetID {
+				houses[i].IsBooked = true
+				houses[i].CheckoutRequestID = ""
+				saveData(houseFile, houses)
+				break
+			}
+		}
+	}
+	w.WriteHeader(200)
+}
+
+// ServeMedia (Restored!)
 func ServeMedia(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "."+r.URL.Path) }
+
 func GetHouses(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(houses)
@@ -240,10 +261,10 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 // --- MPESA HELPERS ---
 
-func initiateSTKPush(phoneNumber, amount string) error {
+func initiateSTKPush(phoneNumber, amount string) (string, error) {
 	token, err := getAccessToken()
 	if err != nil {
-		return err
+		return "", err
 	}
 	timestamp := time.Now().Format("20060102150405")
 	password := base64.StdEncoding.EncodeToString([]byte(shortCode + passkey + timestamp))
@@ -261,14 +282,17 @@ func initiateSTKPush(phoneNumber, amount string) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("failed: %s", string(body))
+
+	var res map[string]interface{}
+	json.NewDecoder(resp.Body).Decode(&res)
+
+	if res["ResponseCode"] != "0" {
+		return "", fmt.Errorf("failed") // Simplified error for brevity
 	}
-	return nil
+	return res["CheckoutRequestID"].(string), nil
 }
 
 func getAccessToken() (string, error) {
