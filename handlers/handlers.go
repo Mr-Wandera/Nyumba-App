@@ -106,12 +106,19 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, templates.GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay))
 }
 
+// --- UPDATED AUTH HANDLERS (With Professional UI) ---
+
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	errorMsg := ""
+
 	if r.Method == http.MethodPost {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
+
+		found := false
 		for _, u := range users {
 			if u.Username == username {
+				found = true
 				err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 				if err == nil {
 					http.SetCookie(w, &http.Cookie{Name: CookieName, Value: username, Path: "/"})
@@ -120,10 +127,38 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		http.Error(w, "Invalid Credentials", http.StatusUnauthorized)
-		return
+		if !found || true { // "true" ensures we fall through to error
+			errorMsg = "Invalid Username or Password"
+		}
 	}
-	fmt.Fprint(w, `<!DOCTYPE html><html><head><title>Login</title><meta name="viewport" content="width=device-width"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><style>body{font-family:'Outfit',sans-serif;background:#0b0f19;color:#fff}.glass{background:rgba(30,41,59,0.4);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.05)}</style></head><body class="h-screen flex items-center justify-center"><div class="glass p-10 rounded-3xl w-full max-w-sm"><h1 class="text-3xl font-bold mb-6 text-center">Login</h1><form method="POST"><input name="username" placeholder="Username" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><input name="password" type="password" placeholder="Password" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><button class="w-full bg-indigo-600 py-3 rounded-xl font-bold">Sign In</button></form><a href="/signup" class="block text-center mt-6 text-slate-400 text-sm">Create Account</a></div></body></html>`)
+
+	// PROFESSIONAL LOGIN UI (With Error Toast)
+	html := fmt.Sprintf(`<!DOCTYPE html><html><head><title>Login • Nyumba</title><meta name="viewport" content="width=device-width"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;800&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script>
+	<style>body{font-family:'Outfit',sans-serif;background:#0f172a;color:#fff}.glass{background:rgba(30,41,59,0.7);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);box-shadow:0 25px 50px -12px rgba(0,0,0,0.5)}</style></head>
+	<body class="h-screen flex items-center justify-center relative overflow-hidden">
+		<div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10"><div class="absolute top-[-10%%] left-[-10%%] w-[40%%] h-[40%%] bg-indigo-600/20 rounded-full blur-[100px]"></div><div class="absolute bottom-[-10%%] right-[-10%%] w-[40%%] h-[40%%] bg-emerald-500/10 rounded-full blur-[100px]"></div></div>
+
+		<div class="glass p-8 md:p-12 rounded-3xl w-full max-w-sm mx-4 relative transform transition hover:scale-[1.01] duration-500">
+			<div class="text-center mb-8">
+				<h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300 mb-2">Nyumba.</h1>
+				<p class="text-xs text-slate-400 font-medium tracking-widest uppercase">Welcome Back</p>
+			</div>
+
+			%s 
+
+			<form method="POST" class="space-y-4">
+				<div><label class="text-[10px] uppercase font-bold text-slate-500 tracking-wider ml-1">Username</label><input name="username" type="text" required class="w-full bg-slate-900/50 border border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-white outline-none transition"></div>
+				<div><label class="text-[10px] uppercase font-bold text-slate-500 tracking-wider ml-1">Password</label><input name="password" type="password" required class="w-full bg-slate-900/50 border border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-white outline-none transition"></div>
+				<button class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 mt-4">Sign In</button>
+			</form>
+			
+			<div class="mt-8 text-center border-t border-white/5 pt-6">
+				<p class="text-slate-400 text-sm">New here? <a href="/signup" class="text-indigo-400 font-bold hover:text-indigo-300 transition">Create Account</a></p>
+			</div>
+		</div>
+	</body></html>`, generateErrorHTML(errorMsg))
+
+	fmt.Fprint(w, html)
 }
 
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
@@ -145,7 +180,38 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	fmt.Fprint(w, `<!DOCTYPE html><html><head><title>Join</title><meta name="viewport" content="width=device-width"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><style>body{font-family:'Outfit',sans-serif;background:#0b0f19;color:#fff}.glass{background:rgba(30,41,59,0.4);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.05)}</style></head><body class="h-screen flex items-center justify-center"><div class="glass p-10 rounded-3xl w-full max-w-sm"><h1 class="text-3xl font-bold mb-6 text-center">Join</h1><form method="POST"><input name="username" placeholder="Username" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><input name="phone" placeholder="Phone" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><input name="password" type="password" placeholder="Password" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><select name="role" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 mb-4"><option value="renter">Renter</option><option value="landlord">Landlord</option></select><button class="w-full bg-indigo-600 py-3 rounded-xl font-bold">Create Account</button></form><a href="/login" class="block text-center mt-6 text-slate-400 text-sm">Login Here</a></div></body></html>`)
+
+	// PROFESSIONAL SIGNUP UI
+	fmt.Fprint(w, `<!DOCTYPE html><html><head><title>Join • Nyumba</title><meta name="viewport" content="width=device-width"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;800&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script>
+	<style>body{font-family:'Outfit',sans-serif;background:#0f172a;color:#fff}.glass{background:rgba(30,41,59,0.7);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);box-shadow:0 25px 50px -12px rgba(0,0,0,0.5)}</style></head>
+	<body class="h-screen flex items-center justify-center relative overflow-hidden">
+		<div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10"><div class="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/20 rounded-full blur-[100px]"></div></div>
+
+		<div class="glass p-8 md:p-12 rounded-3xl w-full max-w-sm mx-4 relative">
+			<div class="text-center mb-6">
+				<h1 class="text-3xl font-bold text-white mb-2">Create Account</h1>
+				<p class="text-xs text-slate-400">Join the curated living community</p>
+			</div>
+			<form method="POST" class="space-y-3">
+				<div><input name="username" type="text" placeholder="Username" required class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500 transition"></div>
+				<div><input name="phone" type="tel" placeholder="Phone (e.g. 07XX...)" required class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500 transition"></div>
+				<div><input name="password" type="password" placeholder="Password" required class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500 transition"></div>
+				<div class="relative"><select name="role" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none appearance-none cursor-pointer"><option value="renter">I want to Rent</option><option value="landlord">I am a Landlord</option></select><div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div></div>
+				<button class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg mt-2 transition">Start Journey</button>
+			</form>
+			<div class="mt-6 text-center border-t border-white/5 pt-4"><a href="/login" class="text-slate-400 text-sm hover:text-white transition">Already have an account? Login</a></div>
+		</div>
+	</body></html>`)
+}
+
+// Helper to generate the Red Error Box
+func generateErrorHTML(msg string) string {
+	if msg == "" {
+		return ""
+	}
+	return fmt.Sprintf(`<div class="bg-red-500/10 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl mb-6 text-xs font-bold flex items-center gap-3 animate-pulse">
+		<span class="text-lg">⚠️</span> %s
+	</div>`, msg)
 }
 
 func UploadHouse(w http.ResponseWriter, r *http.Request) {
