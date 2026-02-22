@@ -11,6 +11,7 @@ import (
 func main() {
 	// 1. Initialize Data
 	handlers.LoadData()
+	handlers.SeedHouses()
 
 	// 2. Ensure uploads folder exists
 	if _, err := os.Stat("uploads"); os.IsNotExist(err) {
