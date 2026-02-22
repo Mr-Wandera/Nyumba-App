@@ -79,7 +79,15 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 
 			const skeletonHTML = '<div class="glass-card rounded-3xl p-4 flex flex-col relative animate-pulse border border-white/5"><div class="w-full h-48 bg-slate-800 rounded-2xl mb-4"></div><div class="h-4 bg-slate-800 rounded w-1/3 mb-2"></div><div class="h-6 bg-slate-800 rounded w-3/4 mb-4"></div><div class="h-12 bg-slate-800 rounded-xl mt-4"></div></div>';
 
-			document.addEventListener("DOMContentLoaded", () => { fetchHouses(); startAutoScroll(); });
+			document.addEventListener("DOMContentLoaded", () => { 
+				// UPGRADED: Read location from URL if clicking a chip!
+				const params = new URLSearchParams(window.location.search);
+				const loc = params.get('loc');
+				if (loc) { document.getElementById('searchLoc').value = loc; }
+
+				fetchHouses(); 
+				startAutoScroll(); 
+			});
 
 			function openDashboard() {
 				const container = document.getElementById('dashboard-list');
@@ -248,6 +256,7 @@ func GetLandingHTML() string {
 	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 	<script src="https://cdn.tailwindcss.com"></script>
 	<style>
+		html { scroll-behavior: smooth; }
 		body { font-family: 'Outfit', sans-serif; background: #0a0a0a; color: #f8fafc; overflow-x: hidden; }
 		.glass-pill { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
 		@keyframes float { 0% { transform: translateY(0px) rotateX(4deg); } 50% { transform: translateY(-10px) rotateX(1deg); } 100% { transform: translateY(0px) rotateX(4deg); } }
@@ -258,14 +267,13 @@ func GetLandingHTML() string {
 		.animate-marquee { display: flex; width: max-content; animation: scroll 30s linear infinite; }
 		.animate-marquee:hover { animation-play-state: paused; }
 		
-		/* UPGRADED: Live Background Blob Animations */
+		/* Live Background Blob Animations */
 		@keyframes blob {
 			0% { transform: translate(0px, 0px) scale(1); }
 			33% { transform: translate(150px, -150px) scale(1.2); }
 			66% { transform: translate(-100px, 100px) scale(0.8); }
 			100% { transform: translate(0px, 0px) scale(1); }
 		}
-		/* Sped up to 10s and made infinite */
 		.animate-blob { animation: blob 10s infinite alternate ease-in-out; }
 		.animation-delay-2000 { animation-delay: 2s; }
 		.animation-delay-4000 { animation-delay: 4s; }
@@ -281,8 +289,8 @@ func GetLandingHTML() string {
 			<nav class="glass-pill rounded-full px-6 py-3 w-full max-w-4xl flex items-center justify-between transition-all">
 				<div class="text-xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">Nyumba.</div>
 				<div class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
-					<a href="#" class="hover:text-white transition">How it Works</a>
-					<a href="#" class="hover:text-white transition">Neighborhoods</a>
+					<a href="#how" class="hover:text-white transition">How it Works</a>
+					<a href="#neighborhoods" class="hover:text-white transition">Neighborhoods</a>
 					<a href="/signup" class="hover:text-white transition">For Landlords</a>
 				</div>
 				<div class="flex items-center gap-4">
@@ -315,7 +323,7 @@ func GetLandingHTML() string {
 				</a>
 			</div>
 
-			<div class="w-full max-w-4xl border-t border-white/10 pt-8 mt-4">
+			<div id="neighborhoods" class="w-full max-w-4xl border-t border-white/10 pt-8 mt-4 scroll-mt-24">
 				<p class="text-xs text-slate-500 uppercase tracking-widest font-bold mb-4">Popular Neighborhoods</p>
 				
 				<div class="relative overflow-hidden w-full flex">
@@ -323,29 +331,52 @@ func GetLandingHTML() string {
 					<div class="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10 pointer-events-none"></div>
 					
 					<div class="animate-marquee gap-3">
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Kileleshwa</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Kilimani</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Thika</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Juja</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Roysambu</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Westlands</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Ruiru</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Karen</a>
+						<a href="/explore?loc=kileleshwa" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Kileleshwa</a>
+						<a href="/explore?loc=kilimani" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Kilimani</a>
+						<a href="/explore?loc=thika" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Thika</a>
+						<a href="/explore?loc=juja" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Juja</a>
+						<a href="/explore?loc=roysambu" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Roysambu</a>
+						<a href="/explore?loc=westlands" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Westlands</a>
+						<a href="/explore?loc=ruiru" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Ruiru</a>
+						<a href="/explore?loc=karen" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Karen</a>
 
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Kileleshwa</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Kilimani</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Thika</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Juja</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Roysambu</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Westlands</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Ruiru</a>
-						<a href="/explore" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Karen</a>
+						<a href="/explore?loc=kileleshwa" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Kileleshwa</a>
+						<a href="/explore?loc=kilimani" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Kilimani</a>
+						<a href="/explore?loc=thika" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Thika</a>
+						<a href="/explore?loc=juja" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Juja</a>
+						<a href="/explore?loc=roysambu" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Roysambu</a>
+						<a href="/explore?loc=westlands" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Westlands</a>
+						<a href="/explore?loc=ruiru" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Ruiru</a>
+						<a href="/explore?loc=karen" class="shrink-0 px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition backdrop-blur-sm cursor-pointer">📍 Karen</a>
 					</div>
 				</div>
 			</div>
 		</main>
 
-		<section class="pb-20 px-6">
+		<section id="how" class="py-24 px-6 relative z-10 border-t border-white/5 bg-slate-900/20 scroll-mt-10">
+			<div class="max-w-5xl mx-auto text-center">
+				<h2 class="text-3xl md:text-5xl font-bold mb-16 text-white">How it Works</h2>
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+					<div class="bg-slate-800/40 p-8 rounded-3xl border border-white/5 backdrop-blur-sm transition hover:-translate-y-2">
+						<div class="text-4xl mb-4">🔍</div>
+						<h3 class="text-xl font-bold text-white mb-2">1. Discover</h3>
+						<p class="text-slate-400 text-sm">Browse our curated list of high-quality apartments in top neighborhoods.</p>
+					</div>
+					<div class="bg-slate-800/40 p-8 rounded-3xl border border-white/5 backdrop-blur-sm transition hover:-translate-y-2">
+						<div class="text-4xl mb-4">💳</div>
+						<h3 class="text-xl font-bold text-white mb-2">2. Unlock</h3>
+						<p class="text-slate-400 text-sm">Pay a secure KES 1,000 viewing fee via M-Pesa to show you're serious.</p>
+					</div>
+					<div class="bg-slate-800/40 p-8 rounded-3xl border border-white/5 backdrop-blur-sm transition hover:-translate-y-2">
+						<div class="text-4xl mb-4">🔑</div>
+						<h3 class="text-xl font-bold text-white mb-2">3. Connect</h3>
+						<p class="text-slate-400 text-sm">Get the landlord's direct phone number instantly. No middlemen.</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="pb-20 pt-10 px-6 border-t border-white/5">
 			<div class="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
 				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center z-10 relative">
 					<h3 class="text-3xl font-bold text-white mb-1">500+</h3>
