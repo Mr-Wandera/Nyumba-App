@@ -390,3 +390,33 @@ func generateErrorHTML(msg string) string {
 	}
 	return fmt.Sprintf(`<div class="bg-red-500/10 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl mb-6 text-xs font-bold flex items-center gap-3 animate-pulse"><span class="text-lg">⚠️</span> %s</div>`, msg)
 }
+func SeedHouses() {
+	// Check if we already have houses to avoid duplicates
+	if len(houses) > 0 {
+		return
+	}
+
+	seedData := []models.House{
+		{
+			ID: 1, BuildingName: "Lavington Heights", Location: "Lavington",
+			Type: "Two Bedroom", Price: 65000, Details: "Modern apartment with a panoramic view of the city. Includes high-speed lift and 24/7 security.",
+			ImageURLs: []string{"https://res.cloudinary.com/dqkqyhou9/image/upload/v1740244597/lavington_main.jpg"},
+			Phone:     "0712345678",
+		},
+		{
+			ID: 2, BuildingName: "Thika Greens Villa", Location: "Thika",
+			Type: "Three Bedroom", Price: 85000, Details: "Spacious family home near MKU. Quiet neighborhood with a private garden.",
+			ImageURLs: []string{"https://res.cloudinary.com/dqkqyhou9/image/upload/v1740244600/thika_greens.jpg"},
+			Phone:     "0722000111",
+		},
+		{
+			ID: 3, BuildingName: "Skyview Studios", Location: "Kileleshwa",
+			Type: "Studio", Price: 35000, Details: "Perfect for young professionals. Fully furnished with gym access.",
+			ImageURLs: []string{"https://res.cloudinary.com/dqkqyhou9/image/upload/v1740244605/kileleshwa_studio.jpg"},
+			Phone:     "0733444555",
+		},
+	}
+
+	houses = append(houses, seedData...)
+	saveData(houseFile, houses)
+}
