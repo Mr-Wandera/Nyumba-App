@@ -258,23 +258,24 @@ func GetLandingHTML() string {
 		.animate-marquee { display: flex; width: max-content; animation: scroll 30s linear infinite; }
 		.animate-marquee:hover { animation-play-state: paused; }
 		
-		/* Live Background Blob Animations */
+		/* UPGRADED: Live Background Blob Animations */
 		@keyframes blob {
 			0% { transform: translate(0px, 0px) scale(1); }
-			33% { transform: translate(30px, -50px) scale(1.1); }
-			66% { transform: translate(-20px, 20px) scale(0.9); }
+			33% { transform: translate(150px, -150px) scale(1.2); }
+			66% { transform: translate(-100px, 100px) scale(0.8); }
 			100% { transform: translate(0px, 0px) scale(1); }
 		}
-		.animate-blob { animation: blob 15s infinite alternate ease-in-out; }
+		/* Sped up to 10s and made infinite */
+		.animate-blob { animation: blob 10s infinite alternate ease-in-out; }
 		.animation-delay-2000 { animation-delay: 2s; }
 		.animation-delay-4000 { animation-delay: 4s; }
 	</style>
 	</head>
 	<body class="antialiased selection:bg-indigo-500/30 relative">
 		
-		<div class="fixed top-[-10%] left-[10%] w-[40vw] h-[40vw] bg-indigo-600/20 rounded-full blur-[100px] -z-10 pointer-events-none animate-blob"></div>
-		<div class="fixed bottom-[10%] right-[10%] w-[30vw] h-[30vw] bg-cyan-500/20 rounded-full blur-[100px] -z-10 pointer-events-none animate-blob animation-delay-2000"></div>
-		<div class="fixed top-[40%] left-[40%] w-[20vw] h-[20vw] bg-emerald-500/10 rounded-full blur-[80px] -z-10 pointer-events-none animate-blob animation-delay-4000"></div>
+		<div class="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-indigo-600/40 rounded-full blur-[120px] -z-10 pointer-events-none animate-blob mix-blend-lighten"></div>
+		<div class="fixed top-[10%] right-[-10%] w-[40vw] h-[40vw] bg-cyan-500/40 rounded-full blur-[120px] -z-10 pointer-events-none animate-blob animation-delay-2000 mix-blend-lighten"></div>
+		<div class="fixed bottom-[-10%] left-[20%] w-[50vw] h-[50vw] bg-emerald-500/30 rounded-full blur-[120px] -z-10 pointer-events-none animate-blob animation-delay-4000 mix-blend-lighten"></div>
 
 		<div class="fixed top-6 left-0 w-full flex justify-center z-50 px-4">
 			<nav class="glass-pill rounded-full px-6 py-3 w-full max-w-4xl flex items-center justify-between transition-all">
@@ -346,19 +347,19 @@ func GetLandingHTML() string {
 
 		<section class="pb-20 px-6">
 			<div class="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
-				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center">
+				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center z-10 relative">
 					<h3 class="text-3xl font-bold text-white mb-1">500+</h3>
 					<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Properties</p>
 				</div>
-				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center">
+				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center z-10 relative">
 					<h3 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 mb-1">100%</h3>
 					<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Verified</p>
 				</div>
-				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center">
+				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center z-10 relative">
 					<h3 class="text-3xl font-bold text-white mb-1">24/7</h3>
 					<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Direct Access</p>
 				</div>
-				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center">
+				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center z-10 relative">
 					<h3 class="text-3xl font-bold text-white mb-1">Secure</h3>
 					<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">M-Pesa</p>
 				</div>
