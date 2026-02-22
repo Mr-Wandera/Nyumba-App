@@ -145,7 +145,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			<form method="POST" class="space-y-4">
 				<div>
 					<label for="username" class="text-[10px] uppercase font-bold text-slate-500 tracking-wider ml-1">Username</label>
-					<input id="username" name="username" type="text" placeholder="e.g. johndoe" required class="w-full bg-slate-900/50 border border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-white outline-none transition">
+					<input id="username" name="username" type="text" placeholder="e.g. Abdul" required class="w-full bg-slate-900/50 border border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-white outline-none transition">
 				</div>
 				<div>
 					<label for="password" class="text-[10px] uppercase font-bold text-slate-500 tracking-wider ml-1">Password</label>
@@ -193,7 +193,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 			<form method="POST" class="space-y-3">
 				<div>
 					<label for="username" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block ml-1">Username</label>
-					<input id="username" name="username" type="text" placeholder="e.g. johndoe" required class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500 transition">
+					<input id="username" name="username" type="text" placeholder="e.g. Abdul" required class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500 transition">
 				</div>
 				<div>
 					<label for="phone" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block ml-1">M-Pesa Number</label>
@@ -214,6 +214,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		</div>
 	</body></html>`)
 }
+
 func UploadHouse(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
