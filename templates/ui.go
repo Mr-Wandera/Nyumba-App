@@ -43,6 +43,7 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 				<a href="/logout" class="text-sm font-bold text-red-400 border border-red-500/30 px-3 py-1 rounded-full hover:bg-red-500/10 transition">Logout</a>
 			</div>
 		</aside>
+
 		<main class="flex-1 h-full overflow-y-auto bg-slate-900 relative z-10">
 			<div class="p-4 md:p-8 max-w-[1600px] mx-auto">
 				<header class="flex justify-between items-end mb-8 mt-4 md:mt-0">
@@ -69,6 +70,7 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 		</div>
 
 		<div id="toast" class="hidden fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl z-[60] flex items-center gap-2 transition-all duration-300"><span class="text-lg">✨</span> <span id="toast-msg">Notification</span></div>
+
 		<script>
 			const isLoggedIn = %s;
 			const currentUsername = "%s";
@@ -155,7 +157,6 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 					return true;
 				});
 
-				// UPDATED: Professional Empty State UI
 				if (filtered.length === 0) { 
 					container.innerHTML = "<div class='col-span-full flex flex-col items-center justify-center text-center py-20 px-4 bg-slate-800/30 rounded-3xl border border-white/5'>" +
 						"<div class='text-6xl mb-4'>🏙️</div>" +
@@ -174,7 +175,6 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 					if (h.is_booked) {
 						actionBtn = '<button onclick="openDashboard()" class="mt-4 w-full py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/50 text-xs font-bold tracking-widest uppercase">🔓 Contact Unlocked</button>';
 					} else if (isLoggedIn) {
-						// UPDATED: Payment Clarity
 						actionBtn = '<div class="mt-4">' +
 							'<p class="text-[10px] text-center text-slate-400 mb-2 uppercase font-bold tracking-wider">Unlocks Direct Phone & WhatsApp</p>' +
 							'<button onclick="payWithMpesa(' + h.id + ')" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">Pay via M-Pesa (KES 1,000)</button>' +
@@ -242,7 +242,6 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 	</body>
 	</html>`, myHubButton, landlordPanelDisplay, currentUsername, isLoggedIn, currentUsername)
 }
-
 func GetLandingHTML() string {
 	return `<!DOCTYPE html><html><head><title>Nyumba • Curated Living</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -257,13 +256,25 @@ func GetLandingHTML() string {
 		/* Infinite Marquee Animation */
 		@keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 		.animate-marquee { display: flex; width: max-content; animation: scroll 30s linear infinite; }
-		.animate-marquee:hover { animation-play-state: paused; } /* Pauses when user hovers over a chip */
+		.animate-marquee:hover { animation-play-state: paused; }
+		
+		/* Live Background Blob Animations */
+		@keyframes blob {
+			0% { transform: translate(0px, 0px) scale(1); }
+			33% { transform: translate(30px, -50px) scale(1.1); }
+			66% { transform: translate(-20px, 20px) scale(0.9); }
+			100% { transform: translate(0px, 0px) scale(1); }
+		}
+		.animate-blob { animation: blob 15s infinite alternate ease-in-out; }
+		.animation-delay-2000 { animation-delay: 2s; }
+		.animation-delay-4000 { animation-delay: 4s; }
 	</style>
 	</head>
-	<body class="antialiased selection:bg-indigo-500/30">
+	<body class="antialiased selection:bg-indigo-500/30 relative">
 		
-		<div class="fixed top-[-10%] left-[10%] w-[40vw] h-[40vw] bg-indigo-600/10 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
-		<div class="fixed bottom-[10%] right-[10%] w-[30vw] h-[30vw] bg-cyan-500/10 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+		<div class="fixed top-[-10%] left-[10%] w-[40vw] h-[40vw] bg-indigo-600/20 rounded-full blur-[100px] -z-10 pointer-events-none animate-blob"></div>
+		<div class="fixed bottom-[10%] right-[10%] w-[30vw] h-[30vw] bg-cyan-500/20 rounded-full blur-[100px] -z-10 pointer-events-none animate-blob animation-delay-2000"></div>
+		<div class="fixed top-[40%] left-[40%] w-[20vw] h-[20vw] bg-emerald-500/10 rounded-full blur-[80px] -z-10 pointer-events-none animate-blob animation-delay-4000"></div>
 
 		<div class="fixed top-6 left-0 w-full flex justify-center z-50 px-4">
 			<nav class="glass-pill rounded-full px-6 py-3 w-full max-w-4xl flex items-center justify-between transition-all">
