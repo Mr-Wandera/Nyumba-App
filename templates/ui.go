@@ -250,74 +250,101 @@ func GetLandingHTML() string {
 	<script src="https://cdn.tailwindcss.com"></script>
 	<style>
 		body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; overflow-x: hidden; }
-		.glass-nav { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-		.hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(0,0,0,0) 70%); top: -200px; left: 50%; transform: translateX(-50%); z-index: -1; }
+		.glass-nav { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+		/* Floating animation for the mockup */
+		@keyframes float { 0% { transform: translateY(0px) perspective(1000px) rotateX(4deg); } 50% { transform: translateY(-15px) perspective(1000px) rotateX(1deg); } 100% { transform: translateY(0px) perspective(1000px) rotateX(4deg); } }
+		.animate-float { animation: float 6s ease-in-out infinite; }
 	</style>
 	</head>
 	<body class="antialiased selection:bg-indigo-500/30">
-		<div class="hero-glow"></div>
 		
+		<div class="fixed top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-indigo-600/20 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+		<div class="fixed top-[20%] right-[-10%] w-[40vw] h-[40vw] bg-cyan-500/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+
 		<nav class="fixed w-full z-50 glass-nav transition-all">
 			<div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
 				<div class="text-2xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</div>
 				<div class="flex items-center gap-4">
 					<a href="/login" class="text-sm font-bold text-slate-300 hover:text-white transition">Login</a>
-					<a href="/explore" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-2 px-5 rounded-full shadow-lg shadow-indigo-500/30 transition transform active:scale-95">Explore Homes</a>
+					<a href="/explore" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-2.5 px-6 rounded-full shadow-lg shadow-indigo-500/25 transition transform hover:-translate-y-0.5 active:scale-95">Explore Homes</a>
 				</div>
 			</div>
 		</nav>
 
-		<main class="pt-32 pb-16 px-6 max-w-7xl mx-auto flex flex-col items-center text-center min-h-[85vh] justify-center">
-			<div class="inline-block mb-4 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-bold tracking-widest uppercase mb-8 animate-pulse">
-				🚀 Now Live in Kenya
+		<main class="pt-36 pb-16 px-6 max-w-7xl mx-auto flex flex-col items-center text-center">
+			
+			<div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-bold tracking-widest uppercase mb-8 backdrop-blur-sm">
+				<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span></span>
+				Now Live in Kenya
 			</div>
-			<h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
-				Find Your Sanctuary. <br/><span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Without the Hassle.</span>
+			
+			<h1 class="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight mb-6 leading-[1.1]">
+				Find Your Sanctuary. <br/>
+				<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-300 to-emerald-300">Without the Hassle.</span>
 			</h1>
-			<p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+			
+			<p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed font-light">
 				Nyumba is an exclusive platform connecting serious renters with verified landlords. Say goodbye to endless scrolling, scams, and agent fees.
 			</p>
-			<div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
-				<a href="/explore" class="bg-white text-slate-900 hover:bg-slate-200 text-lg font-bold py-4 px-8 rounded-2xl transition transform active:scale-95 flex items-center justify-center gap-2 shadow-xl shadow-white/10">
-					Browse Listings <span>→</span>
+			
+			<div class="flex flex-col sm:flex-row gap-4 w-full justify-center relative z-20">
+				<a href="/explore" class="group relative inline-flex items-center justify-center bg-white text-slate-900 text-lg font-bold py-4 px-8 rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+					Browse Listings 
+					<span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
 				</a>
-				<a href="/signup" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white text-lg font-bold py-4 px-8 rounded-2xl transition transform active:scale-95">
+				<a href="/signup" class="bg-slate-800/80 backdrop-blur-md border border-slate-700 hover:bg-slate-700 hover:border-slate-600 text-white text-lg font-bold py-4 px-8 rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
 					I am a Landlord
 				</a>
 			</div>
 
-			<div class="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 pt-10 border-t border-white/5 w-full max-w-4xl">
-				<div><h3 class="text-3xl font-bold text-white mb-1">500+</h3><p class="text-xs text-slate-500 uppercase tracking-widest font-bold">Renters</p></div>
-				<div><h3 class="text-3xl font-bold text-white mb-1">100%</h3><p class="text-xs text-slate-500 uppercase tracking-widest font-bold">Verified</p></div>
-				<div><h3 class="text-3xl font-bold text-white mb-1">24/7</h3><p class="text-xs text-slate-500 uppercase tracking-widest font-bold">Direct Access</p></div>
-				<div><h3 class="text-3xl font-bold text-white mb-1">Secure</h3><p class="text-xs text-slate-500 uppercase tracking-widest font-bold">M-Pesa Pay</p></div>
-			</div>
-		</main>
-
-		<section class="bg-slate-800/50 py-24 border-y border-white/5">
-			<div class="max-w-7xl mx-auto px-6 text-center">
-				<h2 class="text-3xl font-bold mb-16 text-white">How Nyumba Works</h2>
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-					<div class="bg-slate-900 p-8 rounded-3xl border border-white/5 transition hover:-translate-y-2 duration-300">
-						<div class="w-14 h-14 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center text-2xl mb-6 mx-auto">🔍</div>
-						<h3 class="text-xl font-bold text-white mb-3">1. Discover</h3>
-						<p class="text-slate-400 text-sm">Browse our curated list of high-quality apartments in top neighborhoods.</p>
-					</div>
-					<div class="bg-slate-900 p-8 rounded-3xl border border-white/5 transition hover:-translate-y-2 duration-300">
-						<div class="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-2xl mb-6 mx-auto">💳</div>
-						<h3 class="text-xl font-bold text-white mb-3">2. Unlock</h3>
-						<p class="text-slate-400 text-sm">Found something you like? Pay a small KES 1,000 viewing fee securely via M-Pesa.</p>
-					</div>
-					<div class="bg-slate-900 p-8 rounded-3xl border border-white/5 transition hover:-translate-y-2 duration-300">
-						<div class="w-14 h-14 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center text-2xl mb-6 mx-auto">🔑</div>
-						<h3 class="text-xl font-bold text-white mb-3">3. Connect</h3>
-						<p class="text-slate-400 text-sm">Instantly get the landlord's direct phone number and WhatsApp. No middle-men.</p>
+			<div class="mt-20 w-full max-w-4xl mx-auto relative z-10 hidden md:block">
+				<div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-cyan-400 blur-3xl opacity-20 rounded-full animate-pulse"></div>
+				
+				<div class="relative bg-slate-900/60 backdrop-blur-2xl border border-white/10 p-2 rounded-[2rem] shadow-2xl animate-float">
+					<div class="bg-[#0f172a] rounded-[1.5rem] border border-white/5 overflow-hidden flex flex-col h-64 shadow-[inset_0_0_40px_rgba(0,0,0,0.5)]">
+						<div class="bg-slate-800/50 px-4 py-3 flex items-center gap-2 border-b border-white/5">
+							<div class="w-3 h-3 rounded-full bg-red-500/80"></div>
+							<div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
+							<div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
+							<div class="mx-auto bg-slate-900/80 text-slate-500 text-xs py-1 px-10 rounded-full border border-white/5 flex items-center gap-2">🔒 nyumba-app.onrender.com</div>
+						</div>
+						<div class="p-6 flex-1 flex flex-col gap-4">
+							<div class="bg-slate-800/50 border border-white/5 rounded-2xl p-4 flex items-center gap-4 shadow-inner">
+								<div class="text-2xl">📍</div>
+								<div class="flex-1 h-6 bg-slate-700/50 rounded-lg w-1/2"></div>
+								<div class="w-24 h-10 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-500/20"></div>
+							</div>
+							<div class="grid grid-cols-3 gap-4 flex-1">
+								<div class="bg-slate-800/40 rounded-2xl border border-white/5"></div>
+								<div class="bg-slate-800/40 rounded-2xl border border-white/5"></div>
+								<div class="bg-slate-800/40 rounded-2xl border border-white/5"></div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
-		</section>
-		
-		<footer class="text-center py-8 text-slate-500 text-xs">
+
+			<div class="mt-16 md:mt-24 grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-5xl mx-auto z-20 relative">
+				<div class="bg-slate-800/40 border border-white/5 backdrop-blur-md rounded-3xl p-6 md:p-8 transition-all hover:bg-slate-800/60 hover:-translate-y-1 hover:border-indigo-500/30">
+					<h3 class="text-3xl md:text-4xl font-black text-white mb-2">500+</h3>
+					<p class="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-bold">Renters</p>
+				</div>
+				<div class="bg-slate-800/40 border border-white/5 backdrop-blur-md rounded-3xl p-6 md:p-8 transition-all hover:bg-slate-800/60 hover:-translate-y-1 hover:border-emerald-500/30">
+					<h3 class="text-3xl md:text-4xl font-black text-white mb-2 text-transparent bg-clip-text bg-gradient-to-br from-emerald-400 to-cyan-400">100%</h3>
+					<p class="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-bold">Verified</p>
+				</div>
+				<div class="bg-slate-800/40 border border-white/5 backdrop-blur-md rounded-3xl p-6 md:p-8 transition-all hover:bg-slate-800/60 hover:-translate-y-1 hover:border-amber-500/30">
+					<h3 class="text-3xl md:text-4xl font-black text-white mb-2">24/7</h3>
+					<p class="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-bold">Direct Access</p>
+				</div>
+				<div class="bg-slate-800/40 border border-white/5 backdrop-blur-md rounded-3xl p-6 md:p-8 transition-all hover:bg-slate-800/60 hover:-translate-y-1 hover:border-cyan-500/30">
+					<h3 class="text-3xl md:text-4xl font-black text-white mb-2">Secure</h3>
+					<p class="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-bold">M-Pesa Pay</p>
+				</div>
+			</div>
+		</main>
+
+		<footer class="text-center py-10 mt-10 border-t border-white/5 text-slate-500 text-xs font-medium tracking-wide">
 			<p>&copy; 2026 Nyumba. Curated Living in Kenya.</p>
 		</footer>
 	</body></html>`
