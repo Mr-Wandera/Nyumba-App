@@ -242,3 +242,83 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 	</body>
 	</html>`, myHubButton, landlordPanelDisplay, currentUsername, isLoggedIn, currentUsername)
 }
+
+func GetLandingHTML() string {
+	return `<!DOCTYPE html><html><head><title>Nyumba • Curated Living</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<style>
+		body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; overflow-x: hidden; }
+		.glass-nav { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+		.hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, rgba(0,0,0,0) 70%); top: -200px; left: 50%; transform: translateX(-50%); z-index: -1; }
+	</style>
+	</head>
+	<body class="antialiased selection:bg-indigo-500/30">
+		<div class="hero-glow"></div>
+		
+		<nav class="fixed w-full z-50 glass-nav transition-all">
+			<div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+				<div class="text-2xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</div>
+				<div class="flex items-center gap-4">
+					<a href="/login" class="text-sm font-bold text-slate-300 hover:text-white transition">Login</a>
+					<a href="/explore" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-2 px-5 rounded-full shadow-lg shadow-indigo-500/30 transition transform active:scale-95">Explore Homes</a>
+				</div>
+			</div>
+		</nav>
+
+		<main class="pt-32 pb-16 px-6 max-w-7xl mx-auto flex flex-col items-center text-center min-h-[85vh] justify-center">
+			<div class="inline-block mb-4 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-bold tracking-widest uppercase mb-8 animate-pulse">
+				🚀 Now Live in Kenya
+			</div>
+			<h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
+				Find Your Sanctuary. <br/><span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Without the Hassle.</span>
+			</h1>
+			<p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+				Nyumba is an exclusive platform connecting serious renters with verified landlords. Say goodbye to endless scrolling, scams, and agent fees.
+			</p>
+			<div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
+				<a href="/explore" class="bg-white text-slate-900 hover:bg-slate-200 text-lg font-bold py-4 px-8 rounded-2xl transition transform active:scale-95 flex items-center justify-center gap-2 shadow-xl shadow-white/10">
+					Browse Listings <span>→</span>
+				</a>
+				<a href="/signup" class="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white text-lg font-bold py-4 px-8 rounded-2xl transition transform active:scale-95">
+					I am a Landlord
+				</a>
+			</div>
+
+			<div class="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 pt-10 border-t border-white/5 w-full max-w-4xl">
+				<div><h3 class="text-3xl font-bold text-white mb-1">500+</h3><p class="text-xs text-slate-500 uppercase tracking-widest font-bold">Renters</p></div>
+				<div><h3 class="text-3xl font-bold text-white mb-1">100%</h3><p class="text-xs text-slate-500 uppercase tracking-widest font-bold">Verified</p></div>
+				<div><h3 class="text-3xl font-bold text-white mb-1">24/7</h3><p class="text-xs text-slate-500 uppercase tracking-widest font-bold">Direct Access</p></div>
+				<div><h3 class="text-3xl font-bold text-white mb-1">Secure</h3><p class="text-xs text-slate-500 uppercase tracking-widest font-bold">M-Pesa Pay</p></div>
+			</div>
+		</main>
+
+		<section class="bg-slate-800/50 py-24 border-y border-white/5">
+			<div class="max-w-7xl mx-auto px-6 text-center">
+				<h2 class="text-3xl font-bold mb-16 text-white">How Nyumba Works</h2>
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+					<div class="bg-slate-900 p-8 rounded-3xl border border-white/5 transition hover:-translate-y-2 duration-300">
+						<div class="w-14 h-14 bg-indigo-500/20 text-indigo-400 rounded-2xl flex items-center justify-center text-2xl mb-6 mx-auto">🔍</div>
+						<h3 class="text-xl font-bold text-white mb-3">1. Discover</h3>
+						<p class="text-slate-400 text-sm">Browse our curated list of high-quality apartments in top neighborhoods.</p>
+					</div>
+					<div class="bg-slate-900 p-8 rounded-3xl border border-white/5 transition hover:-translate-y-2 duration-300">
+						<div class="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center text-2xl mb-6 mx-auto">💳</div>
+						<h3 class="text-xl font-bold text-white mb-3">2. Unlock</h3>
+						<p class="text-slate-400 text-sm">Found something you like? Pay a small KES 1,000 viewing fee securely via M-Pesa.</p>
+					</div>
+					<div class="bg-slate-900 p-8 rounded-3xl border border-white/5 transition hover:-translate-y-2 duration-300">
+						<div class="w-14 h-14 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center text-2xl mb-6 mx-auto">🔑</div>
+						<h3 class="text-xl font-bold text-white mb-3">3. Connect</h3>
+						<p class="text-slate-400 text-sm">Instantly get the landlord's direct phone number and WhatsApp. No middle-men.</p>
+					</div>
+				</div>
+			</div>
+		</section>
+		
+		<footer class="text-center py-8 text-slate-500 text-xs">
+			<p>&copy; 2026 Nyumba. Curated Living in Kenya.</p>
+		</footer>
+	</body></html>`
+}

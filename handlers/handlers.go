@@ -85,6 +85,14 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 🚦 TRAFFIC COP: If they visit the main domain ("/"), show the Landing Page
+	if r.URL.Path == "/" {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		fmt.Fprint(w, templates.GetLandingHTML())
+		return
+	}
+
+	// 🚦 TRAFFIC COP: If they visit anything else (like "/explore"), show the App
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	currentUser := getCurrentUser(r)
 	isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay := "false", "", "", "none"
