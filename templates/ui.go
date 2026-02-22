@@ -4,72 +4,86 @@ import "fmt"
 
 func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay string) string {
 	
-	return fmt.Sprintf(`<!DOCTYPE html><html><head><title>Nyumba</title><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0f172a"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script>
+	// UPGRADED: Synced theme color to #0a0a0a and added floating badges, premium typography, and image zoom
+	return fmt.Sprintf(`<!DOCTYPE html><html><head><title>Nyumba</title><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#0a0a0a"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script>
 	<style>
-		body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; }
-		.glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); transform-style: preserve-3d; transition: transform 0.1s ease-out; }
-		.glass-card > .absolute, .glass-card > div.mt-4 { transform: translateZ(40px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
-		.glass-sidebar { background: #1e293b; border-right: 1px solid rgba(255, 255, 255, 0.05); }
+		body { font-family: 'Outfit', sans-serif; background: #0a0a0a; color: #f8fafc; overflow-x: hidden; }
+		.glass-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(16px); }
+		.glass-sidebar { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(20px); border-right: 1px solid rgba(255, 255, 255, 0.05); }
 		#toast.hidden { display: none; } 
+		
+		/* Live Background Blob Animations */
+		@keyframes blob { 0%% { transform: translate(0px, 0px) scale(1); } 33%% { transform: translate(150px, -150px) scale(1.2); } 66%% { transform: translate(-100px, 100px) scale(0.8); } 100%% { transform: translate(0px, 0px) scale(1); } }
+		.animate-blob { animation: blob 10s infinite alternate ease-in-out; }
+		.animation-delay-2000 { animation-delay: 2s; }
+		.animation-delay-4000 { animation-delay: 4s; }
 	</style></head>
-	<body class="h-screen flex flex-col md:flex-row overflow-hidden">
-		<div class="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-white/5 z-40"><h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1><button onclick="toggleMenu()" class="text-white text-2xl px-2">☰</button></div>
+	<body class="h-screen flex flex-col md:flex-row overflow-hidden relative">
+		
+		<div class="fixed top-[-10%%] left-[-10%%] w-[50vw] h-[50vw] bg-indigo-600/20 rounded-full blur-[120px] -z-10 pointer-events-none animate-blob mix-blend-lighten"></div>
+		<div class="fixed bottom-[-10%%] right-[-10%%] w-[40vw] h-[40vw] bg-cyan-500/20 rounded-full blur-[120px] -z-10 pointer-events-none animate-blob animation-delay-2000 mix-blend-lighten"></div>
+
+		<div class="md:hidden flex items-center justify-between p-4 bg-slate-900/80 backdrop-blur-md border-b border-white/5 z-40"><h1 class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1><button onclick="toggleMenu()" class="text-white text-2xl px-2">☰</button></div>
 		<div id="backdrop" onclick="toggleMenu()" class="fixed inset-0 bg-black/80 z-40 hidden md:hidden transition-opacity"></div>
 
-		<aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-80 bg-[#1e293b] md:bg-transparent md:static md:flex flex-col h-full transform -translate-x-full md:translate-x-0 transition-transform duration-300 glass-sidebar">
-			<div class="p-8 pb-4 flex justify-between items-center"><div><h1 class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</h1><p class="text-xs text-slate-500 font-medium tracking-widest uppercase mt-2">Curated Living</p></div><button onclick="toggleMenu()" class="md:hidden text-white text-3xl">&times;</button></div>
+		<aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-80 md:w-80 md:static md:flex flex-col h-full transform -translate-x-full md:translate-x-0 transition-transform duration-300 glass-sidebar shadow-2xl">
+			<div class="p-8 pb-4 flex justify-between items-center"><div><a href="/" class="text-4xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 hover:opacity-80 transition">Nyumba.</a><p class="text-xs text-slate-500 font-medium tracking-widest uppercase mt-2">Curated Living</p></div><button onclick="toggleMenu()" class="md:hidden text-white text-3xl">&times;</button></div>
 			<div class="px-6 py-4 space-y-6 flex-1 overflow-y-auto">
 				%s 
-				<div style="display: %s;" class="glass-card rounded-2xl p-5 mb-8">
-					<h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4">Landlord Mode</h3>
+				<div style="display: %s;" class="glass-card rounded-[2rem] p-6 mb-8 border border-indigo-500/20 shadow-[0_0_30px_rgba(99,102,241,0.1)]">
+					<h3 class="text-xs font-extrabold text-indigo-400 uppercase tracking-widest mb-4 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span> Landlord Hub</h3>
 					<div class="space-y-3">
-						<input id="building" type="text" placeholder="Apartment Name" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
-						<input id="loc" type="text" placeholder="Location (e.g. Juja)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white outline-none">
-						<input id="map_url" type="text" placeholder="📍 Google Maps Link" class="w-full bg-slate-900 border border-indigo-500/30 rounded-lg px-3 py-2 text-sm text-indigo-300 outline-none">
-						<select id="type" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm outline-none"><option>Bedsitter</option><option>One Bedroom</option><option>Two Bedroom</option><option>Studio</option></select>
-						<div class="grid grid-cols-2 gap-2"><input id="price" type="number" placeholder="Rent" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm outline-none"><input id="utils" type="number" placeholder="Bills" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm outline-none"></div>
-						<input id="photos" type="file" multiple class="text-xs text-slate-500">
-						<textarea id="details" placeholder="Description..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm h-16 resize-none outline-none"></textarea>
-						<button onclick="uploadHouse()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-lg text-sm transition">Post Listing</button>
+						<input id="building" type="text" placeholder="Apartment Name" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500 transition">
+						<input id="loc" type="text" placeholder="Location (e.g. Juja)" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500 transition">
+						<input id="map_url" type="text" placeholder="📍 Google Maps Link" class="w-full bg-slate-900/50 border border-indigo-500/30 rounded-xl px-4 py-2.5 text-sm text-indigo-300 outline-none focus:border-indigo-500 transition">
+						<select id="type" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none text-slate-300"><option>Bedsitter</option><option>One Bedroom</option><option>Two Bedroom</option><option>Studio</option></select>
+						<div class="grid grid-cols-2 gap-3"><input id="price" type="number" placeholder="Rent (KES)" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-500 transition"><input id="utils" type="number" placeholder="Bills" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-indigo-500 transition"></div>
+						<input id="photos" type="file" multiple class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 transition cursor-pointer w-full">
+						<textarea id="details" placeholder="Beautiful apartment with..." class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-sm h-20 resize-none outline-none focus:border-indigo-500 transition"></textarea>
+						<button onclick="uploadHouse()" class="w-full bg-white hover:bg-slate-200 text-slate-900 font-bold py-3 rounded-xl text-sm transition transform active:scale-95 mt-2">Publish Listing</button>
 					</div>
 				</div>
 				<div class="space-y-4">
-					<div><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Where to?</label><input id="searchLoc" onkeyup="fetchHouses()" type="text" placeholder="Try 'Kileleshwa'..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"></div>
-					<div><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Max Budget</label><input id="searchPrice" onkeyup="fetchHouses()" type="number" placeholder="Any Price" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-emerald-500 outline-none"></div>
+					<div><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block ml-1">Search Neighborhood</label><input id="searchLoc" onkeyup="fetchHouses()" type="text" placeholder="Try 'Kileleshwa'..." class="w-full bg-slate-900/80 border border-slate-700 rounded-2xl px-5 py-3.5 text-white focus:border-indigo-500 outline-none transition shadow-inner"></div>
+					<div><label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block ml-1">Max Budget</label><input id="searchPrice" onkeyup="fetchHouses()" type="number" placeholder="Any Price" class="w-full bg-slate-900/80 border border-slate-700 rounded-2xl px-5 py-3.5 text-white focus:border-emerald-500 outline-none transition shadow-inner"></div>
 				</div>
 			</div>
-			<div class="p-6 border-t border-white/5 flex items-center justify-between bg-[#1e293b]">
-				<div class="flex items-center gap-3"><div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-bold">👤</div><div class="text-sm"><div class="font-bold text-white">%s</div></div></div>
-				<a href="/logout" class="text-sm font-bold text-red-400 border border-red-500/30 px-3 py-1 rounded-full hover:bg-red-500/10 transition">Logout</a>
+			<div class="p-6 border-t border-white/5 flex items-center justify-between">
+				<div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-400 flex items-center justify-center text-sm font-bold shadow-lg">👤</div><div class="text-sm"><div class="font-bold text-white tracking-wide">%s</div></div></div>
+				<a href="/logout" class="text-xs font-bold text-slate-400 hover:text-red-400 px-3 py-2 rounded-lg hover:bg-red-500/10 transition">Logout</a>
 			</div>
 		</aside>
 
-		<main class="flex-1 h-full overflow-y-auto bg-slate-900 relative z-10">
-			<div class="p-4 md:p-8 max-w-[1600px] mx-auto">
-				<header class="flex justify-between items-end mb-8 mt-4 md:mt-0">
-					<div><h2 class="text-2xl md:text-3xl font-light text-white">Discover <span class="font-bold text-indigo-400">Sanctuary</span></h2><p class="text-slate-400 mt-1 text-sm">Pay the viewing fee to unlock landlord contacts instantly.</p></div>
-					<div id="offline-badge" class="hidden bg-amber-500/20 text-amber-500 border border-amber-500/50 px-4 py-2 rounded-lg text-xs font-bold animate-pulse">⚠️ OFFLINE MODE</div>
+		<main class="flex-1 h-full overflow-y-auto relative z-10">
+			<div class="p-4 md:p-8 lg:px-12 max-w-[1600px] mx-auto">
+				<header class="flex flex-col md:flex-row md:justify-between md:items-end mb-10 mt-6 md:mt-2">
+					<div><h2 class="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-2">Explore <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Sanctuaries</span></h2><p class="text-slate-400 text-sm md:text-base">Find your next home and connect directly with verified owners.</p></div>
+					<div id="offline-badge" class="hidden mt-4 md:mt-0 bg-amber-500/20 text-amber-500 border border-amber-500/50 px-4 py-2 rounded-full text-xs font-bold animate-pulse inline-block">⚠️ OFFLINE MODE</div>
 				</header>
-				<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-20"></div>
+				<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 pb-24"></div>
 			</div>
 		</main>
 
-		<div id="dashboard-modal" class="fixed inset-0 z-[100] bg-black/95 hidden flex flex-col items-center justify-center p-4">
-			<div class="bg-slate-900 w-full max-w-md rounded-3xl p-6 border border-white/10 relative">
-				<button onclick="closeDashboard()" class="absolute top-4 right-4 text-white text-2xl">&times;</button>
-				<h2 class="text-xl font-bold text-white mb-4">My Unlocked Contacts</h2>
-				<p class="text-xs text-slate-400 mb-6">These are the landlords you have paid to connect with. Contact them directly to view.</p>
-				<div id="dashboard-list" class="space-y-3 max-h-[60vh] overflow-y-auto"></div>
+		<div id="dashboard-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex flex-col items-center justify-center p-4 transition-opacity">
+			<div class="bg-slate-900/90 w-full max-w-md rounded-[2.5rem] p-8 border border-white/10 relative shadow-2xl">
+				<button onclick="closeDashboard()" class="absolute top-6 right-6 text-slate-400 hover:text-white text-2xl transition">&times;</button>
+				<h2 class="text-2xl font-extrabold text-white mb-2">Unlocked Contacts</h2>
+				<p class="text-sm text-slate-400 mb-8 leading-relaxed">You have full direct access to these landlords. Skip the agents and negotiate directly.</p>
+				<div id="dashboard-list" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2"></div>
 			</div>
 		</div>
 
 		<div id="gallery-modal" class="fixed inset-0 z-[100] bg-black/95 hidden flex flex-col items-center justify-center p-4">
-			<button onclick="closeGallery()" class="absolute top-6 right-6 text-white text-4xl">&times;</button>
-			<img id="gallery-img" src="" class="max-h-[80vh] max-w-full rounded-lg shadow-2xl object-contain mb-4">
-			<div class="flex items-center gap-6"><button onclick="navGallery(-1)" class="text-white text-3xl">❮</button><p id="gallery-counter" class="text-slate-400 font-medium">1 / 1</p><button onclick="navGallery(1)" class="text-white text-3xl">❯</button></div>
+			<button onclick="closeGallery()" class="absolute top-6 right-6 text-white text-4xl hover:scale-110 transition">&times;</button>
+			<img id="gallery-img" src="" class="max-h-[85vh] max-w-full rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] object-contain mb-6">
+			<div class="flex items-center gap-8 bg-slate-900/50 px-6 py-3 rounded-full border border-white/10 backdrop-blur-md">
+                <button onclick="navGallery(-1)" class="text-white text-2xl hover:text-indigo-400 transition">❮</button>
+                <p id="gallery-counter" class="text-slate-300 font-bold tracking-widest text-sm">1 / 1</p>
+                <button onclick="navGallery(1)" class="text-white text-2xl hover:text-indigo-400 transition">❯</button>
+            </div>
 		</div>
 
-		<div id="toast" class="hidden fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl z-[60] flex items-center gap-2 transition-all duration-300"><span class="text-lg">✨</span> <span id="toast-msg">Notification</span></div>
+		<div id="toast" class="hidden fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600/95 backdrop-blur-md px-6 py-3.5 rounded-full text-sm font-bold text-white shadow-2xl shadow-indigo-500/30 z-[60] flex items-center gap-3 transition-all duration-300 border border-indigo-500/50"><span class="text-lg">✨</span> <span id="toast-msg">Notification</span></div>
 
 		<script>
 			const isLoggedIn = %s;
@@ -77,10 +91,9 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 			let houseImages = {}; let currentGalleryID = 0; let galleryIndex = 0; let autoScrollInterval;
 			let allHousesData = []; 
 
-			const skeletonHTML = '<div class="glass-card rounded-3xl p-4 flex flex-col relative animate-pulse border border-white/5"><div class="w-full h-48 bg-slate-800 rounded-2xl mb-4"></div><div class="h-4 bg-slate-800 rounded w-1/3 mb-2"></div><div class="h-6 bg-slate-800 rounded w-3/4 mb-4"></div><div class="h-12 bg-slate-800 rounded-xl mt-4"></div></div>';
+			const skeletonHTML = '<div class="glass-card rounded-[2rem] p-5 flex flex-col relative animate-pulse"><div class="w-full h-56 bg-slate-800/50 rounded-3xl mb-5"></div><div class="h-6 bg-slate-800/50 rounded-md w-2/3 mb-3"></div><div class="h-4 bg-slate-800/50 rounded-md w-full mb-2"></div><div class="h-4 bg-slate-800/50 rounded-md w-4/5 mb-6"></div><div class="h-14 bg-slate-800/50 rounded-xl mt-auto"></div></div>';
 
 			document.addEventListener("DOMContentLoaded", () => { 
-				// UPGRADED: Read location from URL if clicking a chip!
 				const params = new URLSearchParams(window.location.search);
 				const loc = params.get('loc');
 				if (loc) { document.getElementById('searchLoc').value = loc; }
@@ -94,14 +107,14 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 				container.innerHTML = "";
 				const myHouses = allHousesData.filter(h => h.is_booked === true); 
 				if(myHouses.length === 0) {
-					container.innerHTML = "<div class='text-center text-slate-500 py-10'>You haven't paid any viewing fees yet.</div>";
+					container.innerHTML = "<div class='text-center text-slate-500 py-10 font-medium'>No viewing fees paid yet.</div>";
 				} else {
 					myHouses.forEach(h => {
-						let item = '<div class="bg-slate-800 p-4 rounded-xl mb-3 border border-white/10">' +
-							'<div class="flex justify-between mb-2"><span class="font-bold text-white">' + h.building_name + '</span><span class="text-xs text-emerald-400 font-bold">UNLOCKED</span></div>' +
-							'<div class="grid grid-cols-2 gap-2">' +
-								'<a href="tel:' + h.phone + '" class="bg-slate-700 hover:bg-slate-600 text-white py-2 rounded-lg text-xs font-bold text-center">📞 Call Owner</a>' +
-								'<a href="https://wa.me/' + h.phone + '" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-bold text-center">💬 WhatsApp</a>' +
+						let item = '<div class="bg-slate-800/50 p-5 rounded-2xl mb-4 border border-white/5 transition hover:border-emerald-500/30">' +
+							'<div class="flex justify-between items-center mb-4"><span class="font-bold text-white text-lg">' + h.building_name + '</span><span class="text-[10px] text-emerald-400 font-extrabold tracking-widest bg-emerald-500/10 px-2 py-1 rounded-md">UNLOCKED</span></div>' +
+							'<div class="grid grid-cols-2 gap-3">' +
+								'<a href="tel:' + h.phone + '" class="bg-slate-700 hover:bg-slate-600 text-white py-2.5 rounded-xl text-xs font-bold text-center transition flex items-center justify-center gap-2">📞 Call</a>' +
+								'<a href="https://wa.me/' + h.phone + '" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-bold text-center transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">💬 WhatsApp</a>' +
 							'</div>' +
 						'</div>';
 						container.innerHTML += item;
@@ -110,17 +123,6 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 				document.getElementById('dashboard-modal').classList.remove('hidden');
 			}
 			function closeDashboard() { document.getElementById('dashboard-modal').classList.add('hidden'); }
-
-			function add3DEffect(card) {
-				card.addEventListener('mousemove', (e) => {
-					const rect = card.getBoundingClientRect();
-					const x = e.clientX - rect.left; const y = e.clientY - rect.top;
-					const rotateX = ((y - rect.height/2) / (rect.height/2)) * -5; 
-					const rotateY = ((x - rect.width/2) / (rect.width/2)) * 5;
-					card.style.transform = "perspective(1000px) rotateX(" + rotateX + "deg) rotateY(" + rotateY + "deg) scale(1.02)";
-				});
-				card.addEventListener('mouseleave', () => { card.style.transform = "perspective(1000px) rotateX(0) rotateY(0) scale(1)"; });
-			}
 
 			function toggleMenu() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('backdrop').classList.toggle('hidden'); }
 			
@@ -135,7 +137,7 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 			function closeGallery() { document.getElementById('gallery-modal').classList.add('hidden'); }
 			function navGallery(step) { const images = houseImages[currentGalleryID]; galleryIndex += step; if(galleryIndex >= images.length) galleryIndex = 0; if(galleryIndex < 0) galleryIndex = images.length - 1; updateGalleryView(); }
 			function updateGalleryView() { const images = houseImages[currentGalleryID]; document.getElementById('gallery-img').src = images[galleryIndex]; document.getElementById('gallery-counter').innerText = (galleryIndex + 1) + " / " + images.length; }
-			function startAutoScroll() { if (autoScrollInterval) clearInterval(autoScrollInterval); autoScrollInterval = setInterval(() => { document.querySelectorAll('[id^="img-"]').forEach(img => { let id = img.id.split('-')[1]; if (document.getElementById('gallery-modal').classList.contains('hidden')) { changeSlide(id, 1); } }); }, 3500); }
+			function startAutoScroll() { if (autoScrollInterval) clearInterval(autoScrollInterval); autoScrollInterval = setInterval(() => { document.querySelectorAll('[id^="img-"]').forEach(img => { let id = img.id.split('-')[1]; if (document.getElementById('gallery-modal').classList.contains('hidden')) { changeSlide(id, 1); } }); }, 4000); }
 			function changeSlide(id, step) { const images = houseImages[id]; if (!images || images.length <= 1) return; let imgEl = document.getElementById('img-' + id); let current = parseInt(imgEl.dataset.index || 0); let next = current + step; if (next >= images.length) next = 0; if (next < 0) next = images.length - 1; imgEl.dataset.index = next; imgEl.src = images[next]; }
 
 			function fetchHouses() {
@@ -166,11 +168,11 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 				});
 
 				if (filtered.length === 0) { 
-					container.innerHTML = "<div class='col-span-full flex flex-col items-center justify-center text-center py-20 px-4 bg-slate-800/30 rounded-3xl border border-white/5'>" +
-						"<div class='text-6xl mb-4'>🏙️</div>" +
-						"<h3 class='text-xl font-bold text-white mb-2'>No properties here yet</h3>" +
-						"<p class='text-sm text-slate-400 max-w-md mb-6'>We are currently verifying landlords in this area. Check back soon or adjust your search filters.</p>" +
-						"<button onclick=\"document.getElementById('searchLoc').value=''; document.getElementById('searchPrice').value=''; fetchHouses();\" class='bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 px-6 py-2 rounded-full text-sm font-bold hover:bg-indigo-600/40 transition'>Clear Filters</button>" +
+					container.innerHTML = "<div class='col-span-full flex flex-col items-center justify-center text-center py-24 px-4 bg-slate-800/20 rounded-[3rem] border border-white/5 backdrop-blur-sm mt-8'>" +
+						"<div class='text-6xl mb-6 opacity-80'>🏙️</div>" +
+						"<h3 class='text-2xl font-extrabold text-white mb-3'>No Sanctuaries Found</h3>" +
+						"<p class='text-base text-slate-400 max-w-md mb-8 leading-relaxed'>We are actively vetting properties in this area. Check back soon or try adjusting your filters.</p>" +
+						"<button onclick=\"document.getElementById('searchLoc').value=''; document.getElementById('searchPrice').value=''; fetchHouses();\" class='bg-white text-slate-900 px-8 py-3.5 rounded-full text-sm font-bold shadow-lg transition transform hover:-translate-y-0.5 active:scale-95'>Clear Filters</button>" +
 					"</div>";
 					return; 
 				}
@@ -181,29 +183,34 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 					
 					let actionBtn;
 					if (h.is_booked) {
-						actionBtn = '<button onclick="openDashboard()" class="mt-4 w-full py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/50 text-xs font-bold tracking-widest uppercase">🔓 Contact Unlocked</button>';
+						actionBtn = '<button onclick="openDashboard()" class="mt-2 w-full py-3.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-extrabold tracking-widest uppercase hover:bg-emerald-500/20 transition shadow-inner">🔓 Contact Unlocked</button>';
 					} else if (isLoggedIn) {
-						actionBtn = '<div class="mt-4">' +
-							'<p class="text-[10px] text-center text-slate-400 mb-2 uppercase font-bold tracking-wider">Unlocks Direct Phone & WhatsApp</p>' +
-							'<button onclick="payWithMpesa(' + h.id + ')" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">Pay via M-Pesa (KES 1,000)</button>' +
+						actionBtn = '<div class="mt-2">' +
+							'<p class="text-[10px] text-center text-slate-500 mb-2 uppercase font-extrabold tracking-widest">Unlocks Direct Phone & WhatsApp</p>' +
+							'<button onclick="payWithMpesa(' + h.id + ')" class="w-full bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white font-bold py-3.5 rounded-xl shadow-[0_0_20px_rgba(99,102,241,0.2)] transition transform hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 border border-indigo-400/30">Pay KES 1,000 to View</button>' +
 						'</div>';
 					} else {
-						actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock Details</a>';
+						actionBtn = '<a href="/login" class="block mt-2 w-full py-3.5 rounded-xl bg-slate-800/50 border border-slate-700 hover:bg-slate-700 text-slate-300 hover:text-white text-center text-sm font-bold transition backdrop-blur-sm">Sign in to Unlock Details</a>';
 					}
 
+					// UPGRADED JOEDOWNS.AI STYLE CARDS
 					const card = document.createElement('div');
-					card.className = "glass-card rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl";
+					card.className = "glass-card rounded-[2rem] p-5 flex flex-col relative group transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.5)] border border-white/5 hover:border-indigo-500/30";
 					card.innerHTML = 
-						'<div class="w-full h-48 bg-slate-800 rounded-2xl overflow-hidden relative mb-4 cursor-pointer" onclick="openGallery(' + h.id + ')"><img id="img-' + h.id + '" src="' + imageSrc + '" class="w-full h-full object-cover transition duration-700 ease-out"></div>' +
-						'<div class="flex-1">' + 
-							'<h3 class="text-xl font-bold text-white">' + h.building_name + '</h3>' + 
-							'<p class="text-xs text-slate-400 mb-2">📍 ' + h.location + '</p>' + 
-							'<p class="text-slate-400 text-sm line-clamp-2">' + h.details + '</p>' + 
+						'<div class="w-full h-56 bg-slate-800 rounded-3xl overflow-hidden relative mb-5 cursor-pointer shadow-inner" onclick="openGallery(' + h.id + ')">' +
+							'<img id="img-' + h.id + '" src="' + imageSrc + '" class="w-full h-full object-cover transition-transform duration-700 ease-in-out group-hover:scale-110">' +
+							'<div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none"></div>' +
+							'<div class="absolute top-4 right-4 bg-slate-900/90 backdrop-blur-xl px-4 py-1.5 rounded-full border border-white/10 text-white font-extrabold text-sm shadow-xl tracking-wide">KES ' + h.price.toLocaleString() + '</div>' +
+							'<div class="absolute bottom-4 left-4 bg-indigo-600/90 backdrop-blur-xl px-3.5 py-1.5 rounded-full border border-white/10 text-white text-[11px] font-bold tracking-widest uppercase shadow-xl flex items-center gap-1">📍 ' + h.location + '</div>' +
 						'</div>' +
-						'<div class="mt-4 pt-4 border-t border-white/5 flex items-end justify-between"><div><p class="text-[10px] text-slate-500 uppercase font-bold">Monthly Rent</p><p class="text-xl font-bold text-white">KES ' + h.price.toLocaleString() + '</p></div></div>' +
-						actionBtn;
+						'<div class="flex-1">' + 
+							'<h3 class="text-2xl font-bold text-white mb-2 leading-tight tracking-tight">' + h.building_name + '</h3>' + 
+							'<p class="text-slate-400 text-sm line-clamp-2 leading-relaxed font-light">' + h.details + '</p>' + 
+						'</div>' +
+						'<div class="mt-4 pt-4 border-t border-white/10">' +
+						actionBtn +
+						'</div>';
 					
-					add3DEffect(card);
 					container.appendChild(card);
 				});
 			}
