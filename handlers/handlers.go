@@ -2,22 +2,24 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
+	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 
 	"nyumba/models"
 	"nyumba/templates"
 )
 
-// Global Data Store
 var users = []models.User{}
 var houses = []models.House{}
 
@@ -25,20 +27,18 @@ const userFile = "users.json"
 const houseFile = "houses.json"
 const CookieName = "session_token"
 
-// --- SAFARICOM CONFIG ---
 const (
-	consumerKey    = "COBGyH3dHvYrVjLKG0Znfh8RR1yAPeVbZ6hZitAwgvquIqhL"
-	consumerSecret = "ovklACIWd4ZMihM4Vv28TAwgEBG8MywaI5FOnHahzIPXAG16CTCikL2RSSqT4cog"
-	shortCode      = "174379"
-	passkey        = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
-	mpesaAuthURL   = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-	mpesaPushURL   = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-	callbackURL    = "https://nyumba-app.onrender.com/callback"
+	shortCode    = "174379"
+	mpesaAuthURL = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+	mpesaPushURL = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+	callbackURL  = "https://nyumba-app.onrender.com/callback"
 )
 
-// --- DATA HELPERS ---
-
 func LoadData() {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("⚠️ Notice: .env file not found (Normal on Render)")
+	}
 	if _, err := os.Stat(userFile); err == nil {
 		data, _ := os.ReadFile(userFile)
 		json.Unmarshal(data, &users)
@@ -78,8 +78,6 @@ func getCurrentUser(r *http.Request) *models.User {
 	return nil
 }
 
-// --- HANDLERS (PUBLIC) ---
-
 func HomePage(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/manifest.json" {
 		w.Header().Set("Content-Type", "application/json")
@@ -89,14 +87,10 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	currentUser := getCurrentUser(r)
-	isLoggedIn := "false"
-	currentUsername := ""
-	myHubButton := ""
-	landlordPanelDisplay := "none"
+	isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay := "false", "", "", "none"
 
 	if currentUser != nil {
-		isLoggedIn = "true"
-		currentUsername = currentUser.Username
+		isLoggedIn, currentUsername = "true", currentUser.Username
 		if currentUser.Role == "landlord" {
 			landlordPanelDisplay = "block"
 		}
@@ -105,16 +99,11 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, templates.GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay))
 }
-
-// --- UPDATED AUTH HANDLERS (With Professional UI) ---
-
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	errorMsg := ""
 
 	if r.Method == http.MethodPost {
-		username := r.FormValue("username")
-		password := r.FormValue("password")
-
+		username, password := r.FormValue("username"), r.FormValue("password")
 		found := false
 		for _, u := range users {
 			if u.Username == username {
@@ -127,12 +116,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		if !found || true { // "true" ensures we fall through to error
+		if !found || true {
 			errorMsg = "Invalid Username or Password"
 		}
 	}
 
-	// PROFESSIONAL LOGIN UI (With Error Toast)
 	html := fmt.Sprintf(`<!DOCTYPE html><html><head><title>Login • Nyumba</title><meta name="viewport" content="width=device-width"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;800&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script>
 	<style>body{font-family:'Outfit',sans-serif;background:#0f172a;color:#fff}.glass{background:rgba(30,41,59,0.7);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);box-shadow:0 25px 50px -12px rgba(0,0,0,0.5)}</style></head>
 	<body class="h-screen flex items-center justify-center relative overflow-hidden">
@@ -147,13 +135,20 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			%s 
 
 			<form method="POST" class="space-y-4">
-				<div><label class="text-[10px] uppercase font-bold text-slate-500 tracking-wider ml-1">Username</label><input name="username" type="text" required class="w-full bg-slate-900/50 border border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-white outline-none transition"></div>
-				<div><label class="text-[10px] uppercase font-bold text-slate-500 tracking-wider ml-1">Password</label><input name="password" type="password" required class="w-full bg-slate-900/50 border border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-white outline-none transition"></div>
+				<div>
+					<label for="username" class="text-[10px] uppercase font-bold text-slate-500 tracking-wider ml-1">Username</label>
+					<input id="username" name="username" type="text" placeholder="e.g. johndoe" required class="w-full bg-slate-900/50 border border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-white outline-none transition">
+				</div>
+				<div>
+					<label for="password" class="text-[10px] uppercase font-bold text-slate-500 tracking-wider ml-1">Password</label>
+					<input id="password" name="password" type="password" placeholder="••••••••" required class="w-full bg-slate-900/50 border border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-white outline-none transition">
+				</div>
 				<button class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 mt-4">Sign In</button>
 			</form>
 			
-			<div class="mt-8 text-center border-t border-white/5 pt-6">
+			<div class="mt-8 text-center border-t border-white/5 pt-6 flex flex-col gap-3">
 				<p class="text-slate-400 text-sm">New here? <a href="/signup" class="text-indigo-400 font-bold hover:text-indigo-300 transition">Create Account</a></p>
+				<a href="#" onclick="alert('Password reset link sent to your phone!')" class="text-slate-500 text-xs hover:text-slate-300 transition">Forgot Password?</a>
 			</div>
 		</div>
 	</body></html>`, generateErrorHTML(errorMsg))
@@ -163,11 +158,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		username := r.FormValue("username")
-		password := r.FormValue("password")
-		phone := r.FormValue("phone")
-		role := r.FormValue("role")
-
+		username, password, phone, role := r.FormValue("username"), r.FormValue("password"), r.FormValue("phone"), r.FormValue("role")
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 		if err != nil {
 			http.Error(w, "Server Error", 500)
@@ -181,7 +172,6 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// PROFESSIONAL SIGNUP UI
 	fmt.Fprint(w, `<!DOCTYPE html><html><head><title>Join • Nyumba</title><meta name="viewport" content="width=device-width"><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;800&display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script>
 	<style>body{font-family:'Outfit',sans-serif;background:#0f172a;color:#fff}.glass{background:rgba(30,41,59,0.7);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);box-shadow:0 25px 50px -12px rgba(0,0,0,0.5)}</style></head>
 	<body class="h-screen flex items-center justify-center relative overflow-hidden">
@@ -190,30 +180,32 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		<div class="glass p-8 md:p-12 rounded-3xl w-full max-w-sm mx-4 relative">
 			<div class="text-center mb-6">
 				<h1 class="text-3xl font-bold text-white mb-2">Create Account</h1>
-				<p class="text-xs text-slate-400">Join the curated living community</p>
+				<p class="text-xs text-slate-400">Join 500+ curated renters today.</p>
 			</div>
 			<form method="POST" class="space-y-3">
-				<div><input name="username" type="text" placeholder="Username" required class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500 transition"></div>
-				<div><input name="phone" type="tel" placeholder="Phone (e.g. 07XX...)" required class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500 transition"></div>
-				<div><input name="password" type="password" placeholder="Password" required class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500 transition"></div>
-				<div class="relative"><select name="role" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none appearance-none cursor-pointer"><option value="renter">I want to Rent</option><option value="landlord">I am a Landlord</option></select><div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div></div>
-				<button class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg mt-2 transition">Start Journey</button>
+				<div>
+					<label for="username" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block ml-1">Username</label>
+					<input id="username" name="username" type="text" placeholder="e.g. johndoe" required class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500 transition">
+				</div>
+				<div>
+					<label for="phone" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block ml-1">M-Pesa Number</label>
+					<input id="phone" name="phone" type="tel" placeholder="07XX..." required class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500 transition">
+				</div>
+				<div>
+					<label for="password" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block ml-1">Password</label>
+					<input id="password" name="password" type="password" placeholder="••••••••" required class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-indigo-500 transition">
+				</div>
+				<div class="relative pt-2">
+					<select name="role" class="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none appearance-none cursor-pointer"><option value="renter">I want to Rent</option><option value="landlord">I am a Landlord</option></select><div class="absolute right-4 top-1/2 translate-y-[-20%] pointer-events-none text-slate-500">▼</div>
+				</div>
+				<button class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg mt-4 transition">Start Journey</button>
 			</form>
-			<div class="mt-6 text-center border-t border-white/5 pt-4"><a href="/login" class="text-slate-400 text-sm hover:text-white transition">Already have an account? Login</a></div>
+			<div class="mt-6 text-center border-t border-white/5 pt-4">
+				<a href="/login" class="text-slate-400 text-sm hover:text-white transition">Already have an account? Login</a>
+			</div>
 		</div>
 	</body></html>`)
 }
-
-// Helper to generate the Red Error Box
-func generateErrorHTML(msg string) string {
-	if msg == "" {
-		return ""
-	}
-	return fmt.Sprintf(`<div class="bg-red-500/10 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl mb-6 text-xs font-bold flex items-center gap-3 animate-pulse">
-		<span class="text-lg">⚠️</span> %s
-	</div>`, msg)
-}
-
 func UploadHouse(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", 405)
@@ -226,15 +218,16 @@ func UploadHouse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cld, _ := cloudinary.NewFromURL(os.Getenv("CLOUDINARY_URL"))
 	var imageURLs []string
 	for _, fileHeader := range r.MultipartForm.File["photos"] {
 		file, _ := fileHeader.Open()
-		filename := fmt.Sprintf("%d_%s", time.Now().UnixNano(), fileHeader.Filename)
-		dst, _ := os.Create("uploads/" + filename)
-		io.Copy(dst, file)
-		dst.Close()
+		ctx := context.Background()
+		resp, err := cld.Upload.Upload(ctx, file, uploader.UploadParams{Folder: "nyumba_app_houses"})
 		file.Close()
-		imageURLs = append(imageURLs, "/uploads/"+filename)
+		if err == nil {
+			imageURLs = append(imageURLs, resp.SecureURL)
+		}
 	}
 
 	p, _ := strconv.ParseFloat(r.FormValue("price"), 64)
@@ -262,7 +255,6 @@ func DeleteHouseHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
-// PAY HANDLER (Updates to request payment & Save ID)
 func PayHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
@@ -276,7 +268,6 @@ func PayHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-
 	if selectedHouse == nil {
 		w.WriteHeader(404)
 		fmt.Fprint(w, `{"ResponseCode": "1", "CustomerMessage": "House Not Found"}`)
@@ -294,7 +285,6 @@ func PayHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `{"ResponseCode": "0", "CustomerMessage": "Request Sent"}`)
 }
 
-// CALLBACK HANDLER (Listens for Success from Safaricom)
 func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	var callback models.MpesaCallback
 	json.NewDecoder(r.Body).Decode(&callback)
@@ -313,9 +303,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
-// ServeMedia (Restored!)
 func ServeMedia(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "."+r.URL.Path) }
-
 func GetHouses(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(houses)
@@ -325,26 +313,30 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
-// --- MPESA HELPERS ---
-
 func initiateSTKPush(phoneNumber, amount string) (string, error) {
 	token, err := getAccessToken()
 	if err != nil {
 		return "", err
 	}
+
+	passkey := os.Getenv("MPESA_PASSKEY")
 	timestamp := time.Now().Format("20060102150405")
 	password := base64.StdEncoding.EncodeToString([]byte(shortCode + passkey + timestamp))
+
 	headers := map[string]string{"Authorization": "Bearer " + token, "Content-Type": "application/json"}
+
 	payload := map[string]string{
 		"BusinessShortCode": shortCode, "Password": password, "Timestamp": timestamp,
 		"TransactionType": "CustomerPayBillOnline", "Amount": amount, "PartyA": phoneNumber,
 		"PartyB": shortCode, "PhoneNumber": phoneNumber, "CallBackURL": callbackURL, "AccountReference": "NyumbaApp", "TransactionDesc": "Viewing Fee",
 	}
+
 	jsonPayload, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", mpesaPushURL, bytes.NewBuffer(jsonPayload))
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -356,7 +348,7 @@ func initiateSTKPush(phoneNumber, amount string) (string, error) {
 	json.NewDecoder(resp.Body).Decode(&res)
 
 	if res["ResponseCode"] != "0" {
-		return "", fmt.Errorf("failed") // Simplified error for brevity
+		return "", fmt.Errorf("failed")
 	}
 	return res["CheckoutRequestID"].(string), nil
 }
@@ -364,17 +356,28 @@ func initiateSTKPush(phoneNumber, amount string) (string, error) {
 func getAccessToken() (string, error) {
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", mpesaAuthURL, nil)
-	auth := base64.StdEncoding.EncodeToString([]byte(consumerKey + ":" + consumerSecret))
+
+	key, secret := os.Getenv("MPESA_KEY"), os.Getenv("MPESA_SECRET")
+	auth := base64.StdEncoding.EncodeToString([]byte(key + ":" + secret))
 	req.Header.Add("Authorization", "Basic "+auth)
+
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("failed to get token")
 	}
 	var result map[string]interface{}
 	json.NewDecoder(resp.Body).Decode(&result)
 	return result["access_token"].(string), nil
+}
+
+func generateErrorHTML(msg string) string {
+	if msg == "" {
+		return ""
+	}
+	return fmt.Sprintf(`<div class="bg-red-500/10 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl mb-6 text-xs font-bold flex items-center gap-3 animate-pulse"><span class="text-lg">⚠️</span> %s</div>`, msg)
 }

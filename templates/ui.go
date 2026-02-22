@@ -43,7 +43,6 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 				<a href="/logout" class="text-sm font-bold text-red-400 border border-red-500/30 px-3 py-1 rounded-full hover:bg-red-500/10 transition">Logout</a>
 			</div>
 		</aside>
-
 		<main class="flex-1 h-full overflow-y-auto bg-slate-900 relative z-10">
 			<div class="p-4 md:p-8 max-w-[1600px] mx-auto">
 				<header class="flex justify-between items-end mb-8 mt-4 md:mt-0">
@@ -70,7 +69,6 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 		</div>
 
 		<div id="toast" class="hidden fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white shadow-2xl z-[60] flex items-center gap-2 transition-all duration-300"><span class="text-lg">✨</span> <span id="toast-msg">Notification</span></div>
-
 		<script>
 			const isLoggedIn = %s;
 			const currentUsername = "%s";
@@ -119,8 +117,8 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 			function showToast(msg) { 
 				const t = document.getElementById("toast"); 
 				document.getElementById("toast-msg").innerText = msg; 
-				t.classList.remove("hidden"); // Show it
-				setTimeout(() => t.classList.add("hidden"), 3000); // Hide it after 3s
+				t.classList.remove("hidden"); 
+				setTimeout(() => t.classList.add("hidden"), 3000); 
 			}
 
 			function openGallery(id) { const images = houseImages[id]; if(!images || images.length === 0) return; currentGalleryID = id; galleryIndex = 0; updateGalleryView(); document.getElementById('gallery-modal').classList.remove('hidden'); }
@@ -157,7 +155,16 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 					return true;
 				});
 
-				if (filtered.length === 0) { container.innerHTML = "<div class='col-span-full text-center text-slate-500 py-20'>No sanctuaries found.</div>"; return; }
+				// UPDATED: Professional Empty State UI
+				if (filtered.length === 0) { 
+					container.innerHTML = "<div class='col-span-full flex flex-col items-center justify-center text-center py-20 px-4 bg-slate-800/30 rounded-3xl border border-white/5'>" +
+						"<div class='text-6xl mb-4'>🏙️</div>" +
+						"<h3 class='text-xl font-bold text-white mb-2'>No properties here yet</h3>" +
+						"<p class='text-sm text-slate-400 max-w-md mb-6'>We are currently verifying landlords in this area. Check back soon or adjust your search filters.</p>" +
+						"<button onclick=\"document.getElementById('searchLoc').value=''; document.getElementById('searchPrice').value=''; fetchHouses();\" class='bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 px-6 py-2 rounded-full text-sm font-bold hover:bg-indigo-600/40 transition'>Clear Filters</button>" +
+					"</div>";
+					return; 
+				}
 				
 				filtered.forEach((h) => {
 					houseImages[h.id] = h.image_urls;
@@ -167,8 +174,11 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 					if (h.is_booked) {
 						actionBtn = '<button onclick="openDashboard()" class="mt-4 w-full py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/50 text-xs font-bold tracking-widest uppercase">🔓 Contact Unlocked</button>';
 					} else if (isLoggedIn) {
-						// UPDATED: Calls payWithMpesa correctly
-						actionBtn = '<button onclick="payWithMpesa(' + h.id + ')" class="mt-4 w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">Pay Viewing Fee (1k)</button>';
+						// UPDATED: Payment Clarity
+						actionBtn = '<div class="mt-4">' +
+							'<p class="text-[10px] text-center text-slate-400 mb-2 uppercase font-bold tracking-wider">Unlocks Direct Phone & WhatsApp</p>' +
+							'<button onclick="payWithMpesa(' + h.id + ')" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/30 transition transform active:scale-95 flex items-center justify-center gap-2">Pay via M-Pesa (KES 1,000)</button>' +
+						'</div>';
 					} else {
 						actionBtn = '<a href="/login" class="block mt-4 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-center text-xs font-bold transition">Login to Unlock Details</a>';
 					}
@@ -176,7 +186,7 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 					const card = document.createElement('div');
 					card.className = "glass-card rounded-3xl p-4 flex flex-col relative group transition hover:-translate-y-1 hover:shadow-2xl";
 					card.innerHTML = 
-						'<div class="w-full h-48 bg-slate-800 rounded-2xl overflow-hidden relative mb-4"><img id="img-' + h.id + '" src="' + imageSrc + '" class="w-full h-full object-cover transition duration-700 ease-out"></div>' +
+						'<div class="w-full h-48 bg-slate-800 rounded-2xl overflow-hidden relative mb-4 cursor-pointer" onclick="openGallery(' + h.id + ')"><img id="img-' + h.id + '" src="' + imageSrc + '" class="w-full h-full object-cover transition duration-700 ease-out"></div>' +
 						'<div class="flex-1">' + 
 							'<h3 class="text-xl font-bold text-white">' + h.building_name + '</h3>' + 
 							'<p class="text-xs text-slate-400 mb-2">📍 ' + h.location + '</p>' + 
@@ -209,16 +219,13 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 				fetch('/houses/delete?id=' + id, {method: 'POST'}).then(() => { showToast("Listing Deleted"); fetchHouses(); });
 			}
 			
-			// --- UPDATED PAYMENT FUNCTION ---
 			function payWithMpesa(id) {
 				let phone = prompt("Enter M-Pesa Number to Pay Viewing Fee (e.g., 0712345678):");
 				if (!phone) return;
 				
 				showToast("Requesting M-Pesa...");
-				
-				// Using formatted string correctly
 				fetch('/pay?id=' + id + '&phone=' + phone, {method: 'POST'})
-				.then(res => res.json()) // We now expect JSON response
+				.then(res => res.json())
 				.then(data => { 
 					if(data.ResponseCode === "0") { 
 						showToast("📲 check your phone to enter PIN!"); 
