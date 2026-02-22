@@ -249,103 +249,88 @@ func GetLandingHTML() string {
 	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 	<script src="https://cdn.tailwindcss.com"></script>
 	<style>
-		body { font-family: 'Outfit', sans-serif; background: #0f172a; color: #f8fafc; overflow-x: hidden; }
-		.glass-nav { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-		/* Floating animation for the mockup */
-		@keyframes float { 0% { transform: translateY(0px) perspective(1000px) rotateX(4deg); } 50% { transform: translateY(-15px) perspective(1000px) rotateX(1deg); } 100% { transform: translateY(0px) perspective(1000px) rotateX(4deg); } }
-		.animate-float { animation: float 6s ease-in-out infinite; }
+		body { font-family: 'Outfit', sans-serif; background: #0a0a0a; color: #f8fafc; overflow-x: hidden; }
+		/* Component #4: Floating Pill Navbar */
+		.glass-pill { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+		@keyframes float { 0% { transform: translateY(0px) rotateX(4deg); } 50% { transform: translateY(-10px) rotateX(1deg); } 100% { transform: translateY(0px) rotateX(4deg); } }
+		.animate-float { animation: float 6s ease-in-out infinite; perspective: 1000px; }
 	</style>
 	</head>
 	<body class="antialiased selection:bg-indigo-500/30">
 		
-		<div class="fixed top-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-indigo-600/20 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
-		<div class="fixed top-[20%] right-[-10%] w-[40vw] h-[40vw] bg-cyan-500/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+		<div class="fixed top-[-10%] left-[10%] w-[40vw] h-[40vw] bg-indigo-600/10 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+		<div class="fixed bottom-[10%] right-[10%] w-[30vw] h-[30vw] bg-cyan-500/10 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
 
-		<nav class="fixed w-full z-50 glass-nav transition-all">
-			<div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-				<div class="text-2xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Nyumba.</div>
-				<div class="flex items-center gap-4">
-					<a href="/login" class="text-sm font-bold text-slate-300 hover:text-white transition">Login</a>
-					<a href="/explore" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-2.5 px-6 rounded-full shadow-lg shadow-indigo-500/25 transition transform hover:-translate-y-0.5 active:scale-95">Explore Homes</a>
+		<div class="fixed top-6 left-0 w-full flex justify-center z-50 px-4">
+			<nav class="glass-pill rounded-full px-6 py-3 w-full max-w-4xl flex items-center justify-between transition-all">
+				<div class="text-xl font-extrabold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">Nyumba.</div>
+				<div class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
+					<a href="#" class="hover:text-white transition">How it Works</a>
+					<a href="#" class="hover:text-white transition">Neighborhoods</a>
+					<a href="/signup" class="hover:text-white transition">For Landlords</a>
 				</div>
-			</div>
-		</nav>
+				<div class="flex items-center gap-4">
+					<a href="/login" class="text-sm font-bold text-slate-300 hover:text-white transition">Sign In</a>
+					<a href="/explore" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold py-2 px-6 rounded-full shadow-lg shadow-indigo-500/25 transition transform active:scale-95">Explore</a>
+				</div>
+			</nav>
+		</div>
 
-		<main class="pt-36 pb-16 px-6 max-w-7xl mx-auto flex flex-col items-center text-center">
+		<main class="pt-40 pb-16 px-6 max-w-5xl mx-auto flex flex-col items-center text-center">
 			
-			<div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 text-indigo-300 text-xs font-bold tracking-widest uppercase mb-8 backdrop-blur-sm">
-				<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span></span>
-				Now Live in Kenya
+			<div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-700 bg-slate-800/50 text-slate-300 text-xs font-bold tracking-widest uppercase mb-8 backdrop-blur-sm">
+				<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>
+				Verified Listings Only
 			</div>
 			
-			<h1 class="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight mb-6 leading-[1.1]">
+			<h1 class="text-6xl md:text-8xl font-extrabold tracking-tight mb-6 leading-[1.05]">
 				Find Your Sanctuary. <br/>
-				<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-cyan-300 to-emerald-300">Without the Hassle.</span>
+				<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">Simplified.</span>
 			</h1>
 			
 			<p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed font-light">
-				Nyumba is an exclusive platform connecting serious renters with verified landlords. Say goodbye to endless scrolling, scams, and agent fees.
+				An exclusive platform connecting serious renters with verified landlords. No agents. No endless scrolling. Just your next home.
 			</p>
 			
-			<div class="flex flex-col sm:flex-row gap-4 w-full justify-center relative z-20">
-				<a href="/explore" class="group relative inline-flex items-center justify-center bg-white text-slate-900 text-lg font-bold py-4 px-8 rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)]">
-					Browse Listings 
+			<div class="flex flex-col sm:flex-row gap-4 w-full justify-center relative z-20 mb-12">
+				<a href="/explore" class="group relative inline-flex items-center justify-center bg-white text-slate-900 text-lg font-bold py-4 px-10 rounded-full transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+					Start Your Search
 					<span class="ml-2 group-hover:translate-x-1 transition-transform duration-300">→</span>
 				</a>
-				<a href="/signup" class="bg-slate-800/80 backdrop-blur-md border border-slate-700 hover:bg-slate-700 hover:border-slate-600 text-white text-lg font-bold py-4 px-8 rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
-					I am a Landlord
-				</a>
 			</div>
 
-			<div class="mt-20 w-full max-w-4xl mx-auto relative z-10 hidden md:block">
-				<div class="absolute inset-0 bg-gradient-to-r from-indigo-500 to-cyan-400 blur-3xl opacity-20 rounded-full animate-pulse"></div>
-				
-				<div class="relative bg-slate-900/60 backdrop-blur-2xl border border-white/10 p-2 rounded-[2rem] shadow-2xl animate-float">
-					<div class="bg-[#0f172a] rounded-[1.5rem] border border-white/5 overflow-hidden flex flex-col h-64 shadow-[inset_0_0_40px_rgba(0,0,0,0.5)]">
-						<div class="bg-slate-800/50 px-4 py-3 flex items-center gap-2 border-b border-white/5">
-							<div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-							<div class="w-3 h-3 rounded-full bg-amber-500/80"></div>
-							<div class="w-3 h-3 rounded-full bg-emerald-500/80"></div>
-							<div class="mx-auto bg-slate-900/80 text-slate-500 text-xs py-1 px-10 rounded-full border border-white/5 flex items-center gap-2">🔒 nyumba-app.onrender.com</div>
-						</div>
-						<div class="p-6 flex-1 flex flex-col gap-4">
-							<div class="bg-slate-800/50 border border-white/5 rounded-2xl p-4 flex items-center gap-4 shadow-inner">
-								<div class="text-2xl">📍</div>
-								<div class="flex-1 h-6 bg-slate-700/50 rounded-lg w-1/2"></div>
-								<div class="w-24 h-10 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-500/20"></div>
-							</div>
-							<div class="grid grid-cols-3 gap-4 flex-1">
-								<div class="bg-slate-800/40 rounded-2xl border border-white/5"></div>
-								<div class="bg-slate-800/40 rounded-2xl border border-white/5"></div>
-								<div class="bg-slate-800/40 rounded-2xl border border-white/5"></div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div class="mt-16 md:mt-24 grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-5xl mx-auto z-20 relative">
-				<div class="bg-slate-800/40 border border-white/5 backdrop-blur-md rounded-3xl p-6 md:p-8 transition-all hover:bg-slate-800/60 hover:-translate-y-1 hover:border-indigo-500/30">
-					<h3 class="text-3xl md:text-4xl font-black text-white mb-2">500+</h3>
-					<p class="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-bold">Renters</p>
-				</div>
-				<div class="bg-slate-800/40 border border-white/5 backdrop-blur-md rounded-3xl p-6 md:p-8 transition-all hover:bg-slate-800/60 hover:-translate-y-1 hover:border-emerald-500/30">
-					<h3 class="text-3xl md:text-4xl font-black text-white mb-2 text-transparent bg-clip-text bg-gradient-to-br from-emerald-400 to-cyan-400">100%</h3>
-					<p class="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-bold">Verified</p>
-				</div>
-				<div class="bg-slate-800/40 border border-white/5 backdrop-blur-md rounded-3xl p-6 md:p-8 transition-all hover:bg-slate-800/60 hover:-translate-y-1 hover:border-amber-500/30">
-					<h3 class="text-3xl md:text-4xl font-black text-white mb-2">24/7</h3>
-					<p class="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-bold">Direct Access</p>
-				</div>
-				<div class="bg-slate-800/40 border border-white/5 backdrop-blur-md rounded-3xl p-6 md:p-8 transition-all hover:bg-slate-800/60 hover:-translate-y-1 hover:border-cyan-500/30">
-					<h3 class="text-3xl md:text-4xl font-black text-white mb-2">Secure</h3>
-					<p class="text-[10px] md:text-xs text-slate-400 uppercase tracking-widest font-bold">M-Pesa Pay</p>
+			<div class="w-full max-w-3xl border-t border-white/10 pt-8 mt-4">
+				<p class="text-xs text-slate-500 uppercase tracking-widest font-bold mb-4">Popular Neighborhoods</p>
+				<div class="flex flex-wrap justify-center gap-3">
+					<a href="/explore" class="px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition hover:-translate-y-0.5 backdrop-blur-sm cursor-pointer">📍 Kileleshwa</a>
+					<a href="/explore" class="px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition hover:-translate-y-0.5 backdrop-blur-sm cursor-pointer">📍 Kilimani</a>
+					<a href="/explore" class="px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition hover:-translate-y-0.5 backdrop-blur-sm cursor-pointer">📍 Thika</a>
+					<a href="/explore" class="px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition hover:-translate-y-0.5 backdrop-blur-sm cursor-pointer">📍 Juja</a>
+					<a href="/explore" class="px-5 py-2.5 rounded-full bg-slate-800/40 border border-white/5 text-slate-300 text-sm font-medium hover:bg-indigo-600/20 hover:border-indigo-500/30 transition hover:-translate-y-0.5 backdrop-blur-sm cursor-pointer">📍 Westlands</a>
 				</div>
 			</div>
 		</main>
 
-		<footer class="text-center py-10 mt-10 border-t border-white/5 text-slate-500 text-xs font-medium tracking-wide">
-			<p>&copy; 2026 Nyumba. Curated Living in Kenya.</p>
-		</footer>
+		<section class="pb-20 px-6">
+			<div class="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
+				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center">
+					<h3 class="text-3xl font-bold text-white mb-1">500+</h3>
+					<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Properties</p>
+				</div>
+				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center">
+					<h3 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 mb-1">100%</h3>
+					<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Verified</p>
+				</div>
+				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center">
+					<h3 class="text-3xl font-bold text-white mb-1">24/7</h3>
+					<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Direct Access</p>
+				</div>
+				<div class="bg-slate-900/40 border border-white/5 rounded-3xl p-6 text-center">
+					<h3 class="text-3xl font-bold text-white mb-1">Secure</h3>
+					<p class="text-[10px] text-slate-500 uppercase tracking-widest font-bold">M-Pesa</p>
+				</div>
+			</div>
+		</section>
+
 	</body></html>`
 }
