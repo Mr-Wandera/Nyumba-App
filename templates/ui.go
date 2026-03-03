@@ -58,7 +58,7 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 			<div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeDetails()"></div>
 			<div class="absolute right-0 top-0 h-full w-full md:w-[500px] lg:w-[600px] detail-pane animate-slide p-8 overflow-y-auto shadow-2xl">
 				<button onclick="closeDetails()" class="mb-8 text-slate-400 hover:text-white flex items-center gap-2 font-bold text-sm">
-					<span>←</span> Back to Search
+					<span>&larr;</span> Back to Search
 				</button>
 				<div id="detail-content"></div>
 			</div>
@@ -66,70 +66,62 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 
 		<div id="toast" class="hidden fixed top-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full text-sm font-bold text-white z-[200]">
 			<span id="toast-msg"></span>
-		</div>`
-		` <script>
-			const isLoggedIn = %s;
-			const currentUsername = "%s";
-			let allHousesData = [];
+		</div>`, myHubButton, landlordPanelDisplay, currentUsername)
+}
+func GetScripts(isLoggedIn bool, currentUsername string) string {
+	return fmt.Sprintf(`
+	<script>
+		const isLoggedIn = %v;
+		const currentUsername = "%s";
+		let allHousesData = [];
 
-			document.addEventListener("DOMContentLoaded", () => {
-				const params = new URLSearchParams(window.location.search);
-				if (params.get('loc')) document.getElementById('searchLoc').value = params.get('loc');
-				fetchHouses();
+		document.addEventListener("DOMContentLoaded", () => {
+			const params = new URLSearchParams(window.location.search);
+			if (params.get('loc')) document.getElementById('searchLoc').value = params.get('loc');
+			fetchHouses();
+		});
+
+		function fetchHouses() {
+			fetch('/houses').then(res => res.json()).then(data => {
+				allHousesData = data;
+				renderList(data);
 			});
+		}
 
-			function fetchHouses() {
-				fetch('/houses').then(res => res.json()).then(data => {
-					allHousesData = data;
-					renderList(data);
-				});
-			}
+		function renderList(data) {
+			const container = document.getElementById('results-area');
+			const sLoc = document.getElementById('searchLoc').value.toLowerCase();
+			container.innerHTML = "";
 
-			function renderList(data) {
-				const container = document.getElementById('results-area');
-				const sLoc = document.getElementById('searchLoc').value.toLowerCase();
-				container.innerHTML = "";
+			data.filter(h => !sLoc || h.location.toLowerCase().includes(sLoc)).forEach(h => {
+				const card = document.createElement('div');
+				card.className = "glass-card rounded-[2rem] p-5 flex flex-col relative group transition-all duration-300 hover:-translate-y-2 cursor-pointer border border-white/5 hover:border-indigo-500/30";
+				card.onclick = () => openDetails(h.id);
+				card.innerHTML = '<div class="w-full h-56 bg-slate-800 rounded-3xl overflow-hidden relative mb-5"><img src="'+h.image_urls[0]+'" class="w-full h-full object-cover group-hover:scale-110 transition duration-700"><div class="absolute top-4 right-4 bg-slate-900/90 px-4 py-1.5 rounded-full text-white font-extrabold text-sm">KES '+h.price.toLocaleString()+'</div></div><h3 class="text-2xl font-bold text-white mb-2">'+h.building_name+'</h3><p class="text-slate-400 text-sm mb-4">&nbsp;'+h.location+'</p><button class="w-full py-3 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold uppercase tracking-widest">View Details</button>';
+				container.appendChild(card);
+			});
+		}
 
-				data.filter(h => !sLoc || h.location.toLowerCase().includes(sLoc)).forEach(h => {
-					const card = document.createElement('div');
-					card.className = "glass-card rounded-[2rem] p-5 flex flex-col relative group transition-all duration-300 hover:-translate-y-2 cursor-pointer border border-white/5 hover:border-indigo-500/30";
-					card.onclick = () => openDetails(h.id);
-					card.innerHTML = \`
-						<div class="w-full h-56 bg-slate-800 rounded-3xl overflow-hidden relative mb-5">
-							<img src="\${h.image_urls[0]}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
-							<div class="absolute top-4 right-4 bg-slate-900/90 px-4 py-1.5 rounded-full text-white font-extrabold text-sm">KES \${h.price.toLocaleString()}</div>
-						</div>
-						<h3 class="text-2xl font-bold text-white mb-2">\${h.building_name}</h3>
-						<p class="text-slate-400 text-sm mb-4">📍 \${h.location}</p>
-						<button class="w-full py-3 rounded-xl bg-slate-800 text-slate-300 text-xs font-bold uppercase tracking-widest">View Details</button>\`;
-					container.appendChild(card);
-				});
-			}
+		function openDetails(id) {
+			const house = allHousesData.find(h => h.id == id);
+			if (!house) return;
+			const content = document.getElementById('detail-content');
+			content.innerHTML = '<div class="rounded-3xl overflow-hidden mb-8"><img src="'+house.image_urls[0]+'" class="w-full h-80 object-cover"></div><div class="flex justify-between items-start mb-6"><div><h1 class="text-3xl font-extrabold text-white">'+house.building_name+'</h1><p class="text-indigo-400 font-bold uppercase tracking-widest text-xs">📍 '+house.location+'</p></div><div class="text-right"><p class="text-2xl font-black text-white">KES '+house.price.toLocaleString()+'</p></div></div><div class="grid grid-cols-2 gap-4 mb-8"><div class="bg-white/5 p-4 rounded-2xl border border-white/5"><p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Type</p><p class="text-white font-bold">'+house.type+'</p></div><div class="bg-white/5 p-4 rounded-2xl border border-white/5"><p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Deposit</p><p class="text-white font-bold">1 Month</p></div></div><p class="text-slate-400 leading-relaxed mb-8">'+house.details+'</p><div class="sticky bottom-0 bg-slate-900/80 backdrop-blur-md pt-4 border-t border-white/10">' + (house.is_booked ? '<button class="w-full bg-emerald-500 text-white font-bold py-4 rounded-2xl">Unlocked</button>' : '<button onclick="payWithMpesa('+house.id+')" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-500/20">Pay KES 1,000 to View</button>') + '</div>';
+			document.getElementById('detail-overlay').classList.remove('hidden');
+		}
 
-			function openDetails(id) {
-				const house = allHousesData.find(h => h.id == id);
-				if (!house) return;
-				const content = document.getElementById('detail-content');
-				content.innerHTML = \`
-					<div class="rounded-3xl overflow-hidden mb-8"><img src="\${house.image_urls[0]}" class="w-full h-80 object-cover"></div>
-					<div class="flex justify-between items-start mb-6">
-						<div><h1 class="text-3xl font-extrabold text-white">\${house.building_name}</h1><p class="text-indigo-400 font-bold uppercase tracking-widest text-xs">📍 \${house.location}</p></div>
-						<div class="text-right"><p class="text-2xl font-black text-white">KES \${house.price.toLocaleString()}</p></div>
-					</div>
-					<div class="grid grid-cols-2 gap-4 mb-8">
-						<div class="bg-white/5 p-4 rounded-2xl border border-white/5"><p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Type</p><p class="text-white font-bold">\${house.type}</p></div>
-						<div class="bg-white/5 p-4 rounded-2xl border border-white/5"><p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Deposit</p><p class="text-white font-bold">1 Month</p></div>
-					</div>
-					<p class="text-slate-400 leading-relaxed mb-8">\${house.details}</p>
-					<div class="sticky bottom-0 bg-slate-900/80 backdrop-blur-md pt-4 border-t border-white/10">
-						\${house.is_booked ? '<button class="w-full bg-emerald-500 text-white font-bold py-4 rounded-2xl">Unlocked</button>' : '<button onclick="payWithMpesa(\${house.id})" class="w-full bg-indigo-600 text-white font-bold py-4 rounded-2xl shadow-lg shadow-indigo-500/20">Pay KES 1,000 to View</button>'}
-					</div>\`;
-				document.getElementById('detail-overlay').classList.remove('hidden');
-			}
-
-			function closeDetails() { document.getElementById('detail-overlay').classList.add('hidden'); }
-			function showToast(msg) { const t = document.getElementById("toast"); document.getElementById("toast-msg").innerText = msg; t.classList.remove("hidden"); setTimeout(() => t.classList.add("hidden"), 3000); }
-			function payWithMpesa(id) { /* existing pay logic */ }
-		</script>
-	</body></html>\`, myHubButton, landlordPanelDisplay, currentUsername, isLoggedIn, currentUsername)
+		function closeDetails() { document.getElementById('detail-overlay').classList.add('hidden'); }
+		function showToast(msg) { const t = document.getElementById("toast"); document.getElementById("toast-msg").innerText = msg; t.classList.remove("hidden"); setTimeout(() => t.classList.add("hidden"), 3000); }
+		function payWithMpesa(id) {
+			let phone = prompt("Enter M-Pesa Number:");
+			if (!phone) return;
+			showToast("Requesting M-Pesa...");
+			fetch('/pay?id=' + id + '&phone=' + phone, {method: 'POST'})
+			.then(res => res.json())
+			.then(data => { 
+				if(data.ResponseCode === "0") { showToast("Check phone for STK Push!"); } 
+				else { showToast(data.CustomerMessage || "Failed"); } 
+			});
+		}
+	</script>`, isLoggedIn, currentUsername)
 }
