@@ -121,3 +121,35 @@ func GetScripts(isLoggedIn bool, currentUsername string) string {
 		window.onload = fetchHouses;
 	</script>`
 }
+// Add this to your existing GetHTML function or a new component
+func GetTrustSignals() string {
+	return `
+	<section class="mt-16 border-t border-white/5 pt-12">
+		<h3 class="text-indigo-400 font-bold uppercase tracking-[0.2em] text-xs mb-6 text-center">The Science of the Search</h3>
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+			<div class="glass-card p-6 rounded-3xl border-emerald-500/20">
+				<div class="flex items-center gap-3 mb-4">
+					<div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-500">🛡️</div>
+					<h4 class="font-bold text-white">Full Verification</h4>
+				</div>
+				<p class="text-xs text-slate-400 leading-relaxed">Every sanctuary is cross-referenced with ID checks and ownership documents before appearing on your feed.</p>
+			</div>
+
+			<div class="glass-card p-6 rounded-3xl border-indigo-500/20">
+				<div class="flex items-center gap-3 mb-4">
+					<div class="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">🤝</div>
+					<h4 class="font-bold text-white">Landlord Accountability</h4>
+				</div>
+				<p class="text-xs text-slate-400 leading-relaxed">Review landlord responsiveness and transparency. We build communities, not just tenant-owner contracts.</p>
+			</div>
+
+			<div class="glass-card p-6 rounded-3xl border-purple-500/20">
+				<div class="flex items-center gap-3 mb-4">
+					<div class="p-2 bg-purple-500/10 rounded-lg text-purple-400">📈</div>
+					<h4 class="font-bold text-white">Passive Income</h4>
+				</div>
+				<p class="text-xs text-slate-400 leading-relaxed">Landlords: Automate your occupancy. High-quality leads for high-quality properties.</p>
+			</div>
+		</div>
+	</section>`
+}
