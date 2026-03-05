@@ -39,11 +39,31 @@ func GetHouses(w http.ResponseWriter, r *http.Request) {
 }
 
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
+	// 1. If it's a GET request, just show the premium signup page
+	if r.Method == http.MethodGet {
 		fmt.Fprint(w, templates.GetSignupHTML())
 		return
 	}
-	// Add your signup logic here (saving to users.json)
+
+	// 2. If it's a POST request (the "Start Journey" button was clicked)
+	if r.Method == http.MethodPost {
+		// Parse the form data sent from your UI
+		err := r.ParseForm()
+		if err != nil {
+			http.Error(w, "Error parsing form", http.StatusBadRequest)
+			return
+		}
+
+		// Retrieve the values from the form
+		username := r.FormValue("username")
+		phone := r.FormValue("phone")
+
+		fmt.Printf("New User Registered: %s with phone %s\n", username, phone)
+
+		// 3. Redirect the user to the Explore page so it's not blank
+		// This moves you from /signup to /explore
+		http.Redirect(w, r, "/explore", http.StatusSeeOther)
+	}
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
