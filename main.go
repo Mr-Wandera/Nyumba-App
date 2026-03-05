@@ -5,12 +5,19 @@ import (
 	"net/http"
 	"os"
 
-	"nyumba/handlers" // ✅ FIXED: Using your real module name 'nyumba'
+	"nyumba/handlers"
+	"nyumba/models"
 )
+
+// Declare these at the package level so all functions can see them
+var houses []models.House
+var users []models.User
 
 func main() {
 	// 1. Initialize Data
-	handlers.LoadData()
+	// This fixes the "WrongArgCount" and "undefined: houses" errors
+	handlers.LoadData("houses.json", &houses)
+	handlers.LoadData("users.json", &users)
 	handlers.SeedHouses()
 
 	// 2. Ensure uploads folder exists
@@ -20,6 +27,7 @@ func main() {
 
 	// 3. Define Routes
 	http.HandleFunc("/", handlers.HomePage)
+	http.HandleFunc("/explore", handlers.ExploreHandler)
 	http.HandleFunc("/login", handlers.LoginHandler)
 	http.HandleFunc("/signup", handlers.SignupHandler)
 	http.HandleFunc("/logout", handlers.LogoutHandler)
@@ -28,14 +36,17 @@ func main() {
 	// API & Features
 	http.HandleFunc("/houses", handlers.GetHouses)
 	http.HandleFunc("/houses/upload", handlers.UploadHouse)
-	http.HandleFunc("/houses/delete", handlers.DeleteHouseHandler)
 	http.HandleFunc("/pay", handlers.PayHandler)
+
+	// Static Media
 	http.HandleFunc("/uploads/", handlers.ServeMedia)
 
 	// 4. Start Server
-	fmt.Println("🚀 Nyumba App running on port 8080...")
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		fmt.Println("Error starting server:", err)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
 	}
+
+	fmt.Println("🚀 Nyumba Sanctuary is live on port:", port)
+	http.ListenAndServe(":"+port, nil)
 }
