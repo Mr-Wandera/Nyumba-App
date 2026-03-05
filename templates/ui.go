@@ -2,107 +2,76 @@ package templates
 
 import "fmt"
 
+
 func GetLandingHTML() string {
 	return `<!DOCTYPE html>
 	<html lang="en">
 	<head>
 		<meta charset="UTF-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Nyumba | Find Your Sanctuary</title>
 		<script src="https://cdn.tailwindcss.com"></script>
-		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;900&display=swap" rel="stylesheet">
 		<style>
-			body { 
-				font-family: 'Outfit', sans-serif; 
-				background-color: #0a0a0a;
-				color: #f8fafc;
-				overflow-x: hidden;
-			}
-			/* Professional Typography Scale */
-			.hero-title { font-size: clamp(3.5rem, 10vw, 8rem); line-height: 0.9; letter-spacing: -0.05em; }
+			body { font-family: 'Outfit', sans-serif; background: #0a0a0a; color: white; overflow-x: hidden; }
 			
-			/* Infinite Scroll Animation */
+			/* 1. The "Fade" Effect (Essential for UI) */
+			.scroll-container {
+				mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+				-webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+			}
+
+			/* 3. Smoothness & Performance */
 			@keyframes scroll {
 				0% { transform: translateX(0); }
 				100% { transform: translateX(-50%); }
 			}
-			.animate-scroll {
+
+			.scrolling-text {
 				display: flex;
-				width: max-content;
-				animation: scroll 30s linear infinite;
+				white-space: nowrap;
+				/* Slowed down for a premium feel */
+				animation: scroll 40s linear infinite; 
 			}
-			.animate-scroll:hover { animation-play-state: paused; }
-			
-			.glass-nav { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+
+			/* 4. Pause on Hover Interaction */
+			.scroll-container:hover .scrolling-text {
+				animation-play-state: paused;
+			}
+
+			/* 2. Typography & Spacing */
+			.ticker-item {
+				letter-spacing: 0.15em;
+				color: #a1a1aa; /* Muted color to keep focus on CTA */
+			}
 		</style>
 	</head>
 	<body class="min-h-screen flex flex-col">
-		<nav class="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl glass-nav rounded-full px-8 py-4 flex justify-between items-center z-50">
-			<div class="text-2xl font-black tracking-tighter">Nyumba<span class="text-indigo-500">.</span></div>
-			<div class="flex items-center gap-4">
-				<a href="/login" class="text-sm font-bold hover:text-indigo-400 transition">Sign In</a>
-				<a href="/explore" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-full font-bold text-sm transition transform hover:scale-105">Explore</a>
-			</div>
-		</nav>
-
-		<main class="flex-1 flex flex-col items-center justify-center pt-32 pb-12 px-6 relative">
-			<h1 class="hero-title font-black text-center mb-8">
-				Find Your <span class="text-white">Sanctuary.</span><br>
-				<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400">Simplified.</span>
-			</h1>
-			<p class="text-slate-400 text-center text-lg md:text-xl max-w-2xl mb-12 leading-relaxed">
-				An exclusive platform connecting serious renters with verified landlords in Thika's most sought-after corners.
-			</p>
-			<a href="/explore" class="bg-white text-black hover:bg-slate-200 px-10 py-5 rounded-full font-black text-lg transition-all transform hover:scale-105 shadow-xl shadow-white/5">
-				Start Your Search →
-			</a>
-		</main>
-
-		<section class="w-full py-16 bg-black/40 backdrop-blur-sm border-y border-white/5 relative overflow-hidden">
-			<div class="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10"></div>
-			<div class="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10"></div>
-			
-			<div class="animate-scroll gap-12 items-center">
-				` + getNeighborhoodItems() + getNeighborhoodItems() + `
-			</div>
-		</section>
-
-		<section class="max-w-6xl mx-auto px-6 py-24 text-center">
-			<p class="text-indigo-400 font-bold uppercase tracking-[0.2em] text-xs mb-4">The Science of the Search</p>
-			<h2 class="text-4xl font-black mb-16 tracking-tight">Three steps to your sanctuary.</h2>
-			<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-				<div class="group">
-					<div class="text-4xl mb-6 grayscale group-hover:grayscale-0 transition">🔍</div>
-					<h3 class="text-xl font-bold mb-2">Browse</h3>
-					<p class="text-slate-500 text-sm">Every listing is verified for accuracy.</p>
-				</div>
-				<div class="group">
-					<div class="text-4xl mb-6 grayscale group-hover:grayscale-0 transition">🛡️</div>
-					<h3 class="text-xl font-bold mb-2">Verify</h3>
-					<p class="text-slate-500 text-sm">Direct connections with vetted owners.</p>
-				</div>
-				<div class="group">
-					<div class="text-4xl mb-6 grayscale group-hover:grayscale-0 transition">🔑</div>
-					<h3 class="text-xl font-bold mb-2">Secure</h3>
-					<p class="text-slate-500 text-sm">Pay KES 1,000 to unlock direct contact.</p>
-				</div>
+		<section class="scroll-container w-full py-16 bg-black/40 border-y border-white/5 relative overflow-hidden">
+			<div class="scrolling-text gap-24 items-center">
+				` + getTickerContent() + getTickerContent() + `
 			</div>
 		</section>
 	</body>
 	</html>`
 }
 
-func getNeighborhoodItems() string {
-	neighborhoods := []string{"Thika Town", "Section 9", "Ngoingwa", "Landless", "Juja", "Karatina"}
-	items := ""
-	for _, n := range neighborhoods {
-		// Professional Font & Direct Link
-		items += fmt.Sprintf(`
-			<a href="/explore?location=%s" class="text-3xl md:text-5xl font-black text-slate-800 hover:text-indigo-500 transition cursor-pointer tracking-tighter uppercase whitespace-nowrap">
-				%s
-			</a>`, n, n)
+func getTickerContent() string {
+	// 5. Content Variation
+	items := []string{
+		"Verified Listings Only",
+		"Zero Agent Fees Guaranteed",
+		"50+ New Sanctuaries in Thika",
+		"Direct Contact with Vetted Owners",
 	}
-	return items
+	
+	html := ""
+	for _, item := range items {
+		html += fmt.Sprintf(`
+			<span class="ticker-item text-2xl md:text-3xl font-black uppercase whitespace-nowrap">
+				%s <span class="text-indigo-500 mx-8">•</span>
+			</span>`, item)
+	}
+	return html
 }
 
 
