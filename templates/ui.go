@@ -3,15 +3,15 @@ package templates
 import "fmt"
 
 func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay string) string {
-	// We use %% to escape the percent sign so Go doesn't think it's a formatting verb
+	// We use %% to escape the percent sign for Go's Sprintf
 	return fmt.Sprintf(`<!DOCTYPE html><html><head><title>Nyumba</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 	<script src="https://cdn.tailwindcss.com"></script>
 	<style>
 		body { font-family: 'Outfit', sans-serif; background: #0a0a0a; color: #f8fafc; overflow-x: hidden; }
-		.glass-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(16px); }
-		.detail-pane { background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(30px); border-left: 1px solid rgba(255,255,255,0.1); }
+		.glass-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); }
+		.detail-pane { background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(25px); border-left: 1px solid rgba(255,255,255,0.1); }
 		@keyframes slideIn { from { transform: translateX(100%%); } to { transform: translateX(0); } }
 		.animate-slide { animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 	</style></head>
@@ -21,7 +21,7 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 				<header class="mb-10 flex justify-between items-center">
 					<h2 class="text-4xl font-extrabold text-white tracking-tighter">Nyumba<span class="text-indigo-500">.</span></h2>
 					<div class="flex items-center gap-4">
-						<span class="text-slate-400 text-sm">Welcome back,</span>
+						<span class="text-slate-400 text-sm">Active Session:</span>
 						<span class="font-bold text-indigo-400">%s</span>
 					</div>
 				</header>
@@ -31,8 +31,8 @@ func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay stri
 
 		<div id="detail-overlay" class="fixed inset-0 z-[150] hidden">
 			<div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeDetails()"></div>
-			<div class="absolute right-0 top-0 h-full w-full md:w-[500px] lg:w-[600px] detail-pane animate-slide p-8 overflow-y-auto shadow-2xl">
-				<button onclick="closeDetails()" class="mb-8 text-slate-400 hover:text-white flex items-center gap-2 font-bold text-sm transition">
+			<div class="absolute right-0 top-0 h-full w-full md:w-[500px] detail-pane animate-slide p-8 overflow-y-auto shadow-2xl">
+				<button onclick="closeDetails()" class="mb-8 text-slate-400 hover:text-white flex items-center gap-2 font-bold text-sm">
 					<span>←</span> Back to Search
 				</button>
 				<div id="detail-content"></div>
@@ -63,22 +63,11 @@ func GetScripts(isLoggedIn bool, currentUsername string) string {
 		const openDetails = (id) => {
 			const h = allHousesData.find(x => x.id == id);
 			if(!h) return;
-			document.getElementById('detail-content').innerHTML = '<div class="rounded-3xl overflow-hidden mb-8 shadow-2xl"><img src="'+h.image_urls[0]+'" class="w-full h-80 object-cover"></div><div class="flex justify-between items-start mb-6"><div><h1 class="text-3xl font-extrabold text-white mb-1">'+h.building_name+'</h1><p class="text-indigo-400 font-bold uppercase tracking-widest text-xs">📍 '+h.location+'</p></div><div class="text-right"><p class="text-2xl font-black text-white">KES '+h.price.toLocaleString()+'</p></div></div><p class="text-slate-400 leading-relaxed mb-8">'+h.details+'</p><button class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-indigo-500/20">Pay KES 1,000 to View</button>';
+			document.getElementById('detail-content').innerHTML = '<div class="rounded-3xl overflow-hidden mb-8 shadow-2xl"><img src="'+h.image_urls[0]+'" class="w-full h-80 object-cover"></div><h1 class="text-3xl font-extrabold text-white mb-1">'+h.building_name+'</h1><p class="text-indigo-400 font-bold uppercase tracking-widest text-xs mb-6">📍 '+h.location+'</p><p class="text-slate-400 leading-relaxed mb-8">'+h.details+'</p><button class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-indigo-500/20">Pay KES 1,000 to View</button>';
 			document.getElementById('detail-overlay').classList.remove('hidden');
 		};
 
 		const closeDetails = () => document.getElementById('detail-overlay').classList.add('hidden');
 		window.onload = fetchHouses;
 	</script>`
-}
-
-func GetLandingHTML() string {
-	return `<!DOCTYPE html><html><head><title>Nyumba</title><script src="https://cdn.tailwindcss.com"></script></head>
-	<body class="bg-[#0a0a0a] h-screen flex items-center justify-center text-white font-sans">
-		<div class="text-center">
-			<h1 class="text-6xl font-black mb-6 tracking-tighter">Nyumba<span class="text-indigo-500">.</span></h1>
-			<p class="text-slate-400 mb-8 text-lg">Find your next sanctuary in Thika or beyond.</p>
-			<a href="/explore" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-4 rounded-2xl font-bold transition inline-block">Explore Houses</a>
-		</div>
-	</body></html>`
 }
