@@ -25,9 +25,14 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func ExploreHandler(w http.ResponseWriter, r *http.Request) {
-	// A simple, stable call to get the app running again
-	htmlBody := templates.GetHTML("false", "", "", "none")
-	scripts := templates.GetScripts(false, "")
+	// These values come from your session or hardcoded for now
+	isLoggedIn := "true"
+	currentUsername := "Abdul" // cite: User Summary
+
+	// Combines the structural HTML with the Dynamic Scripts
+	htmlBody := templates.GetHTML(isLoggedIn, currentUsername, "", "none")
+	scripts := templates.GetScripts(isLoggedIn == "true", currentUsername)
+
 	fmt.Fprint(w, htmlBody+scripts)
 }
 
