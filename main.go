@@ -8,23 +8,22 @@ import (
 	"os"
 )
 
-// Declare these globally
+// Declare these globally so they are shared across the app
 var houses []models.House
 var users []models.User
 
 func main() {
-	// 1. Load Data correctly
+	// 1. Load your existing data
 	handlers.LoadData("houses.json", &houses)
 	handlers.SeedHouses()
 
-	// 2. Define your routes
+	// 2. Define your routes for every button
 	http.HandleFunc("/", handlers.HomePage)
 	http.HandleFunc("/explore", handlers.ExploreHandler)
-	http.HandleFunc("/login", handlers.LoginHandler)
 	http.HandleFunc("/signup", handlers.SignupHandler)
-	http.HandleFunc("/houses", handlers.GetHouses) // Matches handlers.GetHouses
+	http.HandleFunc("/login", handlers.LoginHandler)
+	http.HandleFunc("/houses", handlers.GetHouses) // Matches GetScripts fetch
 
-	// 3. Start Server
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
