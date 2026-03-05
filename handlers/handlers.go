@@ -25,9 +25,15 @@ func HomePage(w http.ResponseWriter, r *http.Request) {
 }
 
 func ExploreHandler(w http.ResponseWriter, r *http.Request) {
-	// Combines the original UI structure with the scripts
-	html := templates.GetHTML("true", "Abdul", "", "none") + templates.GetScripts(true, "Abdul")
-	fmt.Fprint(w, html)
+	// Using hardcoded context for Abdul
+	isLoggedIn := "true"
+	currentUsername := "Abdul"
+
+	// Combines the structural HTML with the Dynamic Scripts
+	htmlBody := templates.GetHTML(isLoggedIn, currentUsername, "", "none")
+	scripts := templates.GetScripts(isLoggedIn == "true", currentUsername)
+
+	fmt.Fprint(w, htmlBody+scripts)
 }
 
 // These resolve all 'undefined' errors in your main.go
