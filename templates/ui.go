@@ -167,25 +167,6 @@ func GetTrustSignals() string {
 func GetScripts(isLoggedIn bool, currentUsername string) string {
 	return `<script>
 		async function fetchHouses() {
-			try {
-				const response = await fetch('/houses');
-				const data = await response.json();
-				const container = document.getElementById('results-area');
-				container.innerHTML = "";
-				data.forEach(h => {
-					const div = document.createElement('div');
-					div.className = "glass-card p-8 rounded-[2.5rem] relative group";
-					div.innerHTML = '<div class="relative h-64 bg-slate-800 rounded-[2rem] overflow-hidden mb-6"><img src="'+h.image_urls[0]+'" class="w-full h-full object-cover group-hover:scale-110 transition duration-700"><div class="absolute top-4 right-4 bg-slate-900/90 px-4 py-2 rounded-2xl text-white font-bold text-sm">KES '+h.price.toLocaleString()+'</div></div><h2 class="text-3xl font-bold mb-4">'+h.building_name+'</h2><button class="w-full bg-indigo-500 hover:bg-indigo-400 text-white py-5 rounded-2xl font-bold">Pay KES 1,000 to View</button>';
-					container.appendChild(div);
-				});
-			} catch (e) { console.error("Data fetch failed", e); }
-		}
-		window.onload = fetchHouses;
-	</script>`
-}
-func GetScripts(isLoggedIn bool, currentUsername string) string {
-	return `<script>
-		async function fetchHouses() {
 			const res = await fetch('/houses');
 			const data = await res.json();
 			const container = document.getElementById('results-area');
