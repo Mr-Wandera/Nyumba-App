@@ -2,56 +2,59 @@ package templates
 
 import "fmt"
 
-// GetLandingHTML provides the high-fidelity landing page with the infinite scroller
-func GetLandingHTML() string {
-	return `<!DOCTYPE html>
-	<html lang="en">
+// Define the Head section separately for consistency
+func GetHead() string {
+	return `
 	<head>
 		<meta charset="UTF-8">
-		<title>Nyumba | Find Your Sanctuary</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Nyumba | Sanctuary Simplified</title>
 		<script src="https://cdn.tailwindcss.com"></script>
-		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
 		<style>
-			body { font-family: 'Outfit', sans-serif; background-color: #0a0a0a; background-image: radial-gradient(circle at 80% 20%, #1e1b4b 0%, #0a0a0a 50%); color: #f8fafc; overflow-x: hidden; }
-			.glass-nav { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
-			.badge-glow { box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+			:root { --accent: #6366f1; }
+			body { font-family: 'Outfit', sans-serif; background: #0a0a0a; color: #f8fafc; }
+			
+			/* Typography Scale */
+			h1 { font-size: clamp(3rem, 8vw, 6rem); font-weight: 800; line-height: 0.9; letter-spacing: -0.05em; }
+			h2 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.02em; }
+			h3 { font-size: 1.5rem; font-weight: 600; }
+			.body-text { font-size: 1.125rem; line-height: 1.6; color: #94a3b8; }
+			.caption { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; color: #64748b; }
+
+			/* Motion & Micro-interactions */
+			.hover-lift { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+			.hover-lift:hover { transform: translateY(-8px); }
+			@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+			.reveal { animation: fadeIn 0.8s ease-out forwards; }
 		</style>
-	</head>
-	<body class="min-h-screen flex flex-col">
-		<nav class="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl glass-nav rounded-full px-8 py-4 flex justify-between items-center z-50">
-			<div class="text-2xl font-black tracking-tighter">Nyumba<span class="text-indigo-500">.</span></div>
-			<div class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-400">
-				<a href="#" class="hover:text-white transition">How it Works</a>
-				<a href="#" class="hover:text-white transition">Neighborhoods</a>
-				<a href="#" class="hover:text-white transition">For Landlords</a>
+	</head>`
+}
+
+func GetLandingHTML() string {
+	return `<!DOCTYPE html>` + GetHead() + `
+	<body class="min-h-screen flex flex-col overflow-x-hidden">
+		<main class="h-screen w-full flex flex-col items-center justify-center px-6 relative">
+			<div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#1e1b4b_0%,#0a0a0a_70%)] opacity-50"></div>
+			
+			<div class="reveal text-center z-10">
+				<p class="caption mb-6 text-indigo-400">Verified Listings Only</p>
+				<h1 class="mb-8">Find Your <span class="text-white">Sanctuary.</span><br>
+				<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Simplified.</span></h1>
+				
+				<p class="body-text max-w-2xl mx-auto mb-12">
+					An exclusive platform connecting serious renters with verified landlords. 
+					No agents. No endless scrolling. Just your next home.
+				</p>
+
+				<a href="/explore" class="bg-white text-black px-12 py-5 rounded-full font-black text-xl hover:bg-indigo-500 hover:text-white transition-all shadow-2xl shadow-white/5">
+					Start Your Search →
+				</a>
 			</div>
-			<div class="flex items-center gap-4">
-				<a href="/login" class="text-sm font-bold hover:text-indigo-400 transition">Sign In</a>
-				<a href="/explore" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-indigo-600/20 transition transform hover:scale-105">Explore</a>
-			</div>
-		</nav>
-
-		<main class="flex-1 flex flex-col items-center justify-center pt-32 pb-20 px-6 relative">
-			<div class="badge-glow inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 rounded-full mb-8">
-				<div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-				<span class="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Verified Listings Only</span>
-			</div>
-
-			<h1 class="text-6xl md:text-8xl font-black text-center tracking-tighter leading-[0.9] mb-8">
-				Find Your <span class="text-white">Sanctuary.</span><br>
-				<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400">Simplified.</span>
-			</h1>
-
-			<p class="text-slate-400 text-center text-lg md:text-xl max-w-2xl mb-12 leading-relaxed">
-				An exclusive platform connecting serious renters with verified landlords. No agents. No endless scrolling. Just your next home.
-			</p>
-
-			<a href="/explore" class="bg-white text-black hover:bg-slate-200 px-10 py-5 rounded-full font-black text-lg transition-all transform hover:scale-105 shadow-xl shadow-white/5">
-				Start Your Search →
-			</a>
 		</main>` + GetNeighborhoodScroller() + `
 	</body></html>`
 }
+			
 
 // GetNeighborhoodScroller provides the infinite horizontal loop
 func GetNeighborhoodScroller() string {
@@ -176,6 +179,31 @@ func GetScripts(isLoggedIn bool, currentUsername string) string {
 					container.appendChild(div);
 				});
 			} catch (e) { console.error("Data fetch failed", e); }
+		}
+		window.onload = fetchHouses;
+	</script>`
+}
+func GetScripts(isLoggedIn bool, currentUsername string) string {
+	return `<script>
+		async function fetchHouses() {
+			const res = await fetch('/houses');
+			const data = await res.json();
+			const container = document.getElementById('results-area');
+			container.innerHTML = data.map(h => ` + "`" + `
+				<div class="glass-card hover-lift p-6 rounded-[2.5rem] bg-slate-900/40 border border-white/5 group">
+					<div class="relative h-64 rounded-[2rem] overflow-hidden mb-6">
+						<img src="${h.image_urls[0]}" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+						<div class="absolute top-4 right-4 bg-black/80 backdrop-blur-md px-4 py-2 rounded-2xl font-bold text-sm">
+							KES ${h.price.toLocaleString()}
+						</div>
+					</div>
+					<h3 class="mb-2">${h.building_name}</h3>
+					<p class="caption text-indigo-400 mb-6">📍 ${h.location}</p>
+					<button class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-black transition shadow-lg shadow-indigo-600/20">
+						Pay KES 1,000 to View
+					</button>
+				</div>
+			` + "`" + `).join("");
 		}
 		window.onload = fetchHouses;
 	</script>`
