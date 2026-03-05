@@ -153,3 +153,62 @@ func GetTrustSignals() string {
 		</div>
 	</section>`
 }
+func GetSignupHTML() string {
+	return `<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Join Nyumba | Curated Living</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+		<style>
+			body { font-family: 'Outfit', sans-serif; background: #0a0a0a; background-image: radial-gradient(circle at top right, #1e1b4b, #0a0a0a); color: white; }
+			.glass-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(16px); }
+			.input-field { background: #0f172a; border: 1px solid #1e293b; transition: 0.3s; }
+			.input-field:focus { border-color: #6366f1; outline: none; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+		</style>
+	</head>
+	<body class="min-h-screen flex items-center justify-center p-6">
+		<div class="glass-card w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl">
+			<div class="text-center mb-8">
+				<h1 class="text-4xl font-black tracking-tighter mb-2">Create Account</h1>
+				<p class="text-slate-400 text-sm font-semibold uppercase tracking-widest">Join 500+ curated renters today</p>
+			</div>
+
+			<form action="/signup" method="POST" class="space-x-0 space-y-5">
+				<div>
+					<label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4 mb-2 block">Username</label>
+					<input type="text" name="username" placeholder="e.g. johndoe" class="input-field w-full py-4 px-6 rounded-2xl text-white font-semibold">
+				</div>
+
+				<div>
+					<label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4 mb-2 block">M-Pesa Number</label>
+					<input type="text" name="phone" placeholder="07XX..." class="input-field w-full py-4 px-6 rounded-2xl text-white font-semibold">
+				</div>
+
+				<div>
+					<label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4 mb-2 block">Password</label>
+					<input type="password" name="password" placeholder="••••••••" class="input-field w-full py-4 px-6 rounded-2xl text-white font-semibold">
+				</div>
+
+				<div>
+					<label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-4 mb-2 block">I want to</label>
+					<select name="role" class="input-field w-full py-4 px-6 rounded-2xl text-white font-semibold appearance-none">
+						<option value="rent">Rent a House</option>
+						<option value="landlord">List a Property</option>
+					</select>
+				</div>
+
+				<button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-5 rounded-2xl transition-all transform hover:scale-[1.02] shadow-xl shadow-indigo-600/20 mt-4">
+					Start Journey
+				</button>
+			</form>
+
+			<p class="text-center mt-8 text-slate-500 text-sm">
+				Already have an account? <a href="/login" class="text-white font-bold hover:text-indigo-400">Login</a>
+			</p>
+		</div>
+	</body>
+	</html>`
+}

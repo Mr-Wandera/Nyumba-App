@@ -38,8 +38,21 @@ func GetHouses(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(houses)
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request)       { fmt.Fprint(w, "Login Page") }
-func SignupHandler(w http.ResponseWriter, r *http.Request)      { fmt.Fprint(w, "Signup Page") }
+func SignupHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		fmt.Fprint(w, templates.GetSignupHTML())
+		return
+	}
+	// Add your signup logic here (saving to users.json)
+}
+
+func LoginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		// You can create a GetLoginHTML similarly
+		fmt.Fprint(w, templates.GetSignupHTML())
+		return
+	}
+}
 func LogoutHandler(w http.ResponseWriter, r *http.Request)      { http.Redirect(w, r, "/", 302) }
 func UploadHouse(w http.ResponseWriter, r *http.Request)        { fmt.Fprint(w, "Upload Service") }
 func PayHandler(w http.ResponseWriter, r *http.Request)         { fmt.Fprint(w, "Payment Processing") }
