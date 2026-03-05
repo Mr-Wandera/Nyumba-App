@@ -1,7 +1,6 @@
 package templates
 
 import "fmt"
-
 // GetLandingHTML restores your high-end professional landing page design
 func GetLandingHTML() string {
 	return `<!DOCTYPE html>
@@ -62,22 +61,47 @@ func GetLandingHTML() string {
 			<a href="/explore" class="bg-white text-black hover:bg-slate-200 px-10 py-5 rounded-full font-black text-lg transition-all transform hover:scale-105 shadow-xl shadow-white/5">
 				Start Your Search →
 			</a>
-		</main>
+		</main>` + GetNeighborhoodScroller() + `
 	</body>
 	</html>`
 }
-
+func GetNeighborhoodScroller() string {
+	return `
+	<div class="w-full overflow-hidden py-12 bg-black/40 backdrop-blur-sm border-y border-white/5 relative">
+		<div class="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10"></div>
+		<div class="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10"></div>
+		
+		<div class="flex whitespace-nowrap animate-scroll gap-8 items-center">
+			<span class="text-3xl md:text-5xl font-black text-slate-800 hover:text-indigo-500 transition cursor-default tracking-tighter uppercase">Thika Town</span>
+			<span class="text-3xl md:text-5xl font-black text-slate-800 hover:text-indigo-500 transition cursor-default tracking-tighter uppercase underline decoration-indigo-500/30">Section 9</span>
+			<span class="text-3xl md:text-5xl font-black text-slate-800 hover:text-indigo-500 transition cursor-default tracking-tighter uppercase">Ngoingwa</span>
+			<span class="text-3xl md:text-5xl font-black text-slate-800 hover:text-indigo-500 transition cursor-default tracking-tighter uppercase italic">Landless</span>
+			<span class="text-3xl md:text-5xl font-black text-slate-800 hover:text-indigo-500 transition cursor-default tracking-tighter uppercase">Juja</span>
+			<span class="text-3xl md:text-5xl font-black text-slate-800 hover:text-indigo-500 transition cursor-default tracking-tighter uppercase">Thika Town</span>
+			<span class="text-3xl md:text-5xl font-black text-slate-800 hover:text-indigo-500 transition cursor-default tracking-tighter uppercase underline decoration-indigo-500/30">Section 9</span>
+			<span class="text-3xl md:text-5xl font-black text-slate-800 hover:text-indigo-500 transition cursor-default tracking-tighter uppercase">Ngoingwa</span>
+		</div>
+	</div>
+	<style>
+		@keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+		.animate-scroll { animation: scroll 25s linear infinite; width: max-content; }
+	</style>`
+}
 func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay string) string {
-    // This provides the structural UI for your Explore page
-	return fmt.Sprintf(`<!DOCTYPE html><html><head><title>Explore | Nyumba</title>
-	<script src="https://cdn.tailwindcss.com"></script></head>
-	<body class="bg-[#0a0a0a] text-white p-8">
-		<header class="flex justify-between items-center mb-10">
-			<h2 class="text-4xl font-extrabold">Explore <span class="text-indigo-400">Sanctuaries</span></h2>
-			<div class="text-indigo-400 font-bold">` + currentUsername + `</div>
+	return fmt.Sprintf(`<!DOCTYPE html><html><head><title>Nyumba | Explore</title>
+	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;900&display=swap" rel="stylesheet">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<style>
+		body { font-family: 'Outfit', sans-serif; background: #0a0a0a; color: white; }
+		.glass-card { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(16px); }
+	</style></head>
+	<body class="p-8">
+		<header class="flex justify-between items-center mb-12">
+			<h2 class="text-4xl font-black tracking-tighter">Explore <span class="text-indigo-500">Sanctuaries</span></h2>
+			<div class="text-indigo-400 font-bold">%s</div>
 		</header>
 		<div id="results-area" class="grid grid-cols-1 md:grid-cols-3 gap-8"></div>
-	</body></html>`)
+	</body></html>`, currentUsername)
 }
 
 func GetScripts(isLoggedIn bool, currentUsername string) string {
@@ -88,8 +112,8 @@ func GetScripts(isLoggedIn bool, currentUsername string) string {
 				container.innerHTML = "";
 				data.forEach(h => {
 					const div = document.createElement('div');
-					div.className = "bg-slate-900 border border-white/5 p-6 rounded-[2rem] shadow-xl";
-					div.innerHTML = '<img src="'+h.image_urls[0]+'" class="rounded-2xl mb-4 h-48 w-full object-cover"><h3 class="text-xl font-bold">'+h.building_name+'</h3><p class="text-indigo-400 font-bold uppercase text-xs">📍 '+h.location+'</p><button class="w-full bg-indigo-600 py-4 mt-6 rounded-xl font-bold">Pay KES 1,000 to View</button>';
+					div.className = "glass-card p-6 rounded-[2.5rem]";
+					div.innerHTML = '<img src="'+h.image_urls[0]+'" class="rounded-[2rem] mb-6 h-56 w-full object-cover shadow-2xl"><h3 class="text-2xl font-bold mb-2">'+h.building_name+'</h3><p class="text-indigo-400 text-xs font-bold uppercase tracking-widest">📍 '+h.location+'</p><button class="w-full bg-indigo-600 py-4 mt-6 rounded-2xl font-bold shadow-xl shadow-indigo-600/20">Pay KES 1,000 to View</button>';
 					container.appendChild(div);
 				});
 			});
