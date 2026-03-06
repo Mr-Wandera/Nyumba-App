@@ -89,51 +89,53 @@ func GetScripts() string {
 				const container = document.getElementById('results-area');
 				
 				container.innerHTML = data.map(h => ` + "`" + `
-					<div class="bg-slate-900/40 p-8 rounded-[2.5rem] border border-white/5 group transition-all">
-						<img src="${h.image_urls && h.image_urls.length > 0 ? h.image_urls[0] : '/uploads/default.jpg'}" 
-							 class="rounded-[2rem] h-64 w-full object-cover mb-6 group-hover:scale-105 transition duration-500">
+					<div class="group relative bg-gradient-to-b from-white/5 to-white/[0.02] backdrop-blur-xl rounded-[2.5rem] border border-white/10 overflow-hidden hover:border-indigo-500/30 transition-all duration-500 hover:shadow-[0_0_40px_-10px_rgba(99,102,241,0.3)]">
 						
-						<div class="flex justify-between items-start mb-6">
-							<div>
-								<h2 class="text-3xl font-bold tracking-tight">${h.building_name}</h2>
-								<p class="text-slate-500 text-sm font-medium">📍 ${h.location}</p>
+						<div class="relative h-72 overflow-hidden">
+							<img src="${h.image_urls && h.image_urls.length > 0 ? h.image_urls[0] : '/uploads/default.jpg'}" 
+								 class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+							<div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent"></div>
+							
+							<div class="absolute top-6 left-6 bg-indigo-500/20 backdrop-blur-md border border-indigo-500/30 text-indigo-300 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+								<span class="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"></span> Verified Sanctuary
 							</div>
-							${h.map_link ? ` + "`" + `<a href="${h.map_link}" target="_blank" class="text-indigo-400 font-bold text-xs hover:text-white transition">📍 Map</a>` + "`" + ` : ''}
+							
+							<div class="absolute bottom-6 left-6">
+								<p class="text-3xl font-black text-white tracking-tighter">KES ${h.price.toLocaleString()}<span class="text-sm font-normal text-white/50">/mo</span></p>
+								<p class="text-white/60 text-xs font-bold uppercase tracking-widest mt-1">📍 ${h.location}</p>
+							</div>
 						</div>
-
-						${h.is_booked ? ` + "`" + `
-							<div class="bg-green-500/10 border border-green-500/30 rounded-3xl p-6 mt-4 animate-in fade-in zoom-in duration-500">
-								<div class="flex items-center gap-4 mb-4">
-									<div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xl">✓</div>
-									<div>
-										<p class="text-green-400 font-black tracking-tight">Access Granted</p>
-										<p class="text-white/40 text-xs font-bold uppercase tracking-widest">Sanctuary Unlocked</p>
-									</div>
-								</div>
-								<div class="space-y-3 mt-3">
-									<a href="tel:${h.phone}" class="flex items-center justify-center gap-3 bg-white/5 hover:bg-white/10 text-white py-4 rounded-2xl font-bold transition">
-										📞 Call Owner
+						
+						<div class="p-8">
+							<h3 class="text-2xl font-black text-white tracking-tight mb-3">${h.building_name}</h3>
+							<div class="flex gap-6 text-xs font-bold text-white/40 uppercase tracking-widest mb-8">
+								<span class="flex items-center gap-2">🛏 ${h.type || '2 Beds'}</span>
+								<span class="flex items-center gap-2">📐 ${h.details || 'Ready'}</span>
+							</div>
+							
+							${h.is_booked ? ` + "`" + `
+								<div class="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
+									<a href="tel:${h.phone}" class="w-full bg-green-500/10 hover:bg-green-500/20 text-green-400 py-5 rounded-2xl font-black transition flex items-center justify-center gap-3 border border-green-500/20">
+										📞 Call Owner Directly
 									</a>
-									<a href="https://wa.me/${h.phone.replace('+', '')}" target="_blank" class="flex items-center justify-center gap-3 bg-green-500/10 hover:bg-green-500/20 text-green-400 py-4 rounded-2xl font-bold transition">
+									<a href="https://wa.me/${h.phone.replace('+', '')}" target="_blank" class="w-full bg-white/5 hover:bg-white/10 text-white py-4 rounded-2xl font-bold transition flex items-center justify-center gap-3">
 										💬 WhatsApp Chat
 									</a>
-								</div>
-							</div>` + "`" + ` : ` + "`" + `
-							<button onclick="handlePayment(${h.id})" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-5 rounded-2xl font-black shadow-lg shadow-indigo-600/20 transition-all active:scale-95">
-								Pay KES 1,000 to View
-							</button>` + "`" + `}
+								</div>` + "`" + ` : ` + "`" + `
+								<button onclick="handlePayment(${h.id})" class="w-full bg-white text-black py-5 rounded-2xl font-black hover:bg-indigo-50 transition-all flex items-center justify-center gap-3 shadow-xl active:scale-95">
+									<span>🔓</span> Unlock for KES 1,000
+								</button>` + "`" + `}
+						</div>
 					</div>` + "`" + `).join("");
 			} catch (err) {
-				console.error("Failed to load sanctuaries:", err);
+				console.error("Sanctuary Load Error:", err);
 			}
 		}
 
-		function handlePayment(houseId) {
-			// Trigger your STK Push handler here
-			fetch('/pay', { 
-				method: 'POST', 
-				body: JSON.stringify({ house_id: houseId }) 
-			}).then(() => alert("Check your phone for the M-Pesa prompt!"));
+		async function handlePayment(houseId) {
+			// Trigger M-Pesa STK Push
+			alert("Connecting to M-Pesa for Sanctuary ID: " + houseId);
+			const res = await fetch('/pay', { method: 'POST', body: JSON.stringify({ id: houseId }) });
 		}
 
 		window.onload = fetchHouses;
