@@ -1,0 +1,54 @@
+
+# Create the updated main.go with all routes
+
+main_go_content = '''package main
+
+import (
+	"fmt"
+	"net/http"
+	"nyumba/handlers"
+	"nyumba/models"
+	"os"
+)
+
+var houses []models.House
+
+func main() {
+	// Load existing data
+	handlers.LoadData("houses.json", &handlers.Houses)
+	
+	// Seed initial data if empty
+	handlers.SeedHouses()
+
+	// Routes
+	http.HandleFunc("/", handlers.HomePage)
+	http.HandleFunc("/explore", handlers.ExploreHandler)
+	http.HandleFunc("/houses", handlers.GetHouses)
+	http.HandleFunc("/add-house", handlers.AddHouseHandler)
+	
+	// Payment routes
+	http.HandleFunc("/trigger-payment", handlers.TriggerPaymentHandler)
+	http.HandleFunc("/mpesa/callback", handlers.MpesaCallbackHandler)
+	
+	// Static file server for uploads
+	fs := http.FileServer(http.Dir("./uploads"))
+	http.Handle("/uploads/", http.StripPrefix("/uploads/", fs))
+
+	// Port configuration for Render
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	fmt.Println("🚀 Sanctuary live on port:", port)
+	fmt.Println("🌐 Local: http://localhost:" + port)
+	
+	http.ListenAndServe(":"+port, nil)
+}
+'''
+
+with open('/mnt/kimi/output/main_go.txt', 'w') as f:
+    f.write(main_go_content)
+
+print("✅ main.go content created successfully!")
+print(f"📄 File size: {len(main_go_content)} characters")

@@ -1,0 +1,52 @@
+
+# Create the updated models.go with all necessary fields
+
+models_go_content = '''package models
+
+// House represents a property listing
+type House struct {
+	ID                int      `json:"id"`
+	BuildingName      string   `json:"building_name"`
+	Location          string   `json:"location"`
+	MapLink           string   `json:"map_link"`
+	Price             float64  `json:"price"`
+	ImageURLs         []string `json:"image_urls"`
+	IsPaid            bool     `json:"is_paid"`
+	CheckoutRequestID string   `json:"checkout_request_id"`
+	LandlordPhone     string   `json:"landlord_phone"`
+	Bedrooms          int      `json:"bedrooms"`
+	Bathrooms         int      `json:"bathrooms"`
+}
+
+// MpesaCallback represents the M-Pesa API callback
+type MpesaCallback struct {
+	Body struct {
+		StkCallback struct {
+			ResultCode        int    `json:"ResultCode"`
+			ResultDesc        string `json:"ResultDesc"`
+			CheckoutRequestID string `json:"CheckoutRequestID"`
+			CallbackMetadata  struct {
+				Item []struct {
+					Name  string      `json:"Name"`
+					Value interface{} `json:"Value"`
+				} `json:"Item"`
+			} `json:"CallbackMetadata"`
+		} `json:"stkCallback"`
+	} `json:"Body"`
+}
+
+// User represents a user of the platform
+type User struct {
+	ID       int    `json:"id"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Phone    string `json:"phone"`
+	IsAdmin  bool   `json:"is_admin"`
+}
+'''
+
+with open('/mnt/kimi/output/models_go.txt', 'w') as f:
+    f.write(models_go_content)
+
+print("✅ models.go content created successfully!")
+print(f"📄 File size: {len(models_go_content)} characters")
