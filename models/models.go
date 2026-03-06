@@ -1,6 +1,5 @@
 package models
 
-// User structure
 type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -8,7 +7,6 @@ type User struct {
 	Role     string `json:"role"`
 }
 
-// House structure
 type House struct {
 	ID                int      `json:"id"`
 	BuildingName      string   `json:"building_name"`
@@ -24,12 +22,12 @@ type House struct {
 	TenantPhone       string   `json:"tenant_phone"`
 	MapURL            string   `json:"map_url"`
 	CheckoutRequestID string   `json:"checkout_request_id"`
+	MapLink           string   `json:"map_link"` // Fixes the Ln 47 handlers error
 }
 
-// MpesaCallback structure (Fixed: Capitalized StkCallback)
 type MpesaCallback struct {
 	Body struct {
-		StkCallback struct { // <--- FIXED: Capitalized 'S'
+		StkCallback struct {
 			MerchantRequestID string `json:"MerchantRequestID"`
 			CheckoutRequestID string `json:"CheckoutRequestID"`
 			ResultCode        int    `json:"ResultCode"`

@@ -1,122 +1,77 @@
 package templates
 
-import "fmt"
+import "html/template"
 
 func GetLandingHTML() string {
-	return `<!DOCTYPE html><html><head>
-		<title>Nyumba | Find Your Sanctuary</title>
-		<script src="https://cdn.tailwindcss.com"></script>
-		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;900&display=swap" rel="stylesheet">
-		<style>
-			body { font-family: 'Outfit', sans-serif; background: #0a0a0a; color: white; overflow-x: hidden; }
-			.scroll-container { mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); }
-			@keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-			.scrolling-text { display: flex; white-space: nowrap; animation: scroll 40s linear infinite; }
-			.scrolling-text:hover { animation-play-state: paused; }
-		</style>
-	</head>
-	<body class="min-h-screen flex flex-col">
-		<main class="flex-1 flex flex-col items-center justify-center pt-32 pb-12">
-			<h1 class="text-6xl md:text-8xl font-black text-center mb-8 tracking-tighter leading-[0.9]">
-				Find Your <span class="text-white">Sanctuary.</span><br>
-				<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Simplified.</span>
-			</h1>
-			<a href="/explore" class="bg-white text-black px-10 py-5 rounded-full font-black text-lg">Start Your Search →</a>
-		</main>
-		<section class="scroll-container w-full py-16 bg-black/40 border-y border-white/5 overflow-hidden">
-			<div class="scrolling-text gap-24 items-center">
-				` + getTickerItems() + getTickerItems() + `
-			</div>
-		</section>
-	</body></html>`
+	return `<!DOCTYPE html>
+<html>
+<head>
+	<title>Nyumba</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0a0a0a] text-white flex flex-col items-center justify-center h-screen">
+	<h1 class="text-7xl font-black mb-8 tracking-tighter">Find Your Sanctuary.</h1>
+	<a href="/explore" class="bg-white text-black px-10 py-5 rounded-full font-black hover:scale-105 transition">Start Search</a>
+</body>
+</html>`
 }
 
-func getTickerItems() string {
-	locs := []string{"Thika Town", "Section 9", "Ngoingwa", "Landless"}
-	html := ""
-	for _, l := range locs {
-		html += fmt.Sprintf(`<a href="/explore?location=%s" class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">%s <span class="mx-8">•</span></a>`, l, l)
-	}
+func GetHTML(currentUsername string) string {
+	// Use strings.Builder or fmt.Sprintf with script injection
+	html := `<!DOCTYPE html>
+<html>
+<head>
+	<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="h-screen flex bg-[#0a0a0a] text-white overflow-hidden">
+	<aside class="w-[350px] border-r border-white/5 p-6 flex flex-col">
+		<h1 class="text-3xl font-black mb-10">Nyumba.</h1>
+		<p class="text-sm text-gray-400 mb-4">Welcome, ` + template.HTMLEscapeString(currentUsername) + `</p>
+		<form action="/add-house" method="POST" enctype="multipart/form-data" class="space-y-4">
+			<input type="text" name="building_name" placeholder="Apartment Name" class="w-full p-3 rounded-xl bg-slate-900 border border-white/5 text-white" required>
+			<input type="text" name="location" placeholder="Location" class="w-full p-3 rounded-xl bg-slate-900 border border-white/5 text-white">
+			<input type="url" name="map_link" placeholder="📍 Google Maps Link" class="w-full p-3 rounded-xl bg-slate-900 border border-white/5 text-white">
+			<input type="file" name="property_photo" accept="image/*" class="text-xs text-gray-400">
+			<button type="submit" class="w-full bg-white text-black py-4 rounded-xl font-black hover:bg-gray-200 transition">Publish</button>
+		</form>
+	</aside>
+	<main id="results-area" class="flex-1 p-10 grid grid-cols-2 gap-8 overflow-y-auto"></main>
+	` + GetScripts() + `
+</body>
+</html>`
 	return html
 }
 
-func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay string) string {
-	return fmt.Sprintf(`<!DOCTYPE html>
-	<html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<title>Nyumba | Explore Sanctuaries</title>
-		<script src="https://cdn.tailwindcss.com"></script>
-		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
-		<style>
-			body { font-family: 'Outfit', sans-serif; background: #0a0a0a; color: white; overflow: hidden; }
-			.glass-sidebar { background: rgba(15, 23, 42, 0.8); border-right: 1px solid rgba(255, 255, 255, 0.05); }
-			.input-field { background: #0f172a; border: 1px solid #1e293b; color: white; }
-		</style>
-	</head>
-	<body class="h-screen flex">
-		<aside class="w-[350px] glass-sidebar p-6 flex flex-col overflow-y-auto">
-			<div class="mb-10">
-				<h1 class="text-3xl font-black tracking-tighter">Nyumba<span class="text-indigo-500">.</span></h1>
-				<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Curated Living</p>
-			</div>
-
-			<form action="/add-house" method="POST" enctype="multipart/form-data" class="space-y-4 mb-10">
-				<input type="text" name="building_name" placeholder="Apartment Name" class="w-full p-3 rounded-xl bg-slate-950 border border-white/5 text-sm" required>
-				<input type="text" name="location" placeholder="Thika (e.g. Section 9)" class="w-full p-3 rounded-xl bg-slate-950 border border-white/5 text-sm" required>
-				
-				<div class="relative group">
-					<input type="file" name="property_photo" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-					<div class="w-full bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-center group-hover:bg-indigo-600/30 transition">
-						Click to Upload Photo
-					</div>
-				</div>
-
-				<button type="submit" class="w-full bg-white text-black py-4 rounded-xl font-black shadow-xl hover:bg-slate-200 transition">
-					Publish Listing
-				</button>
-			</form>
-
-			<div class="mt-auto flex items-center justify-between p-4 bg-indigo-600/10 rounded-2xl">
-				<div class="flex items-center gap-3">
-					<div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center font-bold text-xs">👤</div>
-					<span class="font-bold text-sm">%%s</span> </div>
-				<a href="/" class="text-xs font-bold text-slate-500">Logout</a>
-			</div>
-		</aside>
-
-		<main class="flex-1 p-10 overflow-y-auto relative">
-			<header class="mb-12">
-				<h1 class="text-5xl font-black tracking-tighter mb-2 text-indigo-400">Explore Sanctuaries</h1>
-				<p class="text-slate-400">Find your next home and connect directly with verified owners.</p>
-			</header>
-			<div id="results-area" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-				</div>
-		</main>
-	</body>
-	</html>`, currentUsername)
-}
-
-func GetSignupHTML() string {
-	return `<!DOCTYPE html><html><head><script src="https://cdn.tailwindcss.com"></script></head>
-	<body class="bg-[#0a0a0a] flex items-center justify-center min-h-screen">
-		<form action="/signup" method="POST" class="bg-slate-900/40 p-10 rounded-[2.5rem] border border-white/5 w-full max-w-md">
-			<h1 class="text-4xl font-black text-center text-white mb-8">Create Account</h1>
-			<button type="submit" class="w-full bg-indigo-600 py-5 rounded-2xl font-bold text-white">Start Journey</button>
-		</form>
-	</body></html>`
-}
-
-func GetScripts(isLoggedIn bool, currentUsername string) string {
+func GetScripts() string {
 	return `<script>
-		async function fetchHouses() {
-			const params = new URLSearchParams(window.location.search);
-			const loc = params.get('location') || '';
-			const res = await fetch('/houses?location=' + loc);
+	async function fetchHouses() {
+		try {
+			const res = await fetch('/houses');
+			if (!res.ok) throw new Error('Failed to fetch');
 			const data = await res.json();
 			const container = document.getElementById('results-area');
-			container.innerHTML = data.map(h => '<div class="bg-slate-900/40 p-8 rounded-[2.5rem] border border-white/5"><img src="'+h.image_urls[0]+'" class="rounded-[2rem] h-64 w-full object-cover mb-6"><h2 class="text-3xl font-bold">'+h.building_name+'</h2><button class="w-full bg-indigo-500 py-5 mt-6 rounded-2xl font-bold">Pay KES 1,000 to View</button></div>').join("");
+			
+			if (data.length === 0) {
+				container.innerHTML = '<p class="text-gray-500 col-span-2 text-center">No listings yet.</p>';
+				return;
+			}
+			
+			container.innerHTML = data.map(h => 
+				'<div class="bg-slate-900/40 p-6 rounded-[2rem] border border-white/5 group hover:border-white/10 transition">' +
+					'<img src="' + (h.image_urls?.[0] || '/uploads/default.jpg') + '" class="h-48 w-full object-cover rounded-xl mb-4 group-hover:scale-105 transition duration-300">' +
+					'<div class="flex justify-between items-center mb-2">' +
+						'<h2 class="text-2xl font-bold">' + (h.building_name || 'Unnamed Property') + '</h2>' +
+						(h.map_link ? '<a href="' + h.map_link + '" target="_blank" rel="noopener" class="text-indigo-400 text-xs font-bold hover:text-indigo-300">📍 Map</a>' : '') +
+					'</div>' +
+					(h.location ? '<p class="text-gray-400 text-sm mb-4">📍 ' + h.location + '</p>' : '') +
+					'<button class="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition">Pay KES 1,000</button>' +
+				'</div>'
+			).join('');
+		} catch (err) {
+			console.error('Error:', err);
+			document.getElementById('results-area').innerHTML = '<p class="text-red-500 col-span-2 text-center">Failed to load listings.</p>';
 		}
-		window.onload = fetchHouses;
+	}
+	window.addEventListener('load', fetchHouses);
 	</script>`
 }

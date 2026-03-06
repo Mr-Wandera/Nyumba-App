@@ -8,11 +8,61 @@ import (
 	"nyumba/models"
 	"nyumba/templates"
 	"os"
+	"path/filepath"
 )
 
-var houses []models.House
+var Houses []models.House
 
-// LoadData reads the JSON database
+func AddHouseHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		// 1. Parse multipart form (max 10MB)
+		err := r.ParseMultipartForm(10 << 20)
+		if err != nil {
+			http.Error(w, "File too large", http.StatusBadRequest)
+			return
+		}
+
+		// 2. Handle Image Upload
+		file, header, err := r.FormFile("property_photo")
+		imagePath := "/uploads/default.jpg"
+		if err == nil {
+			defer file.Close()
+			os.MkdirAll("./uploads", os.ModePerm)
+			filename := filepath.Base(header.Filename)
+			dstPath := filepath.Join("./uploads", filename)
+			dst, _ := os.Create(dstPath)
+			defer dst.Close()
+			io.Copy(dst, file)
+			imagePath = "/uploads/" + filename
+		}
+
+		// 3. Create House entry
+		newHouse := models.House{
+			ID:           len(Houses) + 1,
+			BuildingName: r.FormValue("building_name"),
+			Location:     r.FormValue("location"),
+			MapLink:      r.FormValue("map_link"),
+			Price:        7500.0,
+			ImageURLs:    []string{imagePath},
+		}
+		Houses = append(Houses, newHouse)
+		http.Redirect(w, r, "/explore", http.StatusSeeOther)
+	}
+}
+
+func GetHouses(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(Houses)
+}
+
+func ExploreHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, templates.GetHTML("Abdul")+templates.GetScripts())
+}
+
+func HomePage(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, templates.GetLandingHTML())
+}
+
 func LoadData(filename string, target interface{}) {
 	file, err := os.ReadFile(filename)
 	if err == nil {
@@ -20,78 +70,9 @@ func LoadData(filename string, target interface{}) {
 	}
 }
 
-// GetHouses supports filtering by location (e.g., /houses?location=Section9)
-func GetHouses(w http.ResponseWriter, r *http.Request) {
-	location := r.URL.Query().Get("location")
-	var filtered []models.House
-
-	for _, h := range houses {
-		if location == "" || h.Location == location {
-			filtered = append(filtered, h)
-		}
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(filtered)
-}
-
-func AddHouseHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
-		// 1. Parse the multipart form
-		r.ParseMultipartForm(10 << 20) // 10MB limit
-
-		// 2. Handle the Image Upload
-		file, handler, err := r.FormFile("property_photo")
-		imagePath := "/uploads/default.jpg" // Default if no image is uploaded
-
-		if err == nil {
-			defer file.Close()
-			// Create a unique filename and save to uploads folder
-			imagePath = "/uploads/" + handler.Filename
-			f, _ := os.OpenFile("."+imagePath, os.O_WRONLY|os.O_CREATE, 0666)
-			defer f.Close()
-			io.Copy(f, file)
-		}
-
-		// 3. Save the new House with the real image path
-		newHouse := models.House{
-			ID:           len(houses) + 1,
-			BuildingName: r.FormValue("building_name"),
-			Location:     r.FormValue("location"),
-			Price:        7500,
-			ImageURLs:    []string{imagePath}, // Use the uploaded image
-		}
-		houses = append(houses, newHouse)
-		http.Redirect(w, r, "/explore", http.StatusSeeOther)
-	}
-}
-
-func HomePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, templates.GetLandingHTML())
-}
-
-func ExploreHandler(w http.ResponseWriter, r *http.Request) {
-	currentUsername := "Abdul" // cite: User Summary
-	html := templates.GetHTML("true", currentUsername, "", "none") + templates.GetScripts(true, currentUsername)
-	fmt.Fprint(w, html)
-}
-
-func SignupHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		fmt.Fprint(w, templates.GetSignupHTML())
-		return
-	}
-	http.Redirect(w, r, "/explore", http.StatusSeeOther)
-}
-
 func SeedHouses() {
-	if len(houses) > 0 {
+	if len(Houses) > 0 {
 		return
 	}
-	houses = append(houses, models.House{
-		ID: 1, BuildingName: "Base Apartments", Location: "Thika",
-		Price: 7500, ImageURLs: []string{"https://images.unsplash.com/photo-1570129477492-45c003edd2be"},
-	})
+	Houses = append(Houses, models.House{ID: 1, BuildingName: "Base", Location: "Thika", Price: 7500})
 }
-
-func LoginHandler(w http.ResponseWriter, r *http.Request) { fmt.Fprint(w, templates.GetSignupHTML()) }
