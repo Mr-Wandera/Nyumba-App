@@ -22,6 +22,7 @@ type House struct {
 	TenantPhone       string   `json:"tenant_phone"`
 	MapURL            string   `json:"map_url"`
 	CheckoutRequestID string   `json:"checkout_request_id"`
+	IsPaid            bool     `json:"is_paid"`
 	MapLink           string   `json:"map_link"` // Fixes the Ln 47 handlers error
 }
 

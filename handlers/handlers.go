@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,20 +10,25 @@ import (
 	"nyumba/templates"
 	"os"
 	"path/filepath"
+	"time"
 )
+
+// M-Pesa API response structure
+type TokenResponse struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   string `json:"expires_in"`
+}
 
 var Houses []models.House
 
 func AddHouseHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		// 1. Parse multipart form (max 10MB)
 		err := r.ParseMultipartForm(10 << 20)
 		if err != nil {
 			http.Error(w, "File too large", http.StatusBadRequest)
 			return
 		}
 
-		// 2. Handle Image Upload
 		file, header, err := r.FormFile("property_photo")
 		imagePath := "/uploads/default.jpg"
 		if err == nil {
@@ -30,13 +36,16 @@ func AddHouseHandler(w http.ResponseWriter, r *http.Request) {
 			os.MkdirAll("./uploads", os.ModePerm)
 			filename := filepath.Base(header.Filename)
 			dstPath := filepath.Join("./uploads", filename)
-			dst, _ := os.Create(dstPath)
+			dst, err := os.Create(dstPath)
+			if err != nil {
+				http.Error(w, "Failed to save file", http.StatusInternalServerError)
+				return
+			}
 			defer dst.Close()
 			io.Copy(dst, file)
 			imagePath = "/uploads/" + filename
 		}
 
-		// 3. Create House entry
 		newHouse := models.House{
 			ID:           len(Houses) + 1,
 			BuildingName: r.FormValue("building_name"),
@@ -75,4 +84,34 @@ func SeedHouses() {
 		return
 	}
 	Houses = append(Houses, models.House{ID: 1, BuildingName: "Base", Location: "Thika", Price: 7500})
+}
+
+func GetMpesaToken(consumerKey, consumerSecret string) (string, error) {
+	url := "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	auth := base64.StdEncoding.EncodeToString([]byte(consumerKey + ":" + consumerSecret))
+	req.Header.Set("Authorization", "Basic "+auth)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("mpesa auth failed: %d", res.StatusCode)
+	}
+
+	var tokenRes TokenResponse
+	if err := json.NewDecoder(res.Body).Decode(&tokenRes); err != nil {
+		return "", err
+	}
+
+	return tokenRes.AccessToken, nil
 }

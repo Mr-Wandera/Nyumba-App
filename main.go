@@ -14,6 +14,8 @@ func main() {
 	http.HandleFunc("/explore", handlers.ExploreHandler)
 	http.HandleFunc("/houses", handlers.GetHouses)
 	http.HandleFunc("/add-house", handlers.AddHouseHandler)
+	// In your main() function
+	http.HandleFunc("/api/mpesa/callback", handlers.MpesaCallbackHandler)
 
 	// 2. Serve Static Uploads
 	// This allows <img src="/uploads/photo.jpg"> to work

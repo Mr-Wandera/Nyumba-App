@@ -44,34 +44,21 @@ func GetHTML(currentUsername string) string {
 
 func GetScripts() string {
 	return `<script>
-	async function fetchHouses() {
-		try {
+		async function fetchHouses() {
 			const res = await fetch('/houses');
-			if (!res.ok) throw new Error('Failed to fetch');
 			const data = await res.json();
 			const container = document.getElementById('results-area');
 			
-			if (data.length === 0) {
-				container.innerHTML = '<p class="text-gray-500 col-span-2 text-center">No listings yet.</p>';
-				return;
-			}
-			
-			container.innerHTML = data.map(h => 
-				'<div class="bg-slate-900/40 p-6 rounded-[2rem] border border-white/5 group hover:border-white/10 transition">' +
-					'<img src="' + (h.image_urls?.[0] || '/uploads/default.jpg') + '" class="h-48 w-full object-cover rounded-xl mb-4 group-hover:scale-105 transition duration-300">' +
-					'<div class="flex justify-between items-center mb-2">' +
-						'<h2 class="text-2xl font-bold">' + (h.building_name || 'Unnamed Property') + '</h2>' +
-						(h.map_link ? '<a href="' + h.map_link + '" target="_blank" rel="noopener" class="text-indigo-400 text-xs font-bold hover:text-indigo-300">📍 Map</a>' : '') +
-					'</div>' +
-					(h.location ? '<p class="text-gray-400 text-sm mb-4">📍 ' + h.location + '</p>' : '') +
-					'<button class="w-full bg-indigo-600 hover:bg-indigo-500 py-4 rounded-xl font-bold transition">Pay KES 1,000</button>' +
-				'</div>'
-			).join('');
-		} catch (err) {
-			console.error('Error:', err);
-			document.getElementById('results-area').innerHTML = '<p class="text-red-500 col-span-2 text-center">Failed to load listings.</p>';
+			container.innerHTML = data.map(h => ` + "`" + `
+				<div class="bg-slate-900/40 p-6 rounded-[2rem] border border-white/5 group">
+					<img src="${h.image_urls && h.image_urls.length > 0 ? h.image_urls[0] : '/uploads/default.jpg'}" class="h-48 w-full object-cover rounded-xl mb-4 group-hover:scale-105 transition duration-300">
+					<div class="flex justify-between items-center mb-4">
+						<h2 class="text-2xl font-bold">${h.building_name}</h2>
+						${h.map_link ? ` + "`" + `<a href="${h.map_link}" target="_blank" class="text-indigo-400 font-bold text-xs">📍 Map</a>` + "`" + ` : ''}
+					</div>
+					<button onclick="handlePayment(${h.id})" class="w-full bg-indigo-600 py-4 rounded-xl font-bold">Pay KES 1,000</button>
+				</div>` + "`" + `).join("");
 		}
-	}
-	window.addEventListener('load', fetchHouses);
+		window.onload = fetchHouses;
 	</script>`
 }
