@@ -15,39 +15,42 @@ func GetLandingHTML() string {
 			0% { transform: translateX(0); }
 			100% { transform: translateX(-50%); }
 		}
-		.animate-scroll {
-			display: flex;
-			white-space: nowrap;
-			animation: scroll 40s linear infinite;
-		}
+		.animate-scroll { display: flex; white-space: nowrap; animation: scroll 40s linear infinite; }
 		.animate-scroll:hover { animation-play-state: paused; }
-		.scroll-container {
-			mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-			-webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-		}
 	</style>
 </head>
 <body class="min-h-screen flex flex-col">
-	<main class="flex-1 flex flex-col items-center justify-center pt-32 pb-12 px-6 text-center">
+	<main class="flex-col items-center justify-center pt-32 pb-12 px-6 text-center">
 		<h1 class="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.9]">
 			Find Your <span class="text-white">Sanctuary.</span><br>
-			<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Simplified.</span>
+			<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Directly.</span>
 		</h1>
-		<a href="/explore" class="bg-white text-black px-10 py-5 rounded-full font-black text-lg hover:scale-105 transition">Start Your Search →</a>
+		<a href="/explore" class="bg-white text-black px-10 py-5 rounded-full font-black text-lg hover:scale-105 transition mb-12 inline-block">Start Your Search →</a>
 	</main>
 
-	<section class="w-full overflow-hidden bg-black/40 border-y border-white/5 py-12 relative scroll-container">
+	<div class="flex justify-center gap-12 md:gap-24 py-16 border-y border-white/5 bg-white/[0.02]">
+		<div class="text-center">
+			<div class="text-4xl font-black text-indigo-400 tracking-tighter">500+</div>
+			<div class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Verified Listings</div>
+		</div>
+		<div class="text-center">
+			<div class="text-4xl font-black text-indigo-400 tracking-tighter">0</div>
+			<div class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Scam Reports</div>
+		</div>
+		<div class="text-center">
+			<div class="text-4xl font-black text-indigo-400 tracking-tighter">KES 1K</div>
+			<div class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">To Connect</div>
+		</div>
+	</div>
+
+	<section class="w-full overflow-hidden py-12 relative">
 		<div class="animate-scroll gap-24">
-			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Thika Town <span class="text-indigo-500 mx-8">•</span></span>
-			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Section 9 <span class="text-indigo-500 mx-8">•</span></span>
-			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Ngoingwa <span class="text-indigo-500 mx-8">•</span></span>
-			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Landless <span class="text-indigo-500 mx-8">•</span></span>
-			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Kenyatta Road <span class="text-indigo-500 mx-8">•</span></span>
-			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Thika Town <span class="text-indigo-500 mx-8">•</span></span>
-			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Section 9 <span class="text-indigo-500 mx-8">•</span></span>
-			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Ngoingwa <span class="text-indigo-500 mx-8">•</span></span>
-			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Landless <span class="text-indigo-500 mx-8">•</span></span>
-			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Kenyatta Road <span class="text-indigo-500 mx-8">•</span></span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-700">Section 9 •</span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-700">Ngoingwa •</span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-700">Kenyatta Road •</span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-700">Section 9 •</span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-700">Ngoingwa •</span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-700">Kenyatta Road •</span>
 		</div>
 	</section>
 </body>
