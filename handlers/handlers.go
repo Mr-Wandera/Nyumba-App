@@ -11,39 +11,9 @@ import (
 
 var houses []models.House
 
-// Fixes the blank screen by handling the POST request from 'Start Journey'
-func SignupHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		fmt.Fprint(w, templates.GetSignupHTML())
-		return
-	}
-	if r.Method == http.MethodPost {
-		r.ParseForm()
-		// Success! Redirecting to Explore page
-		http.Redirect(w, r, "/explore", http.StatusSeeOther)
-	}
-}
-
-func ExploreHandler(w http.ResponseWriter, r *http.Request) {
-	currentUsername := "Abdul" // cite: User Summary
-	html := templates.GetHTML("true", currentUsername, "", "none") + templates.GetScripts(true, currentUsername)
-	fmt.Fprint(w, html)
-}
-
-func HomePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, templates.GetLandingHTML())
-}
-
-func GetHouses(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(houses)
-}
-
 func LoadData(filename string, target interface{}) {
-	file, err := os.ReadFile(filename)
-	if err == nil {
-		json.Unmarshal(file, target)
-	}
+	file, _ := os.ReadFile(filename)
+	json.Unmarshal(file, target)
 }
 
 func SeedHouses() {
@@ -56,4 +26,25 @@ func SeedHouses() {
 	})
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) { fmt.Fprint(w, templates.GetSignupHTML()) }
+func HomePage(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, templates.GetLandingHTML())
+}
+
+func ExploreHandler(w http.ResponseWriter, r *http.Request) {
+	html := templates.GetHTML("true", "Abdul", "", "none") + templates.GetScripts(true, "Abdul")
+	fmt.Fprint(w, html)
+}
+
+func SignupHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		fmt.Fprint(w, templates.GetSignupHTML())
+		return
+	}
+	// Handles the POST request to prevent blank screen
+	http.Redirect(w, r, "/explore", http.StatusSeeOther)
+}
+
+func GetHouses(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(houses)
+}
