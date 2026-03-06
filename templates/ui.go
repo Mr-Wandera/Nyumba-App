@@ -27,24 +27,24 @@ func GetLandingHTML() string {
 </head>
 <body class="min-h-screen flex flex-col">
 	<main class="flex-1 flex flex-col items-center justify-center pt-32 pb-12 px-6 text-center">
-		<h1 class="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.9]">
+		<h1 class="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter mb-8 leading-[0.9]">
 			Find Your <span class="text-white">Sanctuary.</span><br>
 			<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Directly.</span>
 		</h1>
 		<a href="/explore" class="bg-white text-black px-10 py-5 rounded-full font-black text-lg hover:scale-105 transition mb-12 inline-block">Start Your Search →</a>
 	</main>
 
-	<div class="flex justify-center gap-12 md:gap-24 py-16 border-y border-white/5 bg-white/[0.02]">
+	<div class="flex justify-center gap-8 md:gap-24 py-16 border-y border-white/5 bg-white/[0.02]">
 		<div class="text-center">
-			<div class="text-4xl font-black text-indigo-400 tracking-tighter">500+</div>
+			<div class="text-3xl md:text-4xl font-black text-indigo-400 tracking-tighter">500+</div>
 			<div class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Verified Listings</div>
 		</div>
 		<div class="text-center">
-			<div class="text-4xl font-black text-indigo-400 tracking-tighter">0</div>
+			<div class="text-3xl md:text-4xl font-black text-indigo-400 tracking-tighter">0</div>
 			<div class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">Scam Reports</div>
 		</div>
 		<div class="text-center">
-			<div class="text-4xl font-black text-indigo-400 tracking-tighter">KES 1K</div>
+			<div class="text-3xl md:text-4xl font-black text-indigo-400 tracking-tighter">KES 1K</div>
 			<div class="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">To Connect</div>
 		</div>
 	</div>
@@ -63,7 +63,7 @@ func GetLandingHTML() string {
 </html>`
 }
 
-// GetHTML serves the exploration dashboard with the sidebar and results grid
+// GetHTML serves the exploration dashboard with the responsive sidebar and grid
 func GetHTML(currentUsername string) string {
 	return fmt.Sprintf(`<!DOCTYPE html>
 <html lang="en">
@@ -76,7 +76,7 @@ func GetHTML(currentUsername string) string {
 	<style>body{font-family:'Outfit',sans-serif; background:#0a0a0a; color:white;}</style>
 </head>
 <body class="min-h-screen flex flex-col md:flex-row bg-[#0a0a0a] text-white">
-	<aside class="w-full md:w-[380px] border-r border-white/5 p-8 flex flex-col bg-slate-900/20 backdrop-blur-xl">
+	<aside class="w-full md:w-[380px] border-b md:border-b-0 md:border-r border-white/5 p-8 flex flex-col bg-slate-900/20 backdrop-blur-xl">
 		<div class="mb-12">
 			<h1 class="text-4xl font-black tracking-tighter">Nyumba<span class="text-indigo-500">.</span></h1>
 			<p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-2">Welcome, %s</p>
@@ -96,14 +96,6 @@ func GetHTML(currentUsername string) string {
 
 			<button type="submit" class="w-full bg-white text-black py-5 rounded-2xl font-black hover:bg-slate-200 transition-all active:scale-95 shadow-xl shadow-white/5">Publish Sanctuary</button>
 		</form>
-
-		<div class="mt-auto pt-8 border-t border-white/5 flex items-center justify-between">
-			<div class="flex items-center gap-3">
-				<div class="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-xs font-bold">A</div>
-				<span class="text-sm font-bold text-slate-400">%s</span>
-			</div>
-			<a href="/" class="text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-white transition">Logout</a>
-		</div>
 	</aside>
 
 	<main class="flex-1 p-8 md:p-12 overflow-y-auto">
@@ -112,13 +104,13 @@ func GetHTML(currentUsername string) string {
 			<p class="text-slate-500 mt-2 font-medium">Verified listings direct from owners in Thika.</p>
 		</header>
 
-		<div id="results-area" class="grid grid-cols-1 xl:grid-cols-2 gap-10">
+		<div id="results-area" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 			</div>
 	</main>
 
 	%s
 </body>
-</html>`, template.HTMLEscapeString(currentUsername), currentUsername, GetScripts())
+</html>`, template.HTMLEscapeString(currentUsername), GetScripts())
 }
 
 func GetScripts() string {
