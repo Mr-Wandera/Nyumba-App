@@ -1,11 +1,17 @@
 package templates
 
-import "html/template"
+import (
+	"fmt"
+	"html/template"
+)
 
+// GetLandingHTML returns the entry point for the application
 func GetLandingHTML() string {
 	return `<!DOCTYPE html>
 <html lang="en">
 <head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Nyumba | Sanctuary</title>
 	<script src="https://cdn.tailwindcss.com"></script>
 	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;900&display=swap" rel="stylesheet">
@@ -20,7 +26,7 @@ func GetLandingHTML() string {
 	</style>
 </head>
 <body class="min-h-screen flex flex-col">
-	<main class="flex-col items-center justify-center pt-32 pb-12 px-6 text-center">
+	<main class="flex-1 flex flex-col items-center justify-center pt-32 pb-12 px-6 text-center">
 		<h1 class="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.9]">
 			Find Your <span class="text-white">Sanctuary.</span><br>
 			<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Directly.</span>
@@ -57,30 +63,62 @@ func GetLandingHTML() string {
 </html>`
 }
 
+// GetHTML serves the exploration dashboard with the sidebar and results grid
 func GetHTML(currentUsername string) string {
-	// Use strings.Builder or fmt.Sprintf with script injection
-	html := `<!DOCTYPE html>
-<html>
+	return fmt.Sprintf(`<!DOCTYPE html>
+<html lang="en">
 <head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Nyumba | Explore</title>
 	<script src="https://cdn.tailwindcss.com"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600;900&display=swap" rel="stylesheet">
+	<style>body{font-family:'Outfit',sans-serif; background:#0a0a0a; color:white;}</style>
 </head>
-<body class="h-screen flex bg-[#0a0a0a] text-white overflow-hidden">
-	<aside class="w-[350px] border-r border-white/5 p-6 flex flex-col">
-		<h1 class="text-3xl font-black mb-10">Nyumba.</h1>
-		<p class="text-sm text-gray-400 mb-4">Welcome, ` + template.HTMLEscapeString(currentUsername) + `</p>
-		<form action="/add-house" method="POST" enctype="multipart/form-data" class="space-y-4">
-			<input type="text" name="building_name" placeholder="Apartment Name" class="w-full p-3 rounded-xl bg-slate-900 border border-white/5 text-white" required>
-			<input type="text" name="location" placeholder="Location" class="w-full p-3 rounded-xl bg-slate-900 border border-white/5 text-white">
-			<input type="url" name="map_link" placeholder="📍 Google Maps Link" class="w-full p-3 rounded-xl bg-slate-900 border border-white/5 text-white">
-			<input type="file" name="property_photo" accept="image/*" class="text-xs text-gray-400">
-			<button type="submit" class="w-full bg-white text-black py-4 rounded-xl font-black hover:bg-gray-200 transition">Publish</button>
+<body class="min-h-screen flex flex-col md:flex-row bg-[#0a0a0a] text-white">
+	<aside class="w-full md:w-[380px] border-r border-white/5 p-8 flex flex-col bg-slate-900/20 backdrop-blur-xl">
+		<div class="mb-12">
+			<h1 class="text-4xl font-black tracking-tighter">Nyumba<span class="text-indigo-500">.</span></h1>
+			<p class="text-[10px] text-slate-500 font-bold uppercase tracking-[0.3em] mt-2">Welcome, %s</p>
+		</div>
+
+		<form action="/add-house" method="POST" enctype="multipart/form-data" class="space-y-5">
+			<input type="text" name="building_name" placeholder="Building Name" class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-sm focus:border-indigo-500 outline-none transition" required>
+			<input type="text" name="location" placeholder="Location (e.g. Section 9)" class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-sm focus:border-indigo-500 outline-none transition" required>
+			<input type="text" name="map_link" placeholder="📍 Google Maps Link" class="w-full p-4 rounded-2xl bg-white/5 border border-white/10 text-sm focus:border-indigo-500 outline-none transition">
+			
+			<div class="relative group">
+				<input type="file" name="property_photo" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+				<div class="w-full bg-white/5 text-slate-400 border border-white/10 py-4 rounded-2xl font-bold text-xs text-center group-hover:bg-white/10 transition">
+					Upload Property Photo
+				</div>
+			</div>
+
+			<button type="submit" class="w-full bg-white text-black py-5 rounded-2xl font-black hover:bg-slate-200 transition-all active:scale-95 shadow-xl shadow-white/5">Publish Sanctuary</button>
 		</form>
+
+		<div class="mt-auto pt-8 border-t border-white/5 flex items-center justify-between">
+			<div class="flex items-center gap-3">
+				<div class="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-xs font-bold">A</div>
+				<span class="text-sm font-bold text-slate-400">%s</span>
+			</div>
+			<a href="/" class="text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-white transition">Logout</a>
+		</div>
 	</aside>
-	<main id="results-area" class="flex-1 p-10 grid grid-cols-2 gap-8 overflow-y-auto"></main>
-	` + GetScripts() + `
+
+	<main class="flex-1 p-8 md:p-12 overflow-y-auto">
+		<header class="mb-12">
+			<h2 class="text-4xl md:text-5xl font-black tracking-tighter">Available <span class="text-indigo-500">Sanctuaries</span></h2>
+			<p class="text-slate-500 mt-2 font-medium">Verified listings direct from owners in Thika.</p>
+		</header>
+
+		<div id="results-area" class="grid grid-cols-1 xl:grid-cols-2 gap-10">
+			</div>
+	</main>
+
+	%s
 </body>
-</html>`
-	return html
+</html>`, template.HTMLEscapeString(currentUsername), currentUsername, GetScripts())
 }
 
 func GetScripts() string {
