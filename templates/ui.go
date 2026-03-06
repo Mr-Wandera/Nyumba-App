@@ -4,14 +4,52 @@ import "html/template"
 
 func GetLandingHTML() string {
 	return `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<title>Nyumba</title>
+	<title>Nyumba | Sanctuary</title>
 	<script src="https://cdn.tailwindcss.com"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;900&display=swap" rel="stylesheet">
+	<style>
+		body { font-family: 'Outfit', sans-serif; background: #0a0a0a; color: white; overflow-x: hidden; }
+		@keyframes scroll {
+			0% { transform: translateX(0); }
+			100% { transform: translateX(-50%); }
+		}
+		.animate-scroll {
+			display: flex;
+			white-space: nowrap;
+			animation: scroll 40s linear infinite;
+		}
+		.animate-scroll:hover { animation-play-state: paused; }
+		.scroll-container {
+			mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+			-webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+		}
+	</style>
 </head>
-<body class="bg-[#0a0a0a] text-white flex flex-col items-center justify-center h-screen">
-	<h1 class="text-7xl font-black mb-8 tracking-tighter">Find Your Sanctuary.</h1>
-	<a href="/explore" class="bg-white text-black px-10 py-5 rounded-full font-black hover:scale-105 transition">Start Search</a>
+<body class="min-h-screen flex flex-col">
+	<main class="flex-1 flex flex-col items-center justify-center pt-32 pb-12 px-6 text-center">
+		<h1 class="text-6xl md:text-8xl font-black tracking-tighter mb-8 leading-[0.9]">
+			Find Your <span class="text-white">Sanctuary.</span><br>
+			<span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Simplified.</span>
+		</h1>
+		<a href="/explore" class="bg-white text-black px-10 py-5 rounded-full font-black text-lg hover:scale-105 transition">Start Your Search →</a>
+	</main>
+
+	<section class="w-full overflow-hidden bg-black/40 border-y border-white/5 py-12 relative scroll-container">
+		<div class="animate-scroll gap-24">
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Thika Town <span class="text-indigo-500 mx-8">•</span></span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Section 9 <span class="text-indigo-500 mx-8">•</span></span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Ngoingwa <span class="text-indigo-500 mx-8">•</span></span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Landless <span class="text-indigo-500 mx-8">•</span></span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Kenyatta Road <span class="text-indigo-500 mx-8">•</span></span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Thika Town <span class="text-indigo-500 mx-8">•</span></span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Section 9 <span class="text-indigo-500 mx-8">•</span></span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Ngoingwa <span class="text-indigo-500 mx-8">•</span></span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Landless <span class="text-indigo-500 mx-8">•</span></span>
+			<span class="text-2xl font-black uppercase tracking-widest text-slate-500 hover:text-indigo-400 transition">Kenyatta Road <span class="text-indigo-500 mx-8">•</span></span>
+		</div>
+	</section>
 </body>
 </html>`
 }
