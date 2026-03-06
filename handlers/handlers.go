@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"nyumba/models"
 	"nyumba/templates"
@@ -34,16 +35,31 @@ func GetHouses(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(filtered)
 }
 
-// AddHouseHandler processes the sidebar form and redirects to explore
 func AddHouseHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		r.ParseForm()
+		// 1. Parse the multipart form
+		r.ParseMultipartForm(10 << 20) // 10MB limit
+
+		// 2. Handle the Image Upload
+		file, handler, err := r.FormFile("property_photo")
+		imagePath := "/uploads/default.jpg" // Default if no image is uploaded
+
+		if err == nil {
+			defer file.Close()
+			// Create a unique filename and save to uploads folder
+			imagePath = "/uploads/" + handler.Filename
+			f, _ := os.OpenFile("."+imagePath, os.O_WRONLY|os.O_CREATE, 0666)
+			defer f.Close()
+			io.Copy(f, file)
+		}
+
+		// 3. Save the new House with the real image path
 		newHouse := models.House{
 			ID:           len(houses) + 1,
 			BuildingName: r.FormValue("building_name"),
 			Location:     r.FormValue("location"),
-			Price:        7500, // Default price placeholder
-			ImageURLs:    []string{"https://images.unsplash.com/photo-1570129477492-45c003edd2be"},
+			Price:        7500,
+			ImageURLs:    []string{imagePath}, // Use the uploaded image
 		}
 		houses = append(houses, newHouse)
 		http.Redirect(w, r, "/explore", http.StatusSeeOther)

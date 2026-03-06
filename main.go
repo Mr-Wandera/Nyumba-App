@@ -19,6 +19,9 @@ func main() {
 	http.HandleFunc("/signup", handlers.SignupHandler)
 	http.HandleFunc("/houses", handlers.GetHouses)
 	http.HandleFunc("/add-house", handlers.AddHouseHandler) //
+	// In main.go inside func main()
+	fs := http.FileServer(http.Dir("./uploads"))
+	http.Handle("/uploads/", http.StripPrefix("/uploads/", fs))
 
 	// Fix Port for Render
 	port := os.Getenv("PORT")

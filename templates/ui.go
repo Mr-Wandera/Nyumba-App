@@ -41,25 +41,60 @@ func getTickerItems() string {
 }
 
 func GetHTML(isLoggedIn, currentUsername, myHubButton, landlordPanelDisplay string) string {
-	return fmt.Sprintf(`<!DOCTYPE html><html><head><script src="https://cdn.tailwindcss.com"></script></head>
-	<body class="h-screen flex bg-[#0a0a0a] text-white overflow-hidden">
-		<aside class="w-[350px] border-r border-white/5 p-6 flex flex-col overflow-y-auto">
-			<h1 class="text-3xl font-black mb-10">Nyumba<span class="text-indigo-500">.</span></h1>
-			
-			<form action="/add-house" method="POST" class="space-y-4 mb-10">
-				<input type="text" name="building_name" placeholder="Apartment Name" class="w-full p-3 rounded-xl bg-slate-900 border border-white/5 text-sm">
-				<input type="text" name="location" placeholder="Thika (e.g. Section 9)" class="w-full p-3 rounded-xl bg-slate-900 border border-white/5 text-sm">
-				<button type="submit" class="w-full bg-white text-black py-4 rounded-xl font-black">Publish Listing</button>
+	return fmt.Sprintf(`<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>Nyumba | Explore Sanctuaries</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
+		<style>
+			body { font-family: 'Outfit', sans-serif; background: #0a0a0a; color: white; overflow: hidden; }
+			.glass-sidebar { background: rgba(15, 23, 42, 0.8); border-right: 1px solid rgba(255, 255, 255, 0.05); }
+			.input-field { background: #0f172a; border: 1px solid #1e293b; color: white; }
+		</style>
+	</head>
+	<body class="h-screen flex">
+		<aside class="w-[350px] glass-sidebar p-6 flex flex-col overflow-y-auto">
+			<div class="mb-10">
+				<h1 class="text-3xl font-black tracking-tighter">Nyumba<span class="text-indigo-500">.</span></h1>
+				<p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Curated Living</p>
+			</div>
+
+			<form action="/add-house" method="POST" enctype="multipart/form-data" class="space-y-4 mb-10">
+				<input type="text" name="building_name" placeholder="Apartment Name" class="w-full p-3 rounded-xl bg-slate-950 border border-white/5 text-sm" required>
+				<input type="text" name="location" placeholder="Thika (e.g. Section 9)" class="w-full p-3 rounded-xl bg-slate-950 border border-white/5 text-sm" required>
+				
+				<div class="relative group">
+					<input type="file" name="property_photo" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+					<div class="w-full bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 py-3 rounded-xl font-bold text-xs uppercase tracking-widest text-center group-hover:bg-indigo-600/30 transition">
+						Click to Upload Photo
+					</div>
+				</div>
+
+				<button type="submit" class="w-full bg-white text-black py-4 rounded-xl font-black shadow-xl hover:bg-slate-200 transition">
+					Publish Listing
+				</button>
 			</form>
 
 			<div class="mt-auto flex items-center justify-between p-4 bg-indigo-600/10 rounded-2xl">
-				<span class="font-bold text-sm">%%s</span> <a href="/" class="text-xs">Logout</a>
+				<div class="flex items-center gap-3">
+					<div class="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center font-bold text-xs">👤</div>
+					<span class="font-bold text-sm">%%s</span> </div>
+				<a href="/" class="text-xs font-bold text-slate-500">Logout</a>
 			</div>
 		</aside>
-		<main class="flex-1 p-10 overflow-y-auto">
-			<h1 class="text-5xl font-black mb-8">Explore <span class="text-indigo-400">Sanctuaries</span></h1>
-			<div id="results-area" class="grid grid-cols-1 lg:grid-cols-2 gap-8"></div>
-		</main></body></html>`, currentUsername)
+
+		<main class="flex-1 p-10 overflow-y-auto relative">
+			<header class="mb-12">
+				<h1 class="text-5xl font-black tracking-tighter mb-2 text-indigo-400">Explore Sanctuaries</h1>
+				<p class="text-slate-400">Find your next home and connect directly with verified owners.</p>
+			</header>
+			<div id="results-area" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+				</div>
+		</main>
+	</body>
+	</html>`, currentUsername)
 }
 
 func GetSignupHTML() string {
