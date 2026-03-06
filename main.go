@@ -18,6 +18,7 @@ func main() {
 	http.HandleFunc("/explore", handlers.ExploreHandler)
 	http.HandleFunc("/signup", handlers.SignupHandler)
 	http.HandleFunc("/houses", handlers.GetHouses)
+	http.HandleFunc("/add-house", handlers.AddHouseHandler) //
 
 	// Fix Port for Render
 	port := os.Getenv("PORT")
