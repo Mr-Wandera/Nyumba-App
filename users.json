@@ -1,14 +1,14 @@
 [
   {
-    "username": "Wandera",
-    "password": "wandera",
-    "role": "renter",
-    "phone": "254798080038"
+    "id": 1,
+    "username": "admin",
+    "email": "admin@nyumba.com",
+    "role": "admin"
   },
   {
-    "username": "wandera",
-    "password": "wandera",
-    "role": "landlord",
-    "phone": "254798080038"
+    "id": 2,
+    "username": "user1",
+    "email": "user1@nyumba.com",
+    "role": "user"
   }
 ]

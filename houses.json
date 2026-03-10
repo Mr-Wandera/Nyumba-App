@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "building_name": "Base Apartments",
+    "location": "Thika",
+    "price": 7500,
+    "deposit": 2000,
+    "type": "Bedsitter",
+    "image_urls": ["https://picsum.photos/seed/apartment1/800/600"],
+    "is_paid": false,
+    "bedrooms": 1,
+    "bathrooms": 1,
+    "landlord_phone": "+254712345678",
+    "description": "Beautiful apartment with modern finishes."
+  },
+  {
+    "id": 2,
+    "building_name": "Sunset Heights",
+    "location": "Westlands, Nairobi",
+    "price": 45000,
+    "deposit": 45000,
+    "type": "2 Bedroom",
+    "image_urls": ["https://picsum.photos/seed/westlands/800/600"],
+    "is_paid": false,
+    "bedrooms": 2,
+    "bathrooms": 1,
+    "landlord_phone": "+254712345678",
+    "description": "Spacious 2 bedroom apartment in the heart of Westlands."
+  },
+  {
+    "id": 3,
+    "building_name": "Kilimani Gardens",
+    "location": "Kilimani, Nairobi",
+    "price": 55000,
+    "deposit": 55000,
+    "type": "3 Bedroom",
+    "image_urls": ["https://picsum.photos/seed/kilimani/800/600"],
+    "is_paid": false,
+    "bedrooms": 3,
+    "bathrooms": 2,
+    "landlord_phone": "+254712345678",
+    "description": "Luxurious 3 bedroom apartment with a view."
+  }
+]
