@@ -1,0 +1,18 @@
+# Sensitive information
+.env
+
+# Go binaries (the executable files created when you run 'go build')
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+Nyumba-App
+
+# Dependency directories
+vendor/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
