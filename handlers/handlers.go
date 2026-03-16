@@ -54,11 +54,14 @@ func AddHouseHandler(w http.ResponseWriter, r *http.Request) {
 		Location:      r.FormValue("location"),
 		MapLink:       r.FormValue("map_link"),
 		Price:         price,
+		Deposit:       price, // Defaulting deposit to price
+		Type:          "Apartment",
 		ImageURLs:     []string{imagePath},
 		IsPaid:        false,
 		Bedrooms:      1,
 		Bathrooms:     1,
 		LandlordPhone: "+254712345678",
+		Description:   "Beautiful sanctuary available now.",
 	}
 	Houses = append(Houses, newHouse)
 	saveHouses()
@@ -73,7 +76,7 @@ func GetHouses(w http.ResponseWriter, r *http.Request) {
 
 func ExploreHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, templates.GetExploreHTML())
+	fmt.Fprint(w, templates.GetExploreHTML(Houses))
 }
 
 func HomePage(w http.ResponseWriter, r *http.Request) {
@@ -97,11 +100,14 @@ func SeedHouses() {
 		BuildingName:  "Sunset Heights",
 		Location:      "Section 9, Thika",
 		Price:         15000,
+		Deposit:       15000,
+		Type:          "Apartment",
 		ImageURLs:     []string{"/uploads/default.jpg"},
 		IsPaid:        false,
 		Bedrooms:      2,
 		Bathrooms:     1,
 		LandlordPhone: "+254712345678",
+		Description:   "Quiet neighborhood, great views.",
 	})
 	saveHouses()
 }

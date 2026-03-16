@@ -15,6 +15,7 @@ import (
 	"nyumba/templates"
 )
 
+// Standardized to models.House to match external packages
 var houses []models.House
 
 func loadHouses() {
@@ -72,12 +73,13 @@ func landingHandler(w http.ResponseWriter, r *http.Request) {
 	if len(featured) > 3 {
 		featured = featured[:3]
 	}
-	// Corrected to pass models.House slice
+	// Now passing models.House which matches templates package
 	fmt.Fprint(w, templates.GetLandingHTML(featured))
 }
 
 func exploreHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, templates.GetExploreHTML())
+	// Passing houses slice as required by updated templates
+	fmt.Fprint(w, templates.GetExploreHTML(houses))
 }
 
 func landlordHandler(w http.ResponseWriter, r *http.Request) {
@@ -90,7 +92,6 @@ func housesAPIHandler(w http.ResponseWriter, r *http.Request) {
 
 	filtered := houses
 	if neighborhood != "" {
-		// Changed to models.House to match the global slice
 		var temp []models.House
 		for _, h := range houses {
 			if strings.Contains(strings.ToLower(h.Location), strings.ToLower(neighborhood)) {
@@ -101,7 +102,6 @@ func housesAPIHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if search != "" {
-		// Changed to models.House to match the global slice
 		var temp []models.House
 		for _, h := range filtered {
 			if strings.Contains(strings.ToLower(h.BuildingName), strings.ToLower(search)) ||
@@ -122,8 +122,7 @@ func addHouseHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Handle both JSON and Form
-	// Changed to models.House for type consistency
+	// Handle both JSON and Form using models.House
 	var newHouse models.House
 	if strings.Contains(r.Header.Get("Content-Type"), "application/json") {
 		json.NewDecoder(r.Body).Decode(&newHouse)
