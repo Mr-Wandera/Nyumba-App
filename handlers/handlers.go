@@ -117,7 +117,6 @@ func saveHouses() {
 	os.WriteFile("houses.json", data, 0644)
 }
 
-// Renamed to LoginHandler (Uppercase) so it can be used in main.go
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		fmt.Fprint(w, templates.GetAuthHTML("Login"))
@@ -128,13 +127,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		email := r.FormValue("email")
 		password := r.FormValue("password")
 
-		// We include password in Printf just to satisfy the Go compiler's "unused variable" rule
 		fmt.Printf("Login attempt: %s with password length %d\n", email, len(password))
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 }
 
-// Renamed to SignupHandler (Uppercase) so it can be used in main.go
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		fmt.Fprint(w, templates.GetAuthHTML("Sign Up"))
@@ -148,7 +145,6 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 		password := r.FormValue("password")
 		role := r.FormValue("role")
 
-		// Included all variables in Printf to fix "declared and not used" errors
 		fmt.Printf("Signup: %s (%s) - Phone: %s, Role: %s, Pass Len: %d\n", name, email, phone, role, len(password))
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}

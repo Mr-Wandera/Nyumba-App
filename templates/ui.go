@@ -238,7 +238,7 @@ func GetAuthHTML(mode string) string {
 			<div class="space-y-4">
 				<div>
 					<label class="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Full Name</label>
-					<input type="text" name="name" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors" placeholder="John Doe">
+					<input type="text" name="name" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors" placeholder="Abdul Wandera">
 				</div>
 				<div>
 					<label class="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Email</label>
