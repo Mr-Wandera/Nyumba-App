@@ -6,8 +6,7 @@ import (
 	"nyumba/models" // Standardizing to the central model package
 )
 
-// The single source of truth for the House model is now in models/models.go
-// This local definition is removed to solve the IncompatibleAssign error
+
 
 func getHeader() string {
 	return `
@@ -215,20 +214,130 @@ func GetLandlordHTML() string {
 }
 
 func GetAuthHTML(mode string) string {
+	isLogin := mode == "Login"
+	
+	// Determine form fields based on mode
+	var formFields string
+	if isLogin {
+		formFields = `
+			<div class="space-y-4">
+				<div>
+					<label class="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Email</label>
+					<input type="email" name="email" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors" placeholder="your@email.com">
+				</div>
+				<div>
+					<label class="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Password</label>
+					<input type="password" name="password" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors" placeholder="••••••••">
+				</div>
+			</div>
+			<button type="submit" class="w-full bg-white text-black font-black py-4 rounded-xl hover:scale-[1.02] transition-transform mt-6">Sign In</button>
+			<p class="text-center text-zinc-500 text-sm mt-6 font-medium">Don't have an account? <a href="/signup" class="text-blue-400 hover:text-blue-300 font-bold">Sign up</a></p>
+		`
+	} else {
+		formFields = `
+			<div class="space-y-4">
+				<div>
+					<label class="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Full Name</label>
+					<input type="text" name="name" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors" placeholder="John Doe">
+				</div>
+				<div>
+					<label class="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Email</label>
+					<input type="email" name="email" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors" placeholder="your@email.com">
+				</div>
+				<div>
+					<label class="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Phone</label>
+					<input type="tel" name="phone" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors" placeholder="+254 700 000 000">
+				</div>
+				<div>
+					<label class="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Password</label>
+					<input type="password" name="password" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-blue-500 transition-colors" placeholder="••••••••">
+				</div>
+				<div>
+					<label class="block text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2">Account Type</label>
+					<select name="role" required class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors">
+						<option value="" disabled selected class="bg-zinc-900">Select account type</option>
+						<option value="renter" class="bg-zinc-900">Looking for a home (Renter)</option>
+						<option value="landlord" class="bg-zinc-900">Listing properties (Landlord)</option>
+					</select>
+				</div>
+			</div>
+			<button type="submit" class="w-full bg-white text-black font-black py-4 rounded-xl hover:scale-[1.02] transition-transform mt-6">Create Account</button>
+			<p class="text-center text-zinc-500 text-sm mt-6 font-medium">Already have an account? <a href="/login" class="text-blue-400 hover:text-blue-300 font-bold">Log in</a></p>
+		`
+	}
+
 	return fmt.Sprintf(`
 <!DOCTYPE html>
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>%s - Nyumba</title>
 	<script src="https://cdn.tailwindcss.com"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+	<style>
+		body { font-family: 'Inter', sans-serif; }
+	</style>
 </head>
-<body class="bg-[#09090b] text-white flex items-center justify-center min-h-screen p-6">
-	<div class="w-full max-w-md bg-white/5 border border-white/10 rounded-[3rem] p-12">
-		<h2 class="text-4xl font-black tracking-tighter mb-8 text-center">%s</h2>
+<body class="bg-[#09090b] text-white flex items-center justify-center min-h-screen p-6 bg-mesh">
+	<div class="w-full max-w-md">
+		<!-- Logo -->
+		<div class="text-center mb-8">
+			<a href="/" class="text-3xl font-black tracking-tighter">Nyumba.</a>
+			<p class="text-zinc-500 text-sm mt-2 font-medium">Find your sanctuary</p>
+		</div>
+		
+		<!-- Form Card -->
+		<div class="bg-white/5 border border-white/10 rounded-[2rem] p-8 md:p-10 backdrop-blur-xl">
+			<h2 class="text-3xl font-black tracking-tighter mb-2 text-center">%s</h2>
+			<p class="text-zinc-500 text-center mb-8 text-sm font-medium">%s</p>
+			
+			<form action="/%s" method="POST" class="space-y-4">
+				%s
+			</form>
+			
+			<!-- Social Login Divider -->
+			<div class="relative my-8">
+				<div class="absolute inset-0 flex items-center">
+					<div class="w-full border-t border-white/10"></div>
+				</div>
+				<div class="relative flex justify-center text-xs uppercase">
+					<span class="bg-[#09090b] px-2 text-zinc-500 font-bold tracking-widest">Or continue with</span>
+				</div>
+			</div>
+			
+			<!-- Google Button -->
+			<button type="button" class="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 flex items-center justify-center gap-3 hover:bg-white/10 transition-colors font-bold text-sm">
+				<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+					<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+					<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+					<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+				</svg>
+				Google
+			</button>
+		</div>
+		
+		<!-- Footer -->
+		<p class="text-center text-zinc-600 text-xs mt-8">
+			By %s, you agree to our <a href="#" class="text-zinc-400 hover:text-white transition-colors">Terms</a> and <a href="#" class="text-zinc-400 hover:text-white transition-colors">Privacy Policy</a>
+		</p>
 	</div>
+	
+	<style>
+		.bg-mesh {
+			background-image: 
+				radial-gradient(at 0%% 0%%, rgba(30, 58, 138, 0.15) 0px, transparent 50%%),
+				radial-gradient(at 100%% 0%%, rgba(20, 184, 166, 0.1) 0px, transparent 50%%),
+				radial-gradient(at 100%% 100%%, rgba(30, 58, 138, 0.1) 0px, transparent 50%%);
+		}
+	</style>
 </body>
-</html>`, mode, mode)
+</html>`, mode, mode, 
+		map[bool]string{true: "Welcome back to your sanctuary", false: "Join Kenya's premier housing platform"}[isLogin],
+		map[bool]string{true: "login", false: "signup"}[isLogin],
+		formFields,
+		map[bool]string{true: "signing in", false: "signing up"}[isLogin])
 }
 
 func GetStaticHTML(title, content string) string {
